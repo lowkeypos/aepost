@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS-система</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f5f7;
+            padding: 20px;
+            color: #333;
+        }
+        .parent {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 7px;
+        }
+        .div1 { grid-column: span 6; }
+        .div2 { grid-column: span 4; grid-row: span 6; grid-row-start: 2; }
+        .div3 { grid-column: span 2; grid-row: span 6; grid-column-start: 5; grid-row-start: 2; }
+        .div4 { grid-column: span 2; grid-column-start: 5; grid-row-start: 8; }
+        .div5 { grid-column: span 4; grid-column-start: 1; grid-row-start: 8; }
+        .tabs { grid-column: span 6; display: flex; gap: 10px; }
+        .tab-button {
+            padding: 10px 15px;
+            cursor: pointer;
+            border: none;
+            background: #007aff;
+            color: white;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .tab-button:hover { background: #005ecb; }
+        .tab-content { display: none; grid-column: span 6; }
+        .active { display: block; }
+        .hidden { display: none; }
+        .order-panel, .product-list, .settings-panel {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <h2 class="div1">POS-система</h2>
+    <div class="tabs div1">
+        <button class="tab-button" onclick="openTab('sales')">Продажи</button>
+        <button class="tab-button" onclick="openTab('products')">Каталог товаров</button>
+        <button class="tab-button" onclick="openTab('receipts')">Чеки</button>
+        <button class="tab-button" onclick="openTab('settings')">Настройки</button>
+    </div>
+    
+    <div id="sales" class="tab-content active">
+        <div class="order-panel div3">
+            <h3>Товары в заказе</h3>
+            <div id="order-items"></div>
+            <strong>Итого: <span id="total">0</span> ₽</strong>
+            <button onclick="checkout()">Оплатить</button>
+            <button onclick="printPDFReceipt()">Печать чека (PDF)</button>
+            <button onclick="connectToPrinter()">Подключить принтер</button>
+            <button onclick="printBluetoothReceipt()">Печать чека (Bluetooth)</button>
+        </div>
+    </div>
+    
+    <div id="settings" class="tab-content">
+        <div class="settings-panel div5">
+            <h3>Настройки</h3>
+            <label>Кассир: <input type="text" id="cashier-name" placeholder="Введите имя кассира"></label>
+            <button onclick="saveCashier()">Сохранить</button>
+            <br>
+            <label>Логотип для чека: <input type="file" id="logo-upload" accept="image/*"></label>
+            <br><br>
+            <button onclick="exportData()">Экспорт CSV</button>
+            <button onclick="importData()">Импорт CSV</button>
+        </div>
+    </div>
+    
+    <script>
+        let bluetoothDevice;
+        let printerService;
+        let printerCharacteristic;
+
+        async function connectToPrinter() {
+            try {
+                bluetoothDevice = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: ["00001101-0000-1000-8000-00805f9b34fb"]
+                });
+                const server = await bluetoothDevice.gatt.connect();
+                printerService = await server.getPrimaryService("00001101-0000-1000-8000-00805f9b34fb");
+                printerCharacteristic = await printerService.getCharacteristic("00002a19-0000-1000-8000-00805f9b34fb");
+                alert("Принтер подключен!");
+            } catch (error) {
+                alert("Ошибка подключения: " + error);
+            }
+        }
+
+        async function printBluetoothReceipt() {
+            if (!printerCharacteristic) {
+                alert("Принтер не подключен!");
+                return;
+            }
+            let receiptText = "\nЧЕК\n----------------\n";
+            receiptText += `Кассир: ${document.getElementById("cashier-name").value || "Кассир"}\n`;
+            receiptText += `Дата: ${new Date().toLocaleString()}\n----------------\n`;
+            receiptText += "Товары:\n";
+            receiptText += "----------------\n";
+            receiptText += "Пример товара - 100 ₽\n"; // Тут можно вставить реальный список товаров
+            receiptText += "----------------\n";
+            receiptText += `ИТОГО: 100 ₽\n\n\n`;
+
+            let encoder = new TextEncoder();
+            let data = encoder.encode(receiptText);
+            await printerCharacteristic.writeValue(data);
+            alert("Чек отправлен на печать!");
+        }
+    </script>
+</body>
+</html>
