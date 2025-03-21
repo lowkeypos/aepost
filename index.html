@@ -1,153 +1,128 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Конструктор открыток</title>
+    <title>Конструктор Открыток</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
             background-color: #f5f5f7;
-        }
-        .container {
-            background: white;
+            margin: 0;
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            width: 400px;
-            text-align: center;
         }
-        button {
-            background: #007aff;
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        button:hover {
-            background: #005ecb;
-        }
-        input, select {
-            width: 100%;
-            padding: 8px;
-            margin: 5px 0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        #preview {
+        .card-preview {
             width: 300px;
             height: 450px;
             border: 1px solid #ccc;
-            margin: 10px auto;
-            background-size: cover;
-            background-position: center;
+            background-color: white;
             display: flex;
-            align-items: center;
             justify-content: center;
-            font-size: 18px;
-            color: white;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+            align-items: center;
+            margin-bottom: 20px;
             position: relative;
+            overflow: hidden;
+            touch-action: none;
         }
-        #preview-text {
+        .card-preview img {
+            max-width: 100%;
+            max-height: 100%;
             position: absolute;
-            font-size: 18px;
+            cursor: grab;
+        }
+        .controls, .order-form {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        input, select, textarea {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #007aff;
             color: white;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+            border: none;
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #005ecb;
+        }
+        canvas {
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Создайте свою открытку</h2>
-        
-        <label for="orientation">Ориентация:</label>
+    <h1>Конструктор Открыток</h1>
+    <div class="card-preview" id="cardPreview"></div>
+    <canvas id="canvas" width="300" height="450"></canvas>
+    <div class="controls">
+        <label>Выберите ориентацию:</label>
         <select id="orientation">
-            <option value="portrait">Портрет</option>
-            <option value="landscape">Альбом</option>
+            <option value="portrait">Портретная</option>
+            <option value="landscape">Горизонтальная</option>
         </select>
-        
-        <label for="image">Загрузите изображение:</label>
-        <input type="file" id="image" accept="image/*" onchange="previewImage(event)">
-        
-        <label for="text">Добавьте текст:</label>
-        <input type="text" id="text" oninput="updateText()">
-        
-        <label for="text-size">Размер текста:</label>
-        <input type="number" id="text-size" value="18" oninput="updateText()">
-        
-        <label for="back-color">Цвет задней стороны:</label>
-        <input type="color" id="back-color">
-        
-        <label for="paper-type">Тип бумаги:</label>
-        <select id="paper-type">
-            <option value="matte">Матовая</option>
-            <option value="glossy">Глянцевая</option>
-            <option value="satin">Сатиновая</option>
-            <option value="semi-gloss">Полуглянцевая</option>
-        </select>
-        
-        <div id="preview">
-            <span id="preview-text"></span>
-        </div>
-        
-        <button onclick="createOrder()">Создать заказ</button>
+        <input type="file" id="uploadImage" accept="image/*">
+        <button id="generateImage">Создать изображение</button>
+        <button id="sendOrder">Отправить заказ</button>
     </div>
-    
     <script>
-        function previewImage(event) {
+        let img = null;
+        let isDragging = false;
+        let startX, startY, imgX = 0, imgY = 0;
+        let scale = 1;
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        document.getElementById('uploadImage').addEventListener('change', function(event) {
             const file = event.target.files[0];
-            const reader = new FileReader();
-            reader.onload = function() {
-                document.getElementById('preview').style.backgroundImage = `url(${reader.result})`;
-            }
             if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    img = new Image();
+                    img.src = e.target.result;
+                    img.onload = () => drawCanvas();
+                };
                 reader.readAsDataURL(file);
             }
+        });
+
+        function drawCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, imgX, imgY, img.width * scale, img.height * scale);
         }
 
-        function updateText() {
-            const text = document.getElementById('text').value;
-            const textSize = document.getElementById('text-size').value;
-            const previewText = document.getElementById('preview-text');
-            previewText.textContent = text;
-            previewText.style.fontSize = textSize + 'px';
-        }
+        document.getElementById('generateImage').addEventListener('click', function() {
+            drawCanvas();
+            const dataUrl = canvas.toDataURL('image/png');
+            const preview = document.createElement('img');
+            preview.src = dataUrl;
+            document.getElementById('cardPreview').innerHTML = '';
+            document.getElementById('cardPreview').appendChild(preview);
+        });
 
-        function createOrder() {
-            const order = {
-                orientation: document.getElementById('orientation').value,
-                text: document.getElementById('text').value,
-                textSize: document.getElementById('text-size').value,
-                backColor: document.getElementById('back-color').value,
-                paperType: document.getElementById('paper-type').value,
-                orderNumber: Math.floor(10000 + Math.random() * 90000)
-            };
-            sendToTelegram(order);
-        }
-
-        function sendToTelegram(order) {
-            const token = '8061862501:AAHXrnm-6uOVuYDo_3Q351KrE6O534rXpCw';
-            const chatId = '5103909743';
-            const message = `Заказ №${order.orderNumber}\nОриентация: ${order.orientation}\nТекст: ${order.text}\nРазмер текста: ${order.textSize}px\nЦвет задней стороны: ${order.backColor}\nТип бумаги: ${order.paperType}`;
-            
-            fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        document.getElementById('sendOrder').addEventListener('click', function() {
+            const dataUrl = canvas.toDataURL('image/png');
+            fetch('https://api.telegram.org/bot8061862501:AAHXrnm-6uOVuYDo_3Q351KrE6O534rXpCw/sendPhoto', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({chat_id: chatId, text: message})
-            })
-            .then(response => response.json())
-            .then(data => alert('Заказ отправлен в Telegram!'))
-            .catch(error => alert('Ошибка отправки заказа в Telegram: ' + error));
-        }
+                body: JSON.stringify({
+                    chat_id: "5103909743", // Замените на ваш chat_id
+                    photo: dataUrl
+                }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+        });
     </script>
 </body>
 </html>
