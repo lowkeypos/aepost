@@ -27,11 +27,9 @@
             overflow: hidden;
             touch-action: none;
         }
-        .card-preview img {
-            max-width: 100%;
-            max-height: 100%;
-            position: absolute;
-            cursor: grab;
+        canvas {
+            width: 100%;
+            height: 100%;
         }
         .controls, .order-form {
             width: 100%;
@@ -56,15 +54,13 @@
         button:hover {
             background-color: #005ecb;
         }
-        canvas {
-            display: none;
-        }
     </style>
 </head>
 <body>
     <h1>Конструктор Открыток</h1>
-    <div class="card-preview" id="cardPreview"></div>
-    <canvas id="canvas" width="300" height="450"></canvas>
+    <div class="card-preview">
+        <canvas id="canvas" width="300" height="450"></canvas>
+    </div>
     <div class="controls">
         <label>Выберите ориентацию:</label>
         <select id="orientation">
@@ -72,55 +68,62 @@
             <option value="landscape">Горизонтальная</option>
         </select>
         <input type="file" id="uploadImage" accept="image/*">
-        <button id="generateImage">Создать изображение</button>
+        <input type="text" id="textInput" placeholder="Введите текст">
+        <button id="generateImage">Обновить предпросмотр</button>
         <button id="sendOrder">Отправить заказ</button>
     </div>
     <script>
-        let img = null;
-        let isDragging = false;
-        let startX, startY, imgX = 0, imgY = 0;
-        let scale = 1;
+        let img = new Image();
+        let text = "";
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
+        const orientationSelect = document.getElementById('orientation');
+
+        function updateCanvas() {
+            const isLandscape = orientationSelect.value === 'landscape';
+            canvas.width = isLandscape ? 450 : 300;
+            canvas.height = isLandscape ? 300 : 450;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (img.src) ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "black";
+            ctx.font = "20px Arial";
+            ctx.fillText(text, 20, 50);
+        }
 
         document.getElementById('uploadImage').addEventListener('change', function(event) {
             const file = event.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    img = new Image();
                     img.src = e.target.result;
-                    img.onload = () => drawCanvas();
+                    img.onload = updateCanvas;
                 };
                 reader.readAsDataURL(file);
             }
         });
 
-        function drawCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(img, imgX, imgY, img.width * scale, img.height * scale);
-        }
-
-        document.getElementById('generateImage').addEventListener('click', function() {
-            drawCanvas();
-            const dataUrl = canvas.toDataURL('image/png');
-            const preview = document.createElement('img');
-            preview.src = dataUrl;
-            document.getElementById('cardPreview').innerHTML = '';
-            document.getElementById('cardPreview').appendChild(preview);
+        document.getElementById('textInput').addEventListener('input', function(event) {
+            text = event.target.value;
+            updateCanvas();
         });
+
+        orientationSelect.addEventListener('change', updateCanvas);
+        document.getElementById('generateImage').addEventListener('click', updateCanvas);
 
         document.getElementById('sendOrder').addEventListener('click', function() {
             const dataUrl = canvas.toDataURL('image/png');
             fetch('https://api.telegram.org/bot8061862501:AAHXrnm-6uOVuYDo_3Q351KrE6O534rXpCw/sendPhoto', {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    chat_id: "5103909743", // Замените на ваш chat_id
-                    photo: dataUrl
-                }),
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                    chat_id: "YOUR_CHAT_ID", // Укажите ваш chat_id
+                    photo: dataUrl,
+                    caption: `Ориентация: ${orientationSelect.value}\nТекст: ${text}`
+                })
+            }).then(response => response.json()).then(data => {
+                alert("Заказ отправлен!");
+            }).catch(error => {
+                alert("Ошибка отправки заказа");
             });
         });
     </script>
