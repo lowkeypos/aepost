@@ -1,122 +1,129 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POS-система</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <title>Конструктор Открыток</title>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            text-align: center;
             background-color: #f5f5f7;
+            color: #1d1d1f;
+            margin: 0;
             padding: 20px;
-            color: #333;
         }
-        .parent {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            grid-template-rows: repeat(8, 1fr);
-            gap: 7px;
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
-        .div1 { grid-column: span 6; }
-        .div2 { grid-column: span 4; grid-row: span 6; grid-row-start: 2; }
-        .div3 { grid-column: span 2; grid-row: span 6; grid-column-start: 5; grid-row-start: 2; }
-        .div4 { grid-column: span 2; grid-column-start: 5; grid-row-start: 8; }
-        .div5 { grid-column: span 4; grid-column-start: 1; grid-row-start: 8; }
-        .tabs { grid-column: span 6; display: flex; gap: 10px; }
-        .tab-button {
-            padding: 10px 15px;
-            cursor: pointer;
-            border: none;
+        canvas {
+            border-radius: 8px;
+            width: 100%;
+            height: auto;
+            margin-top: 10px;
+            background: #fff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+        select, input, button, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #d1d1d6;
+            border-radius: 8px;
+            font-size: 16px;
+            background: #fff;
+        }
+        button {
             background: #007aff;
             color: white;
-            border-radius: 8px;
-            transition: background 0.2s;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
         }
-        .tab-button:hover { background: #005ecb; }
-        .tab-content { display: none; grid-column: span 6; }
-        .active { display: block; }
-        .hidden { display: none; }
-        .order-panel, .product-list, .settings-panel {
-            background: white;
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        button:hover {
+            background: #005ecb;
         }
     </style>
 </head>
 <body>
-    <h2 class="div1">POS-система</h2>
-    <div class="tabs div1">
-        <button class="tab-button" onclick="openTab('sales')">Продажи</button>
-        <button class="tab-button" onclick="openTab('products')">Каталог товаров</button>
-        <button class="tab-button" onclick="openTab('receipts')">Чеки</button>
-        <button class="tab-button" onclick="openTab('settings')">Настройки</button>
+    <div class="container">
+        <h1>Конструктор Открыток</h1>
+        <label>Орієнтація:
+            <select id="orientation">
+                <option value="portrait">Портрет</option>
+                <option value="landscape">Горизонталь</option>
+            </select>
+        </label>
+        <canvas id="canvas" width="300" height="450"></canvas>
+        <input type="file" id="upload" accept="image/*">
+        <input type="color" id="backColor" value="#ffffff">
+        <label for="backColor">Колір задньої сторони</label>
+        <label>Папір:
+            <select id="paperType">
+                <option value="matte">Матова</option>
+                <option value="glossy">Глянець</option>
+                <option value="satin">Сатин</option>
+                <option value="semi-gloss">Полуглянець</option>
+            </select>
+        </label>
+        <button onclick="openForm()">Створити замовлення</button>
     </div>
-    
-    <div id="sales" class="tab-content active">
-        <div class="order-panel div3">
-            <h3>Товары в заказе</h3>
-            <div id="order-items"></div>
-            <strong>Итого: <span id="total">0</span> ₽</strong>
-            <button onclick="checkout()">Оплатить</button>
-            <button onclick="printPDFReceipt()">Печать чека (PDF)</button>
-            <button onclick="connectToPrinter()">Подключить принтер</button>
-            <button onclick="printBluetoothReceipt()">Печать чека (Bluetooth)</button>
-        </div>
+    <div class="container" id="orderForm" style="display:none;">
+        <h2>Оформлення замовлення</h2>
+        <input type="text" id="name" placeholder="ФІО">
+        <input type="text" id="phone" placeholder="Номер телефону">
+        <select id="deliveryMethod">
+            <option value="ukrpost">Укрпошта</option>
+            <option value="novaPoshta">Нова Пошта</option>
+        </select>
+        <input type="text" id="address" placeholder="Адреса доставки">
+        <select id="paymentMethod">
+            <option value="cash">Оплата при отриманні</option>
+            <option value="prepay">Передоплата</option>
+        </select>
+        <select id="contactMethod">
+            <option value="telegram">Telegram</option>
+            <option value="viber">Viber</option>
+            <option value="sms">SMS</option>
+            <option value="call">Дзвінок</option>
+        </select>
+        <textarea id="comment" placeholder="Коментар"></textarea>
+        <button onclick="submitOrder()">Підтвердити замовлення</button>
     </div>
-    
-    <div id="settings" class="tab-content">
-        <div class="settings-panel div5">
-            <h3>Настройки</h3>
-            <label>Кассир: <input type="text" id="cashier-name" placeholder="Введите имя кассира"></label>
-            <button onclick="saveCashier()">Сохранить</button>
-            <br>
-            <label>Логотип для чека: <input type="file" id="logo-upload" accept="image/*"></label>
-            <br><br>
-            <button onclick="exportData()">Экспорт CSV</button>
-            <button onclick="importData()">Импорт CSV</button>
-        </div>
-    </div>
-    
     <script>
-        let bluetoothDevice;
-        let printerService;
-        let printerCharacteristic;
-
-        async function connectToPrinter() {
-            try {
-                bluetoothDevice = await navigator.bluetooth.requestDevice({
-                    acceptAllDevices: true,
-                    optionalServices: ["00001101-0000-1000-8000-00805f9b34fb"]
-                });
-                const server = await bluetoothDevice.gatt.connect();
-                printerService = await server.getPrimaryService("00001101-0000-1000-8000-00805f9b34fb");
-                printerCharacteristic = await printerService.getCharacteristic("00002a19-0000-1000-8000-00805f9b34fb");
-                alert("Принтер подключен!");
-            } catch (error) {
-                alert("Ошибка подключения: " + error);
-            }
+        function openForm() {
+            document.getElementById('orderForm').style.display = 'block';
         }
-
-        async function printBluetoothReceipt() {
-            if (!printerCharacteristic) {
-                alert("Принтер не подключен!");
-                return;
-            }
-            let receiptText = "\nЧЕК\n----------------\n";
-            receiptText += `Кассир: ${document.getElementById("cashier-name").value || "Кассир"}\n`;
-            receiptText += `Дата: ${new Date().toLocaleString()}\n----------------\n`;
-            receiptText += "Товары:\n";
-            receiptText += "----------------\n";
-            receiptText += "Пример товара - 100 ₽\n"; // Тут можно вставить реальный список товаров
-            receiptText += "----------------\n";
-            receiptText += `ИТОГО: 100 ₽\n\n\n`;
-
-            let encoder = new TextEncoder();
-            let data = encoder.encode(receiptText);
-            await printerCharacteristic.writeValue(data);
-            alert("Чек отправлен на печать!");
+        function submitOrder() {
+            const orderNumber = Math.floor(10000 + Math.random() * 90000);
+            const orientation = document.getElementById('orientation').value;
+            const paperType = document.getElementById('paperType').value;
+            const backColor = document.getElementById('backColor').value;
+            const name = document.getElementById('name').value;
+            const phone = document.getElementById('phone').value;
+            const deliveryMethod = document.getElementById('deliveryMethod').value;
+            const address = document.getElementById('address').value;
+            const paymentMethod = document.getElementById('paymentMethod').value;
+            const contactMethod = document.getElementById('contactMethod').value;
+            const comment = document.getElementById('comment').value;
+            const canvas = document.getElementById('canvas');
+            const image = canvas.toDataURL('image/png');
+            
+            const message = `Нове замовлення #${orderNumber}\nОрієнтація: ${orientation}\nПапір: ${paperType}\nКолір задньої сторони: ${backColor}\n\nФІО: ${name}\nТелефон: ${phone}\nДоставка: ${deliveryMethod}\nАдреса: ${address}\nОплата: ${paymentMethod}\nЗв'язок: ${contactMethod}\nКоментар: ${comment}`;
+            
+            fetch(`https://api.telegram.org/bot8061862501:AAHXrnm-6uOVuYDo_3Q351KrE6O534rXpCw/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: '5103909743',
+                    text: message
+                })
+            });
         }
     </script>
 </body>
