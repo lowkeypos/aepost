@@ -19,19 +19,14 @@
             height: 450px;
             border: 1px solid #ccc;
             background-color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 20px;
             position: relative;
             overflow: hidden;
-            touch-action: none;
         }
         canvas {
             width: 100%;
             height: 100%;
         }
-        .controls, .order-form {
+        .controls {
             width: 100%;
             max-width: 400px;
             display: flex;
@@ -59,7 +54,7 @@
 <body>
     <h1>Конструктор Открыток</h1>
     <div class="card-preview">
-        <canvas id="canvas" width="300" height="450"></canvas>
+        <canvas id="canvas"></canvas>
     </div>
     <div class="controls">
         <label>Выберите ориентацию:</label>
@@ -75,6 +70,8 @@
     <script>
         let img = new Image();
         let text = "";
+        let imgX = 0, imgY = 0, imgScale = 1;
+        let textX = 20, textY = 50;
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const orientationSelect = document.getElementById('orientation');
@@ -84,10 +81,10 @@
             canvas.width = isLandscape ? 450 : 300;
             canvas.height = isLandscape ? 300 : 450;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            if (img.src) ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            if (img.src) ctx.drawImage(img, imgX, imgY, img.width * imgScale, img.height * imgScale);
             ctx.fillStyle = "black";
             ctx.font = "20px Arial";
-            ctx.fillText(text, 20, 50);
+            ctx.fillText(text, textX, textY);
         }
 
         document.getElementById('uploadImage').addEventListener('change', function(event) {
@@ -96,7 +93,11 @@
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     img.src = e.target.result;
-                    img.onload = updateCanvas;
+                    img.onload = () => {
+                        img.width = canvas.width;
+                        img.height = canvas.height;
+                        updateCanvas();
+                    };
                 };
                 reader.readAsDataURL(file);
             }
@@ -109,6 +110,30 @@
 
         orientationSelect.addEventListener('change', updateCanvas);
         document.getElementById('generateImage').addEventListener('click', updateCanvas);
+
+        let dragging = false;
+        let lastX, lastY;
+
+        canvas.addEventListener('mousedown', function(e) {
+            lastX = e.offsetX;
+            lastY = e.offsetY;
+            dragging = true;
+        });
+
+        canvas.addEventListener('mousemove', function(e) {
+            if (dragging) {
+                const dx = e.offsetX - lastX;
+                const dy = e.offsetY - lastY;
+                imgX += dx;
+                imgY += dy;
+                lastX = e.offsetX;
+                lastY = e.offsetY;
+                updateCanvas();
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => dragging = false);
+        canvas.addEventListener('mouseleave', () => dragging = false);
 
         document.getElementById('sendOrder').addEventListener('click', function() {
             const dataUrl = canvas.toDataURL('image/png');
