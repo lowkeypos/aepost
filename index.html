@@ -26,7 +26,7 @@
             width: 100%;
             height: 100%;
         }
-        .controls {
+        .controls, .order-form {
             width: 100%;
             max-width: 400px;
             display: flex;
@@ -65,8 +65,32 @@
         <input type="file" id="uploadImage" accept="image/*">
         <input type="text" id="textInput" placeholder="Введите текст">
         <button id="generateImage">Обновить предпросмотр</button>
-        <button id="sendOrder">Отправить заказ</button>
+        <button id="sendOrder">Оформить заказ</button>
     </div>
+    
+    <div class="order-form" style="display:none;">
+        <h2>Оформление заказа</h2>
+        <input type="text" id="customerName" placeholder="ФИО">
+        <input type="text" id="phoneNumber" placeholder="Номер телефона">
+        <select id="deliveryMethod">
+            <option value="ukrposhta">Укрпочта</option>
+            <option value="nova_poshta">Новая почта</option>
+        </select>
+        <input type="text" id="deliveryAddress" placeholder="Адрес доставки">
+        <select id="paymentMethod">
+            <option value="upon_receipt">Оплата при получении</option>
+            <option value="prepayment">Предоплата</option>
+        </select>
+        <select id="contactMethod">
+            <option value="telegram">Telegram</option>
+            <option value="viber">Viber</option>
+            <option value="sms">SMS</option>
+            <option value="call">Звонок</option>
+        </select>
+        <textarea id="comment" placeholder="Комментарий"></textarea>
+        <button id="confirmOrder">Отправить заказ</button>
+    </div>
+
     <script>
         let img = new Image();
         let text = "";
@@ -75,13 +99,26 @@
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const orientationSelect = document.getElementById('orientation');
+        const orderForm = document.querySelector('.order-form');
 
         function updateCanvas() {
             const isLandscape = orientationSelect.value === 'landscape';
             canvas.width = isLandscape ? 450 : 300;
             canvas.height = isLandscape ? 300 : 450;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            if (img.src) ctx.drawImage(img, imgX, imgY, img.width * imgScale, img.height * imgScale);
+            if (img.src) {
+                const aspectRatio = img.width / img.height;
+                const canvasAspectRatio = canvas.width / canvas.height;
+                let drawWidth, drawHeight;
+                if (aspectRatio > canvasAspectRatio) {
+                    drawWidth = img.height * canvasAspectRatio;
+                    drawHeight = img.height;
+                } else {
+                    drawWidth = img.width;
+                    drawHeight = img.width / canvasAspectRatio;
+                }
+                ctx.drawImage(img, imgX, imgY, drawWidth, drawHeight);
+            }
             ctx.fillStyle = "black";
             ctx.font = "20px Arial";
             ctx.fillText(text, textX, textY);
@@ -93,11 +130,7 @@
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     img.src = e.target.result;
-                    img.onload = () => {
-                        img.width = canvas.width;
-                        img.height = canvas.height;
-                        updateCanvas();
-                    };
+                    img.onload = updateCanvas;
                 };
                 reader.readAsDataURL(file);
             }
@@ -110,46 +143,21 @@
 
         orientationSelect.addEventListener('change', updateCanvas);
         document.getElementById('generateImage').addEventListener('click', updateCanvas);
-
-        let dragging = false;
-        let lastX, lastY;
-
-        canvas.addEventListener('mousedown', function(e) {
-            lastX = e.offsetX;
-            lastY = e.offsetY;
-            dragging = true;
-        });
-
-        canvas.addEventListener('mousemove', function(e) {
-            if (dragging) {
-                const dx = e.offsetX - lastX;
-                const dy = e.offsetY - lastY;
-                imgX += dx;
-                imgY += dy;
-                lastX = e.offsetX;
-                lastY = e.offsetY;
-                updateCanvas();
-            }
-        });
-
-        canvas.addEventListener('mouseup', () => dragging = false);
-        canvas.addEventListener('mouseleave', () => dragging = false);
-
         document.getElementById('sendOrder').addEventListener('click', function() {
+            orderForm.style.display = 'block';
+        });
+        
+        document.getElementById('confirmOrder').addEventListener('click', function() {
             const dataUrl = canvas.toDataURL('image/png');
             fetch('https://api.telegram.org/bot8061862501:AAHXrnm-6uOVuYDo_3Q351KrE6O534rXpCw/sendPhoto', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    chat_id: "5103909743", // Укажите ваш chat_id
+                    chat_id: "YOUR_CHAT_ID", // Укажите ваш chat_id
                     photo: dataUrl,
-                    caption: `Ориентация: ${orientationSelect.value}\nТекст: ${text}`
+                    caption: `Ориентация: ${orientationSelect.value}\nТекст: ${text}\nИмя: ${document.getElementById('customerName').value}\nТелефон: ${document.getElementById('phoneNumber').value}\nДоставка: ${document.getElementById('deliveryMethod').value}\nАдрес: ${document.getElementById('deliveryAddress').value}\nОплата: ${document.getElementById('paymentMethod').value}\nСвязь: ${document.getElementById('contactMethod').value}\nКомментарий: ${document.getElementById('comment').value}`
                 })
-            }).then(response => response.json()).then(data => {
-                alert("Заказ отправлен!");
-            }).catch(error => {
-                alert("Ошибка отправки заказа");
-            });
+            }).then(() => alert("Заказ отправлен!"));
         });
     </script>
 </body>
