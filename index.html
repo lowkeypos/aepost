@@ -131,11 +131,10 @@
     </div>
 
     <script>
-        // Supabase Client Initialization
-        // !!! ВАЖНО: Замените 'YOUR_SUPABASE_URL' и 'YOUR_SUPABASE_ANON_KEY' на ваши реальные данные Supabase !!!
-        const SUPABASE_URL = 'https://iedrcmbvegttznaxpevd.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllZHJjbWJ2ZWd0dHpuYXhwZXZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0MDQyMzEsImV4cCI6MjA2Mjk4MDIzMX0.5K7nHzHI10tXQRP1ha8iH1CD-gjTtpzFSQSRIPofj1A';
-
+    const SUPABASE_CONFIG = {
+    url: 'https://iedrcmbvegttznaxpevd.supabase.co',
+    key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllZHJjbWJ2ZWd0dHpuYXhwZXZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0MDQyMzEsImV4cCI6MjA2Mjk4MDIzMX0.5K7nHzHI10tXQRP1ha8iH1CD-gjTtpzFSQSRIPofj1A'
+};
         // Исправлено: Supabase.createClient на supabase.createClient
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
