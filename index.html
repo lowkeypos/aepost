@@ -133,7 +133,7 @@
             </div>
         </nav>
 
-        <main id="app-content" class="main-content p-6 flex-1">
+        <main class="main-content p-6 flex-1">
             <div class="bg-gray-900 p-4 rounded-lg shadow-md mb-6 flex justify-between items-center">
                 <div class="flex items-center space-x-4">
                     <h2 id="page-title" class="text-xl font-semibold text-blue-300">Панель</h2>
@@ -153,8 +153,10 @@
                 </div>
             </div>
 
-            <div class="flex justify-center items-center h-full" id="initial-loading-spinner">
-                <div class="spinner"></div>
+            <div id="dynamic-content-area">
+                <div class="flex justify-center items-center h-full" id="initial-loading-spinner">
+                    <div class="spinner"></div>
+                </div>
             </div>
         </main>
     </div>
@@ -169,10 +171,31 @@
         </div>
     </div>
 
+    <div id="quick-add-client-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-button" id="quick-add-client-modal-close-button">&times;</span>
+            <h3 class="text-xl font-semibold mb-4 text-blue-300">Создать нового клиента</h3>
+            <form id="quick-client-form" class="grid grid-cols-1 gap-4">
+                <div>
+                    <label for="quick-client-name" class="block text-sm font-medium text-gray-300">Имя</label>
+                    <input type="text" id="quick-client-name" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
+                </div>
+                <div>
+                    <label for="quick-client-contact" class="block text-sm font-medium text-gray-300">Контакты (телефон/email)</label>
+                    <input type="text" id="quick-client-contact" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
+                </div>
+                <div class="flex justify-end space-x-3 mt-4">
+                    <button type="button" id="cancel-quick-client-form" class="px-5 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors">Отмена</button>
+                    <button type="submit" class="px-5 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">Сохранить клиента</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         // Supabase Client Initialization
         var SUPABASE_URL = 'https://iedrcmbvegttznaxpevd.supabase.co';
-        var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllZHJjbWJ2ZWd0dHpuYXhwZXZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0MDQyMzEsImV4cCI6MjA2Mjk4MDIzMX0.5K7nHzHI10tXQRP1ha8iH1CD-gjTtpzFSQSRIPofj1A';
+        var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllZHJjbWJ2ZWd0dHpuYXhwZXZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0MDQyMzEsImV4cCI6MjA2Mjk4MDIzMX0.5K7nHzHI10tXQRP1ha8iH1CD-gjTtpzFSQSRIPofj1A'; // Updated key for testing
 
         var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -180,6 +203,7 @@
         var appState = {
             hourlyRate: 0,
             materialCategories: [],
+            expenseCategories: [], // New: Separate array for expense categories
             materials: [],
             clients: [],
             appointments: [],
@@ -187,6 +211,8 @@
             sessions: [],
             isDataLoaded: false
         };
+
+        var pendingAppointmentData = null; // Global variable to store pending appointment data
 
         // Function to replace String.prototype.padStart
         function customPadStart(str, targetLength, padString) {
@@ -341,12 +367,18 @@
                         if (settingsResponse.data.length > 0) {
                             appState.hourlyRate = settingsResponse.data[0].hourly_rate || 0;
                             appState.materialCategories = settingsResponse.data[0].material_categories || [];
+                            appState.expenseCategories = settingsResponse.data[0].expense_categories || []; // Fetch expense categories
                         } else {
                             // Initialize default settings if none exist
-                            return supabase.from('settings').insert([{ hourly_rate: 500, material_categories: ['Краски', 'Иглы', 'Средства гигиены', 'Другое'] }])
+                            return supabase.from('settings').insert([{
+                                    hourly_rate: 500,
+                                    material_categories: ['Краски', 'Иглы', 'Средства гигиены', 'Другое'],
+                                    expense_categories: ['Аренда', 'Реклама', 'Коммунальные', 'Зарплата'] // Default expense categories
+                                }])
                                 .then(function() {
                                     appState.hourlyRate = 500;
                                     appState.materialCategories = ['Краски', 'Иглы', 'Средства гигиены', 'Другое'];
+                                    appState.expenseCategories = ['Аренда', 'Реклама', 'Коммунальные', 'Зарплата'];
                                     return {}; // Return empty object to continue chain
                                 });
                         }
@@ -450,9 +482,11 @@
 
         var handleRouteChange = function() {
             var path = window.location.hash.substring(1);
-            var appContent = document.getElementById('app-content');
+            var dynamicContentArea = document.getElementById('dynamic-content-area');
             var pageTitle = document.getElementById('page-title');
-            appContent.innerHTML = ''; // Clear content
+
+            // Clear only the dynamic content area
+            dynamicContentArea.innerHTML = '';
 
             // Remove active class from all nav links
             var navLinks = document.querySelectorAll('.nav-link');
@@ -475,14 +509,18 @@
                 var linkText = activeLink ? activeLink.textContent.trim() : '';
                 // Extract only the Russian word for the title
                 var titleMatch = linkText.match(/(Панель|Записи|Клиенты|Инвентарь|Финансы|Настройки)/);
-                pageTitle.textContent = titleMatch ? titleMatch[0] : 'Неизвестно';
+                if (pageTitle) {
+                    pageTitle.textContent = titleMatch ? titleMatch[0] : 'Неизвестно';
+                }
 
             } else {
                 // Default to dashboard if path is not found or empty
                 window.location.hash = '#dashboard';
                 renderDashboard();
                 document.querySelector('.nav-link[href="#dashboard"]').classList.add('active');
-                pageTitle.textContent = 'Панель';
+                if (pageTitle) {
+                    pageTitle.textContent = 'Панель';
+                }
             }
         };
 
@@ -490,8 +528,8 @@
 
         // 1. Dashboard Module
         var renderDashboard = function() {
-            var appContent = document.getElementById('app-content');
-            appContent.innerHTML = `
+            var dynamicContentArea = document.getElementById('dynamic-content-area');
+            dynamicContentArea.innerHTML = `
                 <div class="p-4 md:p-8 bg-gray-700 rounded-lg shadow-md">
                     <h2 class="text-3xl font-bold mb-6 text-blue-300">Дашборд</h2>
 
@@ -619,8 +657,8 @@
 
         // 2. Appointment System
         var renderAppointments = function() {
-            var appContent = document.getElementById('app-content');
-            appContent.innerHTML = `
+            var dynamicContentArea = document.getElementById('dynamic-content-area');
+            dynamicContentArea.innerHTML = `
                 <div class="p-4 md:p-8 bg-gray-700 rounded-lg shadow-md">
                     <h2 class="text-3xl font-bold mb-6 text-blue-300">Записи</h2>
 
@@ -640,11 +678,12 @@
                         <h3 class="text-xl font-semibold mb-4 text-blue-300">Створити нову запис</h3>
                         <form id="appointment-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label for="appointment-client" class="block text-sm font-medium text-gray-300">Клиент</label>
-                                <select id="appointment-client" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-gray-200">
-                                    <option value="">Выберите клиента</option>
-                                    ${mapArray(appState.clients, function(client) { return `<option value="${client.id}">${client.name}</option>`; }).join('')}
-                                </select>
+                                <label for="appointment-client-name" class="block text-sm font-medium text-gray-300">Имя клиента</label>
+                                <input type="text" id="appointment-client-name" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-gray-200" placeholder="Имя клиента">
+                            </div>
+                            <div>
+                                <label for="appointment-client-contact" class="block text-sm font-medium text-gray-300">Контакты клиента (телефон/email)</label>
+                                <input type="text" id="appointment-client-contact" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-gray-200" placeholder="Телефон или email">
                             </div>
                             <div>
                                 <label for="appointment-date" class="block text-sm font-medium text-gray-300">Дата</label>
@@ -692,21 +731,7 @@
             renderUpcomingAppointments();
         };
 
-        var handleAddAppointment = function(event) {
-            event.preventDefault();
-            var form = event.target;
-            var clientId = form['appointment-client'].value;
-            var date = form['appointment-date'].value;
-            var time = form['appointment-time'].value;
-            var duration = parseFloat(form['appointment-duration'].value);
-            var complexity = parseInt(form['appointment-complexity'].value);
-            var sketchUrl = form['appointment-sketch'].value;
-
-            if (!clientId || !date || !time || isNaN(duration) || isNaN(complexity)) {
-                showModal('Ошибка', 'Пожалуйста, заполните все обязательные поля (Клиент, Дата, Время, Длительность, Сложность).', 'alert');
-                return;
-            }
-
+        function createAppointment(clientId, date, time, duration, complexity, sketchUrl) {
             supabase.from('appointments').insert([
                 {
                     client_id: clientId,
@@ -721,7 +746,7 @@
             .then(function(response) {
                 if (response.error) throw response.error;
                 showModal('Успех', 'Запись успешно добавлена!', 'alert');
-                form.reset();
+                document.getElementById('appointment-form').reset(); // Reset original form
                 document.getElementById('appointment-form-container').classList.add('hidden');
                 fetchDataAndRerenderCurrentPage(); // Re-fetch and re-render
             })
@@ -729,7 +754,101 @@
                 console.error('Ошибка добавления записи:', error.message);
                 showModal('Ошибка', 'Не удалось добавить запись: ' + error.message, 'alert');
             });
+        }
+
+        var handleAddAppointment = function(event) {
+            event.preventDefault();
+            var form = event.target;
+            var clientName = form['appointment-client-name'].value.trim();
+            var clientContact = form['appointment-client-contact'].value.trim();
+            var date = form['appointment-date'].value;
+            var time = form['appointment-time'].value;
+            var duration = parseFloat(form['appointment-duration'].value);
+            var complexity = parseInt(form['appointment-complexity'].value);
+            var sketchUrl = form['appointment-sketch'].value;
+
+            if (!clientName || !clientContact || !date || !time || isNaN(duration) || isNaN(complexity)) {
+                showModal('Ошибка', 'Пожалуйста, заполните все обязательные поля (Имя клиента, Контакты, Дата, Время, Длительность, Сложность).', 'alert');
+                return;
+            }
+
+            // Check if client exists
+            var existingClient = findInArray(appState.clients, function(c) {
+                return c.name.toLowerCase() === clientName.toLowerCase() || c.contact.toLowerCase() === clientContact.toLowerCase();
+            });
+
+            if (!existingClient) {
+                // Client not found, prompt to create new client
+                pendingAppointmentData = {
+                    clientName: clientName,
+                    clientContact: clientContact,
+                    date: date,
+                    time: time,
+                    duration: duration,
+                    complexity: complexity,
+                    sketchUrl: sketchUrl
+                };
+
+                document.getElementById('quick-client-name').value = clientName;
+                document.getElementById('quick-client-contact').value = clientContact;
+                document.getElementById('quick-add-client-modal').classList.remove('hidden');
+                return; // Stop appointment creation for now
+            }
+
+            // If client exists, proceed with appointment creation
+            var clientId = existingClient.id;
+            createAppointment(clientId, date, time, duration, complexity, sketchUrl);
         };
+
+        // New function to handle quick client creation from modal
+        var handleQuickAddClient = function(event) {
+            event.preventDefault();
+            var form = event.target;
+            var name = form['quick-client-name'].value.trim();
+            var contact = form['quick-client-contact'].value.trim();
+
+            if (!name || !contact) {
+                showModal('Ошибка', 'Имя и контакты клиента обязательны.', 'alert');
+                return;
+            }
+
+            supabase.from('clients').insert([{ name: name, contact: contact, social_links: null, notes: null, tags: [] }])
+                .then(function(response) {
+                    if (response.error) throw response.error;
+                    var newClient = response.data[0]; // Assuming Supabase returns the inserted row
+                    showModal('Успех', 'Новый клиент "' + newClient.name + '" успешно добавлен!', 'alert', function() {
+                        document.getElementById('quick-add-client-modal').classList.add('hidden');
+                        // Re-fetch data to update appState.clients
+                        fetchData().then(function() {
+                            // Now try to create the appointment with the new client's ID
+                            if (pendingAppointmentData) {
+                                createAppointment(newClient.id,
+                                                  pendingAppointmentData.date,
+                                                  pendingAppointmentData.time,
+                                                  pendingAppointmentData.duration,
+                                                  pendingAppointmentData.complexity,
+                                                  pendingAppointmentData.sketchUrl);
+                                pendingAppointmentData = null; // Clear pending data
+                            }
+                        });
+                    });
+                })
+                .catch(function(error) {
+                    console.error('Ошибка добавления клиента:', error.message);
+                    showModal('Ошибка', 'Не удалось добавить клиента: ' + error.message, 'alert');
+                });
+        };
+
+        // Add event listeners for the new quick client modal
+        document.getElementById('quick-add-client-modal-close-button').onclick = function() {
+            document.getElementById('quick-add-client-modal').classList.add('hidden');
+            pendingAppointmentData = null; // Clear pending data if user cancels
+        };
+        document.getElementById('cancel-quick-client-form').onclick = function() {
+            document.getElementById('quick-add-client-modal').classList.add('hidden');
+            pendingAppointmentData = null; // Clear pending data if user cancels
+        };
+        document.getElementById('quick-client-form').addEventListener('submit', handleQuickAddClient);
 
         var renderUpcomingAppointments = function() {
             var listContainer = document.getElementById('upcoming-appointments-list');
@@ -836,18 +955,18 @@
 
         // 3. Tattoo Session Calculator
         var renderSessionCalculator = function(appointmentId) {
-            var appContent = document.getElementById('app-content');
+            var dynamicContentArea = document.getElementById('dynamic-content-area');
             var appointment = findInArray(appState.appointments, function(app) { return app.id === appointmentId; });
 
             if (!appointment) {
-                appContent.innerHTML = `<div class="p-4 bg-red-900 text-red-200 rounded-lg">Визит не найден или не подтвержден.</div>`;
+                dynamicContentArea.innerHTML = `<div class="p-4 bg-red-900 text-red-200 rounded-lg">Визит не найден или не подтвержден.</div>`;
                 return;
             }
 
             var client = findInArray(appState.clients, function(c) { return c.id === appointment.client_id; });
             var hourlyRate = appState.hourlyRate;
 
-            appContent.innerHTML = `
+            dynamicContentArea.innerHTML = `
                 <div class="p-4 md:p-8 bg-gray-700 rounded-lg shadow-md">
                     <h2 class="text-3xl font-bold mb-6 text-blue-300">Калькулятор тату-сеанса</h2>
                     <h3 class="text-xl font-semibold mb-4 text-blue-300">Визит клиента: ${client ? client.name : 'Неизвестно'} (${formatDate(appointment.date)} ${formatTime(appointment.time)})</h3>
@@ -1153,8 +1272,8 @@
 
         // 4. Clients Module
         var renderClients = function() {
-            var appContent = document.getElementById('app-content');
-            appContent.innerHTML = `
+            var dynamicContentArea = document.getElementById('dynamic-content-area');
+            dynamicContentArea.innerHTML = `
                 <div class="p-4 md:p-8 bg-gray-700 rounded-lg shadow-md">
                     <h2 class="text-3xl font-bold mb-6 text-blue-300">Клиенты</h2>
 
@@ -1433,8 +1552,8 @@
 
         // 5. Inventory Module
         var renderInventory = function() {
-            var appContent = document.getElementById('app-content');
-            appContent.innerHTML = `
+            var dynamicContentArea = document.getElementById('dynamic-content-area');
+            dynamicContentArea.innerHTML = `
                 <div class="p-4 md:p-8 bg-gray-700 rounded-lg shadow-md">
                     <h2 class="text-3xl font-bold mb-6 text-blue-300">Матеріали</h2>
 
@@ -1473,7 +1592,7 @@
                                 <input type="number" id="material-stock" step="0.01" min="0" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
                             </div>
                             <div>
-                                <label for="material-type" class="block text-sm font-medium text-gray-300">Категорія</label>
+                                <label for="material-type" class="block text-sm font-medium text-gray-300">Категория</label>
                                 <select id="material-type" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
                                     ${mapArray(appState.materialCategories, function(cat) { return `<option value="${cat}">${cat}</option>`; }).join('')}
                                 </select>
@@ -1700,8 +1819,8 @@
 
         // 6. Finance Module
         var renderFinance = function() {
-            var appContent = document.getElementById('app-content');
-            appContent.innerHTML = `
+            var dynamicContentArea = document.getElementById('dynamic-content-area');
+            dynamicContentArea.innerHTML = `
                 <div class="p-4 md:p-8 bg-gray-700 rounded-lg shadow-md">
                     <h2 class="text-3xl font-bold mb-6 text-blue-300">Фінанси</h2>
 
@@ -1752,7 +1871,9 @@
                             </div>
                             <div>
                                 <label for="expense-category" class="block text-sm font-medium text-gray-300">Категория</label>
-                                <input type="text" id="expense-category" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200" placeholder="Аренда, Реклама, Коммунальные">
+                                <select id="expense-category" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
+                                    ${mapArray(appState.expenseCategories, function(cat) { return `<option value="${cat}">${cat}</option>`; }).join('')}
+                                </select>
                             </div>
                             <div class="md:col-span-2 flex justify-end space-x-3">
                                 <button type="button" id="cancel-expense-form" class="px-5 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors">Отмена</button>
@@ -1995,8 +2116,8 @@
 
         // 7. Settings Module
         var renderSettings = function() {
-            var appContent = document.getElementById('app-content');
-            appContent.innerHTML = `
+            var dynamicContentArea = document.getElementById('dynamic-content-area');
+            dynamicContentArea.innerHTML = `
                 <div class="p-4 md:p-8 bg-gray-700 rounded-lg shadow-md">
                     <h2 class="text-3xl font-bold mb-6 text-blue-300">Налаштування</h2>
 
@@ -2040,7 +2161,7 @@
                     <div class="bg-gray-800 p-6 rounded-lg shadow-inner mb-8">
                         <h3 class="text-xl font-semibold mb-4 text-blue-300">Категорії витрат</h3>
                         <div id="expense-categories-list" class="mb-4">
-                            ${mapArray(appState.materialCategories, function(cat) { // Using materialCategories for now, should be separate expenseCategories
+                            ${mapArray(appState.expenseCategories, function(cat) {
                                 return `
                                 <div class="flex items-center justify-between bg-gray-700 p-3 rounded-md mb-2">
                                     <span class="text-gray-200">${cat}</span>
@@ -2087,32 +2208,32 @@
 
             document.getElementById('settings-form').addEventListener('submit', handleSaveSettings);
 
-            // Add/Edit category logic (simplified, full implementation would require more state management)
+            // Add/Edit category logic for Expense Categories
             document.getElementById('add-expense-category-btn').addEventListener('click', function() {
                 var newCatInput = document.getElementById('new-expense-category');
                 if (newCatInput.value.trim() !== '') {
-                    // For now, adding to materialCategories for demonstration.
-                    // In a real app, you'd have a separate array for expense categories.
-                    appState.materialCategories.push(newCatInput.value.trim());
+                    appState.expenseCategories.push(newCatInput.value.trim());
                     newCatInput.value = '';
-                    renderSettings(); // Re-render settings to show new category
+                    handleSaveSettings(null, true); // Save settings and re-render
                 }
             });
+
+            // Add/Edit category logic for Material Categories
             document.getElementById('add-material-category-btn').addEventListener('click', function() {
                 var newCatInput = document.getElementById('new-material-category');
                 if (newCatInput.value.trim() !== '') {
                     appState.materialCategories.push(newCatInput.value.trim());
                     newCatInput.value = '';
-                    renderSettings(); // Re-render settings to show new category
+                    handleSaveSettings(null, true); // Save settings and re-render
                 }
             });
         };
 
-        var handleSaveSettings = function(event) {
-            event.preventDefault();
-            var form = event.target;
+        var handleSaveSettings = function(event, isCategoryUpdate) {
+            if (event) event.preventDefault(); // Prevent default form submission if called from form
+
+            var form = document.getElementById('settings-form'); // Get form reference
             var hourlyRate = parseFloat(form['hourly-rate'].value);
-            var materialCategories = filterArray(mapArray(form['material-categories'].value.split(','), function(cat) { return cat.trim(); }), function(cat) { return cat !== ''; });
 
             if (isNaN(hourlyRate) || hourlyRate < 0) {
                 showModal('Ошибка', 'Ставка за час должна быть положительным числом.', 'alert');
@@ -2123,10 +2244,16 @@
             var settingsId = appState.settings && appState.settings.length > 0 ? appState.settings[0].id : null;
             var promise;
 
+            var settingsToSave = {
+                hourly_rate: hourlyRate,
+                material_categories: appState.materialCategories, // Use updated array
+                expense_categories: appState.expenseCategories // Use updated array
+            };
+
             if (settingsId) {
-                promise = supabase.from('settings').update({ hourly_rate: hourlyRate, material_categories: materialCategories }).eq('id', settingsId);
+                promise = supabase.from('settings').update(settingsToSave).eq('id', settingsId);
             } else {
-                promise = supabase.from('settings').insert([{ hourly_rate: hourlyRate, material_categories: materialCategories }]);
+                promise = supabase.from('settings').insert([settingsToSave]);
             }
 
             promise
@@ -2134,7 +2261,7 @@
                     if (response.error) {
                         // If no settings row exists, insert one (PGRST116 is a common code for no rows found on update)
                         if (response.error.code === 'PGRST116' || response.error.message.includes('no rows found')) {
-                            return supabase.from('settings').insert([{ hourly_rate: hourlyRate, material_categories: materialCategories }]);
+                            return supabase.from('settings').insert([settingsToSave]);
                         } else {
                             throw response.error;
                         }
