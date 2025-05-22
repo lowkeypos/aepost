@@ -171,13 +171,13 @@
 
     <script>
         // Supabase Client Initialization
-        const SUPABASE_URL = 'https://iedrcmbvegttznaxpevd.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllZHJjbWJ2ZWd0dHpuYXhwZXZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0MDQyMzEsImV4cCI6MjA2Mjk4MDIzMX0.5K7nHzHI10tXQRP1ha8iH1CD-gjTtpzFSQSRIPofj1A';
+        var SUPABASE_URL = 'https://iedrcmbvegttznaxpevd.supabase.co';
+        var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllZHJjbWJ2ZWd0dHpuYXhwZXZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0MDQyMzEsImV4cCI6MjA2Mjk4MDIzMX0.5K7nHzHI10tXQRP1ha8iH1CD-gjTtpzFSQSRIPofj1A';
 
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // Global state variables
-        let appState = {
+        var appState = {
             hourlyRate: 0,
             materialCategories: [],
             materials: [],
@@ -188,32 +188,135 @@
             isDataLoaded: false
         };
 
+        // Function to replace String.prototype.padStart
+        function customPadStart(str, targetLength, padString) {
+            str = String(str);
+            padString = String(padString);
+            if (str.length >= targetLength) {
+                return str;
+            }
+            targetLength = targetLength - str.length;
+            if (targetLength > padString.length) {
+                padString += padString.repeat(Math.ceil(targetLength / padString.length)); // Ensure enough padding
+            }
+            return padString.slice(0, targetLength) + str;
+        }
+
+        // Helper to format currency
+        var formatCurrency = function(amount) {
+            // Intl.NumberFormat is ES2015. For very old iPads, this might fail.
+            // A fallback would be manual string formatting if this causes issues.
+            try {
+                return new Intl.NumberFormat('uk-UA', { style: 'currency', currency: 'UAH' }).format(amount);
+            } catch (e) {
+                console.warn("Intl.NumberFormat not fully supported, falling back to basic format.");
+                return amount.toFixed(2) + ' грн'; // Basic fallback
+            }
+        };
+
+        // Helper to format date
+        var formatDate = function(dateString) {
+            if (!dateString) return '';
+            var date = new Date(dateString);
+            // toLocaleDateString is ES1, generally well-supported, but locale might vary.
+            return date.toLocaleDateString('uk-UA');
+        };
+
+        // Helper to format time (replacing padStart)
+        var formatTime = function(timeString) {
+            if (!timeString) return '';
+            // Assuming timeString is in HH:MM:SS format from Supabase
+            var parts = timeString.split(':');
+            var hours = parts[0];
+            var minutes = parts[1];
+            return customPadStart(hours, 2, '0') + ':' + customPadStart(minutes, 2, '0');
+        };
+
+        // Helper to find an element in an array (replacing Array.prototype.find)
+        var findInArray = function(array, predicate) {
+            for (var i = 0; i < array.length; i++) {
+                if (predicate(array[i])) {
+                    return array[i];
+                }
+            }
+            return undefined;
+        };
+
+        // Helper to filter an array (replacing Array.prototype.filter)
+        var filterArray = function(array, predicate) {
+            var result = [];
+            for (var i = 0; i < array.length; i++) {
+                if (predicate(array[i])) {
+                    result.push(array[i]);
+                }
+            }
+            return result;
+        };
+
+        // Helper to map an array (replacing Array.prototype.map)
+        var mapArray = function(array, callback) {
+            var result = [];
+            for (var i = 0; i < array.length; i++) {
+                result.push(callback(array[i], i, array));
+            }
+            return result;
+        };
+
+        // Helper to reduce an array (replacing Array.prototype.reduce)
+        var reduceArray = function(array, callback, initialValue) {
+            var accumulator = initialValue;
+            var startIndex = 0;
+            if (arguments.length < 3) {
+                if (array.length === 0) {
+                    throw new TypeError('Reduce of empty array with no initial value');
+                }
+                accumulator = array[0];
+                startIndex = 1;
+            }
+            for (var i = startIndex; i < array.length; i++) {
+                accumulator = callback(accumulator, array[i], i, array);
+            }
+            return accumulator;
+        };
+
+        // Helper for includes (replacing Array.prototype.includes)
+        var arrayIncludes = function(arr, value) {
+            for (var i = 0; i < arr.length; i++) {
+                if (arr[i] === value) {
+                    return true;
+                }
+            }
+            return false;
+        };
+
         // Utility function to show custom modal
-        function showModal(title, message, type = 'alert', onConfirm = null) {
-            const modal = document.getElementById('custom-modal');
-            const modalTitle = document.getElementById('modal-title');
-            const modalMessage = document.getElementById('modal-message');
-            const modalActions = document.getElementById('modal-actions');
+        var showModal = function(title, message, type, onConfirm) {
+            if (type === undefined) type = 'alert';
+
+            var modal = document.getElementById('custom-modal');
+            var modalTitle = document.getElementById('modal-title');
+            var modalMessage = document.getElementById('modal-message');
+            var modalActions = document.getElementById('modal-actions');
 
             modalTitle.textContent = title;
             modalMessage.innerHTML = message; // Use innerHTML for rich content
             modalActions.innerHTML = ''; // Clear previous buttons
 
             if (type === 'alert') {
-                const okButton = document.createElement('button');
+                var okButton = document.createElement('button');
                 okButton.textContent = 'ОК';
                 okButton.className = 'px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors';
-                okButton.onclick = () => modal.classList.add('hidden');
+                okButton.onclick = function() { modal.classList.add('hidden'); };
                 modalActions.appendChild(okButton);
             } else if (type === 'confirm') {
-                const cancelButton = document.createElement('button');
+                var cancelButton = document.createElement('button');
                 cancelButton.textContent = 'Отмена';
                 cancelButton.className = 'px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors';
-                const confirmButton = document.createElement('button');
+                var confirmButton = document.createElement('button');
                 confirmButton.textContent = 'Подтвердить';
                 confirmButton.className = 'px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors';
-                cancelButton.onclick = () => modal.classList.add('hidden');
-                confirmButton.onclick = () => {
+                cancelButton.onclick = function() { modal.classList.add('hidden'); };
+                confirmButton.onclick = function() {
                     if (onConfirm) onConfirm();
                     modal.classList.add('hidden');
                 };
@@ -221,125 +324,121 @@
                 modalActions.appendChild(confirmButton);
             }
             modal.classList.remove('hidden');
-        }
+        };
 
         // Close modal button
-        document.getElementById('modal-close-button').onclick = () => {
+        document.getElementById('modal-close-button').onclick = function() {
             document.getElementById('custom-modal').classList.add('hidden');
         };
 
-        // Helper to format currency
-        const formatCurrency = (amount) => {
-            return new Intl.NumberFormat('uk-UA', { style: 'currency', currency: 'UAH' }).format(amount);
-        };
-
-        // Helper to format date
-        const formatDate = (dateString) => {
-            if (!dateString) return '';
-            const date = new Date(dateString);
-            return date.toLocaleDateString('uk-UA');
-        };
-
-        // Helper to format time
-        const formatTime = (timeString) => {
-            if (!timeString) return '';
-            // Assuming timeString is in HH:MM:SS format from Supabase
-            const [hours, minutes] = timeString.split(':');
-            return `${hours}:${minutes}`;
-        };
-
         // --- Data Fetching and Realtime Subscriptions ---
-        async function fetchData() {
-            document.getElementById('initial-loading-spinner').classList.remove('hidden');
-            try {
-                const { data: settingsData, error: settingsError } = await supabase.from('settings').select('*').limit(1);
-                if (settingsError) throw settingsError;
-                if (settingsData.length > 0) {
-                    appState.hourlyRate = settingsData[0].hourly_rate || 0;
-                    appState.materialCategories = settingsData[0].material_categories || [];
-                } else {
-                    // Initialize default settings if none exist
-                    await supabase.from('settings').insert([{ hourly_rate: 500, material_categories: ['Краски', 'Иглы', 'Средства гигиены', 'Другое'] }]);
-                    appState.hourlyRate = 500;
-                    appState.materialCategories = ['Краски', 'Иглы', 'Средства гигиены', 'Другое'];
-                }
+        var fetchData = function() {
+            return new Promise(function(resolve, reject) {
+                document.getElementById('initial-loading-spinner').classList.remove('hidden');
+                supabase.from('settings').select('*').limit(1)
+                    .then(function(settingsResponse) {
+                        if (settingsResponse.error) throw settingsResponse.error;
+                        if (settingsResponse.data.length > 0) {
+                            appState.hourlyRate = settingsResponse.data[0].hourly_rate || 0;
+                            appState.materialCategories = settingsResponse.data[0].material_categories || [];
+                        } else {
+                            // Initialize default settings if none exist
+                            return supabase.from('settings').insert([{ hourly_rate: 500, material_categories: ['Краски', 'Иглы', 'Средства гигиены', 'Другое'] }])
+                                .then(function() {
+                                    appState.hourlyRate = 500;
+                                    appState.materialCategories = ['Краски', 'Иглы', 'Средства гигиены', 'Другое'];
+                                    return {}; // Return empty object to continue chain
+                                });
+                        }
+                        return {}; // Return empty object if settings already exist
+                    })
+                    .then(function() {
+                        return supabase.from('materials').select('*');
+                    })
+                    .then(function(materialsResponse) {
+                        if (materialsResponse.error) throw materialsResponse.error;
+                        appState.materials = materialsResponse.data;
+                        return supabase.from('clients').select('*');
+                    })
+                    .then(function(clientsResponse) {
+                        if (clientsResponse.error) throw clientsResponse.error;
+                        appState.clients = clientsResponse.data;
+                        return supabase.from('appointments').select('*, clients(*)');
+                    })
+                    .then(function(appointmentsResponse) {
+                        if (appointmentsResponse.error) throw appointmentsResponse.error;
+                        appState.appointments = appointmentsResponse.data;
+                        return supabase.from('expenses').select('*');
+                    })
+                    .then(function(expensesResponse) {
+                        if (expensesResponse.error) throw expensesResponse.error;
+                        appState.expenses = expensesResponse.data;
+                        return supabase.from('sessions').select('*');
+                    })
+                    .then(function(sessionsResponse) {
+                        if (sessionsResponse.error) throw sessionsResponse.error;
+                        appState.sessions = sessionsResponse.data;
 
-                const { data: materials, error: materialsError } = await supabase.from('materials').select('*');
-                if (materialsError) throw materialsError;
-                appState.materials = materials;
+                        appState.isDataLoaded = true;
+                        document.getElementById('initial-loading-spinner').classList.add('hidden');
+                        handleRouteChange(); // Render content after data is loaded
+                        resolve();
+                    })
+                    .catch(function(error) {
+                        console.error('Ошибка загрузки данных:', error.message);
+                        showModal('Ошибка', 'Не удалось загрузить данные: ' + error.message + '. Пожалуйста, проверьте подключение к Supabase и настройки таблиц.', 'alert');
+                        document.getElementById('initial-loading-spinner').classList.add('hidden');
+                        reject(error);
+                    });
+            });
+        };
 
-                const { data: clients, error: clientsError } = await supabase.from('clients').select('*');
-                if (clientsError) throw clientsError;
-                appState.clients = clients;
-
-                const { data: appointments, error: appointmentsError } = await supabase.from('appointments').select('*, clients(*)'); // Fetch client details
-                if (appointmentsError) throw appointmentsError;
-                appState.appointments = appointments;
-
-                const { data: expenses, error: expensesError } = await supabase.from('expenses').select('*');
-                if (expensesError) throw expensesError;
-                appState.expenses = expenses;
-
-                const { data: sessions, error: sessionsError } = await supabase.from('sessions').select('*');
-                if (sessionsError) throw sessionsError;
-                appState.sessions = sessions;
-
-                appState.isDataLoaded = true;
-                document.getElementById('initial-loading-spinner').classList.add('hidden');
-                handleRouteChange(); // Render content after data is loaded
-            } catch (error) {
-                console.error('Ошибка загрузки данных:', error.message);
-                showModal('Ошибка', `Не удалось загрузить данные: ${error.message}. Пожалуйста, проверьте подключение к Supabase и настройки таблиц.`, 'alert');
-                document.getElementById('initial-loading-spinner').classList.add('hidden');
-            }
-        }
-
-        // Realtime subscriptions
-        function setupRealtimeSubscriptions() {
+        var setupRealtimeSubscriptions = function() {
             supabase.channel('public:materials')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'materials' }, payload => {
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'materials' }, function(payload) {
                     fetchDataAndRerenderCurrentPage();
                 })
                 .subscribe();
 
             supabase.channel('public:clients')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, payload => {
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, function(payload) {
                     fetchDataAndRerenderCurrentPage();
                 })
                 .subscribe();
 
             supabase.channel('public:appointments')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, payload => {
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, function(payload) {
                     fetchDataAndRerenderCurrentPage();
                 })
                 .subscribe();
 
             supabase.channel('public:expenses')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, payload => {
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, function(payload) {
                     fetchDataAndRerenderCurrentPage();
                 })
                 .subscribe();
 
             supabase.channel('public:sessions')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'sessions' }, payload => {
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'sessions' }, function(payload) {
                     fetchDataAndRerenderCurrentPage();
                 })
                 .subscribe();
 
             supabase.channel('public:settings')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, payload => {
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, function(payload) {
                     fetchDataAndRerenderCurrentPage();
                 })
                 .subscribe();
-        }
+        };
 
-        async function fetchDataAndRerenderCurrentPage() {
-            await fetchData(); // Re-fetch all data
-            handleRouteChange(); // Re-render the current view
-        }
+        var fetchDataAndRerenderCurrentPage = function() {
+            return fetchData().then(function() {
+                handleRouteChange(); // Re-render the current view
+            });
+        };
 
         // --- Routing ---
-        const routes = {
+        var routes = {
             'dashboard': renderDashboard,
             'appointments': renderAppointments,
             'clients': renderClients,
@@ -349,28 +448,35 @@
             'session': renderSessionCalculator // This will handle /session/[id]
         };
 
-        function handleRouteChange() {
-            const path = window.location.hash.substring(1);
-            const appContent = document.getElementById('app-content');
-            const pageTitle = document.getElementById('page-title');
+        var handleRouteChange = function() {
+            var path = window.location.hash.substring(1);
+            var appContent = document.getElementById('app-content');
+            var pageTitle = document.getElementById('page-title');
             appContent.innerHTML = ''; // Clear content
 
             // Remove active class from all nav links
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('active');
-            });
+            var navLinks = document.querySelectorAll('.nav-link');
+            for (var i = 0; i < navLinks.length; i++) {
+                navLinks[i].classList.remove('active');
+            }
 
-            const [basePath, id] = path.split('/');
+            var pathParts = path.split('/');
+            var basePath = pathParts[0];
+            var id = pathParts[1];
 
             if (routes[basePath]) {
                 routes[basePath](id); // Pass ID if available
                 // Add active class to current nav link
-                const activeLink = document.querySelector(`.nav-link[href="#${basePath}"]`);
+                var activeLink = document.querySelector('.nav-link[href="#' + basePath + '"]');
                 if (activeLink) {
                     activeLink.classList.add('active');
                 }
                 // Update page title
-                pageTitle.textContent = activeLink ? activeLink.textContent.trim().replace(/[\s\S]*?(Панель|Записи|Клиенты|Инвентарь|Финансы|Настройки)/, '$1') : 'Неизвестно';
+                var linkText = activeLink ? activeLink.textContent.trim() : '';
+                // Extract only the Russian word for the title
+                var titleMatch = linkText.match(/(Панель|Записи|Клиенты|Инвентарь|Финансы|Настройки)/);
+                pageTitle.textContent = titleMatch ? titleMatch[0] : 'Неизвестно';
+
             } else {
                 // Default to dashboard if path is not found or empty
                 window.location.hash = '#dashboard';
@@ -378,13 +484,13 @@
                 document.querySelector('.nav-link[href="#dashboard"]').classList.add('active');
                 pageTitle.textContent = 'Панель';
             }
-        }
+        };
 
         // --- Module Rendering Functions ---
 
         // 1. Dashboard Module
-        function renderDashboard() {
-            const appContent = document.getElementById('app-content');
+        var renderDashboard = function() {
+            var appContent = document.getElementById('app-content');
             appContent.innerHTML = `
                 <div class="p-4 md:p-8 bg-gray-700 rounded-lg shadow-md">
                     <h2 class="text-3xl font-bold mb-6 text-blue-300">Дашборд</h2>
@@ -410,7 +516,7 @@
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-300 mb-1">Сеанси</h3>
                                 <p class="text-3xl font-bold text-purple-400">${appState.sessions.length}</p>
-                                <p class="text-sm text-gray-400">${appState.appointments.filter(a => a.status === 'pending' || a.status === 'confirmed').length} заплановано</p>
+                                <p class="text-sm text-gray-400">${filterArray(appState.appointments, function(a) { return a.status === 'pending' || a.status === 'confirmed'; }).length} заплановано</p>
                             </div>
                             <i class="fas fa-calendar-check text-4xl text-purple-600"></i>
                         </div>
@@ -418,7 +524,7 @@
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-300 mb-1">Матеріали</h3>
                                 <p class="text-3xl font-bold text-yellow-400">${appState.materials.length}</p>
-                                <p class="text-sm text-gray-400">${appState.materials.filter(m => m.stock <= m.low_stock_threshold).length} закінчується</p>
+                                <p class="text-sm text-gray-400">${filterArray(appState.materials, function(m) { return m.stock <= m.low_stock_threshold; }).length} закінчується</p>
                             </div>
                             <i class="fas fa-box-open text-4xl text-yellow-600"></i>
                         </div>
@@ -446,26 +552,29 @@
                 </div>
             `;
             renderLatestAppointments();
-        }
+        };
 
-        function calculateMonthlyRevenue() {
-            const now = new Date();
-            const currentMonth = now.getMonth();
-            const currentYear = now.getFullYear();
-            return appState.sessions.reduce((sum, session) => {
-                const sessionDate = new Date(session.start_time);
+        var calculateTotalRevenue = function() {
+            return reduceArray(appState.sessions, function(sum, session) { return sum + session.total_price; }, 0);
+        };
+
+        var calculateMonthlyRevenue = function() {
+            var now = new Date();
+            var currentMonth = now.getMonth();
+            var currentYear = now.getFullYear();
+            return reduceArray(appState.sessions, function(sum, session) {
+                var sessionDate = new Date(session.start_time);
                 if (sessionDate.getMonth() === currentMonth && sessionDate.getFullYear() === currentYear) {
                     return sum + session.total_price;
                 }
                 return sum;
             }, 0);
-        }
+        };
 
-        function renderLatestAppointments() {
-            const listContainer = document.getElementById('latest-appointments-list');
-            const latestAppointments = appState.appointments
-                .filter(a => a.status === 'pending' || a.status === 'confirmed')
-                .sort((a, b) => new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time))
+        var renderLatestAppointments = function() {
+            var listContainer = document.getElementById('latest-appointments-list');
+            var latestAppointments = filterArray(appState.appointments, function(a) { return a.status === 'pending' || a.status === 'confirmed'; })
+                .sort(function(a, b) { return new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time); })
                 .slice(0, 5); // Show top 5
 
             if (latestAppointments.length === 0) {
@@ -489,64 +598,28 @@
                         </tr>
                     </thead>
                     <tbody class="text-gray-200 text-sm">
-                        ${latestAppointments.map(app => `
-                            <tr class="border-b border-gray-600 hover:bg-gray-700">
-                                <td class="py-3 px-6 text-left whitespace-nowrap">${formatDate(app.date)}</td>
-                                <td class="py-3 px-6 text-left">${formatTime(app.time)}</td>
-                                <td class="py-3 px-6 text-left">${app.clients ? app.clients.name : 'Неизвестно'}</td>
-                                <td class="py-3 px-6 text-left">
-                                    <span class="px-2 py-1 rounded-full text-xs font-semibold ${app.status === 'confirmed' ? 'bg-green-700 text-green-100' : 'bg-yellow-700 text-yellow-100'}">
-                                        ${app.status === 'pending' ? 'Ожидает' : 'Подтверждено'}
-                                    </span>
-                                </td>
-                            </tr>
-                        `).join('')}
+                        ${mapArray(latestAppointments, function(app) {
+                            return `
+                                <tr class="border-b border-gray-600 hover:bg-gray-700">
+                                    <td class="py-3 px-6 text-left whitespace-nowrap">${formatDate(app.date)}</td>
+                                    <td class="py-3 px-6 text-left">${formatTime(app.time)}</td>
+                                    <td class="py-3 px-6 text-left">${app.clients ? app.clients.name : 'Неизвестно'}</td>
+                                    <td class="py-3 px-6 text-left">
+                                        <span class="px-2 py-1 rounded-full text-xs font-semibold ${app.status === 'confirmed' ? 'bg-green-700 text-green-100' : 'bg-yellow-700 text-yellow-100'}">
+                                            ${app.status === 'pending' ? 'Ожидает' : 'Подтверждено'}
+                                        </span>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
                     </tbody>
                 </table>
             `;
-        }
-
-        function renderLatestExpenses() {
-            // This function is not explicitly shown in the dashboard screenshot,
-            // but keeping it for consistency if needed elsewhere.
-            const listContainer = document.getElementById('latest-expenses-list');
-            const latestExpenses = appState.expenses
-                .sort((a, b) => new Date(b.date) - new Date(a.date))
-                .slice(0, 5); // Show top 5
-
-            if (latestExpenses.length === 0) {
-                listContainer.innerHTML = '<p class="text-gray-400">Нет недавних расходов.</p>';
-                return;
-            }
-
-            listContainer.innerHTML = `
-                <table class="min-w-full bg-gray-800 rounded-lg shadow-sm">
-                    <thead>
-                        <tr class="bg-gray-700 text-gray-300 uppercase text-sm leading-normal">
-                            <th class="py-3 px-6 text-left rounded-tl-lg">Дата</th>
-                            <th class="py-3 px-6 text-left">Описание</th>
-                            <th class="py-3 px-6 text-left">Категория</th>
-                            <th class="py-3 px-6 text-left rounded-tr-lg">Сумма</th>
-                        </tr>
-                    </thead>
-                    <tbody class="text-gray-200 text-sm">
-                        ${latestExpenses.map(exp => `
-                            <tr class="border-b border-gray-600 hover:bg-gray-700">
-                                <td class="py-3 px-6 text-left whitespace-nowrap">${formatDate(exp.date)}</td>
-                                <td class="py-3 px-6 text-left">${exp.description}</td>
-                                <td class="py-3 px-6 text-left">${exp.category}</td>
-                                <td class="py-3 px-6 text-left font-semibold text-red-400">${formatCurrency(exp.amount)}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
-        }
-
+        };
 
         // 2. Appointment System
-        function renderAppointments() {
-            const appContent = document.getElementById('app-content');
+        var renderAppointments = function() {
+            var appContent = document.getElementById('app-content');
             appContent.innerHTML = `
                 <div class="p-4 md:p-8 bg-gray-700 rounded-lg shadow-md">
                     <h2 class="text-3xl font-bold mb-6 text-blue-300">Записи</h2>
@@ -570,7 +643,7 @@
                                 <label for="appointment-client" class="block text-sm font-medium text-gray-300">Клиент</label>
                                 <select id="appointment-client" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-gray-200">
                                     <option value="">Выберите клиента</option>
-                                    ${appState.clients.map(client => `<option value="${client.id}">${client.name}</option>`).join('')}
+                                    ${mapArray(appState.clients, function(client) { return `<option value="${client.id}">${client.name}</option>`; }).join('')}
                                 </select>
                             </div>
                             <div>
@@ -606,62 +679,62 @@
                 </div>
             `;
 
-            document.getElementById('add-appointment-btn').addEventListener('click', () => {
+            document.getElementById('add-appointment-btn').addEventListener('click', function() {
                 document.getElementById('appointment-form-container').classList.toggle('hidden');
             });
 
-            document.getElementById('cancel-appointment-form').addEventListener('click', () => {
+            document.getElementById('cancel-appointment-form').addEventListener('click', function() {
                 document.getElementById('appointment-form-container').classList.add('hidden');
                 document.getElementById('appointment-form').reset();
             });
 
             document.getElementById('appointment-form').addEventListener('submit', handleAddAppointment);
             renderUpcomingAppointments();
-        }
+        };
 
-        async function handleAddAppointment(event) {
+        var handleAddAppointment = function(event) {
             event.preventDefault();
-            const form = event.target;
-            const clientId = form['appointment-client'].value;
-            const date = form['appointment-date'].value;
-            const time = form['appointment-time'].value;
-            const duration = parseFloat(form['appointment-duration'].value);
-            const complexity = parseInt(form['appointment-complexity'].value);
-            const sketchUrl = form['appointment-sketch'].value;
+            var form = event.target;
+            var clientId = form['appointment-client'].value;
+            var date = form['appointment-date'].value;
+            var time = form['appointment-time'].value;
+            var duration = parseFloat(form['appointment-duration'].value);
+            var complexity = parseInt(form['appointment-complexity'].value);
+            var sketchUrl = form['appointment-sketch'].value;
 
             if (!clientId || !date || !time || isNaN(duration) || isNaN(complexity)) {
                 showModal('Ошибка', 'Пожалуйста, заполните все обязательные поля (Клиент, Дата, Время, Длительность, Сложность).', 'alert');
                 return;
             }
 
-            try {
-                const { data, error } = await supabase.from('appointments').insert([
-                    {
-                        client_id: clientId,
-                        date: date,
-                        time: time,
-                        duration: duration,
-                        complexity: complexity,
-                        sketch_url: sketchUrl,
-                        status: 'pending'
-                    }
-                ]);
-                if (error) throw error;
+            supabase.from('appointments').insert([
+                {
+                    client_id: clientId,
+                    date: date,
+                    time: time,
+                    duration: duration,
+                    complexity: complexity,
+                    sketch_url: sketchUrl,
+                    status: 'pending'
+                }
+            ])
+            .then(function(response) {
+                if (response.error) throw response.error;
                 showModal('Успех', 'Запись успешно добавлена!', 'alert');
                 form.reset();
                 document.getElementById('appointment-form-container').classList.add('hidden');
                 fetchDataAndRerenderCurrentPage(); // Re-fetch and re-render
-            } catch (error) {
+            })
+            .catch(function(error) {
                 console.error('Ошибка добавления записи:', error.message);
-                showModal('Ошибка', `Не удалось добавить запись: ${error.message}`, 'alert');
-            }
-        }
+                showModal('Ошибка', 'Не удалось добавить запись: ' + error.message, 'alert');
+            });
+        };
 
-        function renderUpcomingAppointments() {
-            const listContainer = document.getElementById('upcoming-appointments-list');
-            const upcomingAppointments = appState.appointments
-                .filter(app => app.status === 'pending' || app.status === 'confirmed')
-                .sort((a, b) => new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time));
+        var renderUpcomingAppointments = function() {
+            var listContainer = document.getElementById('upcoming-appointments-list');
+            var upcomingAppointments = filterArray(appState.appointments, function(app) { return app.status === 'pending' || app.status === 'confirmed'; })
+                .sort(function(a, b) { return new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time); });
 
             if (upcomingAppointments.length === 0) {
                 listContainer.innerHTML = `
@@ -674,7 +747,7 @@
                         </button>
                     </div>
                 `;
-                document.getElementById('add-appointment-from-empty-btn').addEventListener('click', () => {
+                document.getElementById('add-appointment-from-empty-btn').addEventListener('click', function() {
                     document.getElementById('appointment-form-container').classList.remove('hidden');
                 });
                 return;
@@ -694,79 +767,85 @@
                         </tr>
                     </thead>
                     <tbody class="text-gray-200 text-sm">
-                        ${upcomingAppointments.map(app => `
-                            <tr class="border-b border-gray-600 hover:bg-gray-700">
-                                <td class="py-3 px-6 text-left whitespace-nowrap">${formatDate(app.date)}</td>
-                                <td class="py-3 px-6 text-left">${formatTime(app.time)}</td>
-                                <td class="py-3 px-6 text-left">${app.clients ? app.clients.name : 'Неизвестно'}</td>
-                                <td class="py-3 px-6 text-left">${app.duration} ч</td>
-                                <td class="py-3 px-6 text-left">${app.complexity}</td>
-                                <td class="py-3 px-6 text-left">
-                                    <span class="px-2 py-1 rounded-full text-xs font-semibold ${app.status === 'confirmed' ? 'bg-green-700 text-green-100' : 'bg-yellow-700 text-yellow-100'}">
-                                        ${app.status === 'pending' ? 'Ожидает' : 'Подтверждено'}
-                                    </span>
-                                </td>
-                                <td class="py-3 px-6 text-center">
-                                    ${app.status === 'pending' ? `
-                                        <button data-id="${app.id}" class="confirm-appointment-btn bg-green-600 text-white px-3 py-1 rounded-md text-xs hover:bg-green-700 transition-colors mr-2">Подтвердить</button>
-                                        <button data-id="${app.id}" class="cancel-appointment-btn bg-red-600 text-white px-3 py-1 rounded-md text-xs hover:bg-red-700 transition-colors">Отменить</button>
-                                    ` : `
-                                        <a href="#session/${app.id}" class="bg-purple-600 text-white px-3 py-1 rounded-md text-xs hover:bg-purple-700 transition-colors">Открыть калькулятор</a>
-                                    `}
-                                </td>
-                            </tr>
-                        `).join('')}
+                        ${mapArray(upcomingAppointments, function(app) {
+                            return `
+                                <tr class="border-b border-gray-600 hover:bg-gray-700">
+                                    <td class="py-3 px-6 text-left whitespace-nowrap">${formatDate(app.date)}</td>
+                                    <td class="py-3 px-6 text-left">${formatTime(app.time)}</td>
+                                    <td class="py-3 px-6 text-left">${app.clients ? app.clients.name : 'Неизвестно'}</td>
+                                    <td class="py-3 px-6 text-left">${app.duration} ч</td>
+                                    <td class="py-3 px-6 text-left">${app.complexity}</td>
+                                    <td class="py-3 px-6 text-left">
+                                        <span class="px-2 py-1 rounded-full text-xs font-semibold ${app.status === 'confirmed' ? 'bg-green-700 text-green-100' : 'bg-yellow-700 text-yellow-100'}">
+                                            ${app.status === 'pending' ? 'Ожидает' : 'Подтверждено'}
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-6 text-center">
+                                        ${app.status === 'pending' ? `
+                                            <button data-id="${app.id}" class="confirm-appointment-btn bg-green-600 text-white px-3 py-1 rounded-md text-xs hover:bg-green-700 transition-colors mr-2">Подтвердить</button>
+                                            <button data-id="${app.id}" class="cancel-appointment-btn bg-red-600 text-white px-3 py-1 rounded-md text-xs hover:bg-red-700 transition-colors">Отменить</button>
+                                        ` : `
+                                            <a href="#session/${app.id}" class="bg-purple-600 text-white px-3 py-1 rounded-md text-xs hover:bg-purple-700 transition-colors">Открыть калькулятор</a>
+                                        `}
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
                     </tbody>
                 </table>
             `;
 
-            listContainer.querySelectorAll('.confirm-appointment-btn').forEach(button => {
-                button.addEventListener('click', async (e) => {
-                    const appointmentId = e.target.dataset.id;
-                    showModal('Подтверждение', 'Вы уверены, что хотите подтвердить этот визит? Он будет перенесен в калькулятор сеанса.', 'confirm', async () => {
-                        try {
-                            const { error } = await supabase.from('appointments').update({ status: 'confirmed' }).eq('id', appointmentId);
-                            if (error) throw error;
-                            showModal('Успех', 'Визит подтвержден!', 'alert');
-                            window.location.hash = `#session/${appointmentId}`; // Redirect to session calculator
-                        } catch (error) {
-                            console.error('Ошибка подтверждения визита:', error.message);
-                            showModal('Ошибка', `Не удалось подтвердить визит: ${error.message}`, 'alert');
-                        }
+            var confirmButtons = listContainer.querySelectorAll('.confirm-appointment-btn');
+            for (var i = 0; i < confirmButtons.length; i++) {
+                confirmButtons[i].addEventListener('click', function(e) {
+                    var appointmentId = e.target.dataset.id;
+                    showModal('Подтверждение', 'Вы уверены, что хотите подтвердить этот визит? Он будет перенесен в калькулятор сеанса.', 'confirm', function() {
+                        supabase.from('appointments').update({ status: 'confirmed' }).eq('id', appointmentId)
+                            .then(function(response) {
+                                if (response.error) throw response.error;
+                                showModal('Успех', 'Визит подтвержден!', 'alert');
+                                window.location.hash = '#session/' + appointmentId; // Redirect to session calculator
+                            })
+                            .catch(function(error) {
+                                console.error('Ошибка подтверждения визита:', error.message);
+                                showModal('Ошибка', 'Не удалось подтвердить визит: ' + error.message, 'alert');
+                            });
                     });
                 });
-            });
+            }
 
-            listContainer.querySelectorAll('.cancel-appointment-btn').forEach(button => {
-                button.addEventListener('click', async (e) => {
-                    const appointmentId = e.target.dataset.id;
-                    showModal('Отмена визита', 'Вы уверены, что хотите отменить этот визит?', 'confirm', async () => {
-                        try {
-                            const { error } = await supabase.from('appointments').update({ status: 'cancelled' }).eq('id', appointmentId);
-                            if (error) throw error;
-                            showModal('Успех', 'Визит отменен.', 'alert');
-                            fetchDataAndRerenderCurrentPage(); // Re-fetch and re-render
-                        } catch (error) {
-                            console.error('Ошибка отмены визита:', error.message);
-                            showModal('Ошибка', `Не удалось отменить визит: ${error.message}`, 'alert');
-                        }
+            var cancelButtons = listContainer.querySelectorAll('.cancel-appointment-btn');
+            for (var i = 0; i < cancelButtons.length; i++) {
+                cancelButtons[i].addEventListener('click', function(e) {
+                    var appointmentId = e.target.dataset.id;
+                    showModal('Отмена визита', 'Вы уверены, что хотите отменить этот визит?', 'confirm', function() {
+                        supabase.from('appointments').update({ status: 'cancelled' }).eq('id', appointmentId)
+                            .then(function(response) {
+                                if (response.error) throw response.error;
+                                showModal('Успех', 'Визит отменен.', 'alert');
+                                fetchDataAndRerenderCurrentPage(); // Re-fetch and re-render
+                            })
+                            .catch(function(error) {
+                                console.error('Ошибка отмены визита:', error.message);
+                                showModal('Ошибка', 'Не удалось отменить визит: ' + error.message, 'alert');
+                            });
                     });
                 });
-            });
-        }
+            }
+        };
 
         // 3. Tattoo Session Calculator
-        async function renderSessionCalculator(appointmentId) {
-            const appContent = document.getElementById('app-content');
-            const appointment = appState.appointments.find(app => app.id === appointmentId);
+        var renderSessionCalculator = function(appointmentId) {
+            var appContent = document.getElementById('app-content');
+            var appointment = findInArray(appState.appointments, function(app) { return app.id === appointmentId; });
 
             if (!appointment) {
                 appContent.innerHTML = `<div class="p-4 bg-red-900 text-red-200 rounded-lg">Визит не найден или не подтвержден.</div>`;
                 return;
             }
 
-            const client = appState.clients.find(c => c.id === appointment.client_id);
-            const hourlyRate = appState.hourlyRate;
+            var client = findInArray(appState.clients, function(c) { return c.id === appointment.client_id; });
+            var hourlyRate = appState.hourlyRate;
 
             appContent.innerHTML = `
                 <div class="p-4 md:p-8 bg-gray-700 rounded-lg shadow-md">
@@ -842,19 +921,20 @@
             `;
 
             // Pre-fill start time with appointment date and time
-            const appointmentDateTime = new Date(`${appointment.date}T${appointment.time}`);
+            var appointmentDateTime = new Date(appointment.date + 'T' + appointment.time);
             document.getElementById('session-start-time').value = appointmentDateTime.toISOString().slice(0, 16);
 
-            const materialsUsedList = document.getElementById('materials-used-list');
-            let usedMaterials = []; // Array to store {material_id, quantity}
+            var materialsUsedList = document.getElementById('materials-used-list');
+            var usedMaterials = []; // Array to store {material_id, quantity}
 
-            function addMaterialInput(material = null) {
-                const materialDiv = document.createElement('div');
+            function addMaterialInput(material) {
+                if (material === void 0) { material = null; }
+                var materialDiv = document.createElement('div');
                 materialDiv.className = 'flex items-center space-x-2';
                 materialDiv.innerHTML = `
                     <select class="material-select block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
                         <option value="">Выберите материал</option>
-                        ${appState.materials.map(m => `<option value="${m.id}" data-price="${m.unit_price}" ${material && material.material_id === m.id ? 'selected' : ''}>${m.name} (${formatCurrency(m.unit_price)}/ед.)</option>`).join('')}
+                        ${mapArray(appState.materials, function(m) { return `<option value="${m.id}" data-price="${m.unit_price}" ${material && material.material_id === m.id ? 'selected' : ''}>${m.name} (${formatCurrency(m.unit_price)}/ед.)</option>`; }).join('')}
                     </select>
                     <input type="number" min="0.01" step="0.01" placeholder="Кол-во" value="${material ? material.quantity : ''}" class="material-quantity w-24 p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
                     <button class="remove-material-btn text-red-500 hover:text-red-400 p-2 rounded-full">
@@ -863,25 +943,25 @@
                 `;
                 materialsUsedList.appendChild(materialDiv);
 
-                const selectElement = materialDiv.querySelector('.material-select');
-                const quantityElement = materialDiv.querySelector('.material-quantity');
+                var selectElement = materialDiv.querySelector('.material-select');
+                var quantityElement = materialDiv.querySelector('.material-quantity');
 
                 selectElement.addEventListener('change', calculateSessionPrice);
                 quantityElement.addEventListener('input', calculateSessionPrice);
-                materialDiv.querySelector('.remove-material-btn').addEventListener('click', () => {
+                materialDiv.querySelector('.remove-material-btn').addEventListener('click', function() {
                     materialsUsedList.removeChild(materialDiv);
                     calculateSessionPrice();
                 });
             }
 
-            document.getElementById('add-material-btn').addEventListener('click', () => addMaterialInput());
+            document.getElementById('add-material-btn').addEventListener('click', function() { addMaterialInput(); });
 
             // Load existing materials if session was already calculated (e.g., editing a completed session)
-            const existingSession = appState.sessions.find(s => s.appointment_id === appointmentId);
+            var existingSession = findInArray(appState.sessions, function(s) { return s.appointment_id === appointmentId; });
             if (existingSession && existingSession.materials_used) {
                 try {
-                    const parsedMaterials = JSON.parse(existingSession.materials_used);
-                    parsedMaterials.forEach(mat => addMaterialInput(mat));
+                    var parsedMaterials = JSON.parse(existingSession.materials_used);
+                    mapArray(parsedMaterials, function(mat) { addMaterialInput(mat); });
                     document.getElementById('session-start-time').value = new Date(existingSession.start_time).toISOString().slice(0, 16);
                     document.getElementById('session-end-time').value = new Date(existingSession.end_time).toISOString().slice(0, 16);
                     document.getElementById('session-complexity').value = existingSession.complexity_score;
@@ -906,41 +986,48 @@
             // Initial calculation
             calculateSessionPrice();
 
-            document.getElementById('save-session-btn').addEventListener('click', async () => {
-                const startTime = document.getElementById('session-start-time').value;
-                const endTime = document.getElementById('session-end-time').value;
-                const complexity = parseInt(document.getElementById('session-complexity').value);
-                const discount = parseFloat(document.getElementById('session-discount').value);
-                const paymentMethod = document.getElementById('payment-method').value;
-                const notes = document.getElementById('session-notes').value;
+            document.getElementById('save-session-btn').addEventListener('click', function() {
+                var startTime = document.getElementById('session-start-time').value;
+                var endTime = document.getElementById('session-end-time').value;
+                var complexity = parseInt(document.getElementById('session-complexity').value);
+                var discount = parseFloat(document.getElementById('session-discount').value);
+                var paymentMethod = document.getElementById('payment-method').value;
+                var notes = document.getElementById('session-notes').value;
 
                 if (!startTime || !endTime || isNaN(complexity) || isNaN(discount)) {
                     showModal('Ошибка', 'Пожалуйста, заполните все поля времени, сложности и скидки.', 'alert');
                     return;
                 }
 
-                const start = new Date(startTime);
-                const end = new Date(endTime);
+                var start = new Date(startTime);
+                var end = new Date(endTime);
 
                 if (end <= start) {
                     showModal('Ошибка', 'Время окончания должно быть позже времени начала.', 'alert');
                     return;
                 }
 
-                const { totalWorkTime, costPriceMaterials, complexityMarkup, workCost, finalPrice } = calculateSessionPrice(true);
+                var calculationResults = calculateSessionPrice(true);
+                var totalWorkTime = calculationResults.totalWorkTime;
+                var costPriceMaterials = calculationResults.costPriceMaterials;
+                var complexityMarkup = calculationResults.complexityMarkup;
+                var workCost = calculationResults.workCost;
+                var finalPrice = calculationResults.finalPrice;
 
-                const materialsUsed = Array.from(materialsUsedList.children).map(div => {
-                    const select = div.querySelector('.material-select');
-                    const quantity = div.querySelector('.material-quantity');
+                var materialsUsed = mapArray(materialsUsedList.children, function(div) {
+                    var select = div.querySelector('.material-select');
+                    var quantity = div.querySelector('.material-quantity');
                     return {
                         material_id: select.value,
                         quantity: parseFloat(quantity.value)
                     };
-                }).filter(m => m.material_id && m.quantity > 0); // Filter out empty or zero quantity materials
+                });
+                materialsUsed = filterArray(materialsUsed, function(m) { return m.material_id && m.quantity > 0; }); // Filter out empty or zero quantity materials
 
                 // Check for duplicate materials
-                const materialCounts = {};
-                for (const mat of materialsUsed) {
+                var materialCounts = {};
+                for (var i = 0; i < materialsUsed.length; i++) {
+                    var mat = materialsUsed[i];
                     materialCounts[mat.material_id] = (materialCounts[mat.material_id] || 0) + 1;
                     if (materialCounts[mat.material_id] > 1) {
                         showModal('Ошибка', 'Обнаружены дубликаты материалов. Пожалуйста, объедините их или удалите лишние.', 'alert');
@@ -948,98 +1035,108 @@
                     }
                 }
 
-                showModal('Подтверждение оплаты', `Итого к оплате: ${formatCurrency(finalPrice)}. Подтвердить?`, 'confirm', async () => {
-                    try {
-                        let sessionId = existingSession ? existingSession.id : null;
-                        let sessionData = {
-                            appointment_id: appointmentId,
-                            start_time: startTime,
-                            end_time: endTime,
-                            hourly_rate_used: hourlyRate,
-                            complexity_score: complexity,
-                            materials_used: JSON.stringify(materialsUsed), // Store as JSON string
-                            total_price: finalPrice,
-                            cost_price: costPriceMaterials,
-                            discount: discount,
-                            payment_method: paymentMethod,
-                            notes: notes
-                        };
+                showModal('Подтверждение оплаты', 'Итого к оплате: ' + formatCurrency(finalPrice) + '. Подтвердить?', 'confirm', function() {
+                    var sessionId = existingSession ? existingSession.id : null;
+                    var sessionData = {
+                        appointment_id: appointmentId,
+                        start_time: startTime,
+                        end_time: endTime,
+                        hourly_rate_used: hourlyRate,
+                        complexity_score: complexity,
+                        materials_used: JSON.stringify(materialsUsed), // Store as JSON string
+                        total_price: finalPrice,
+                        cost_price: costPriceMaterials,
+                        discount: discount,
+                        payment_method: paymentMethod,
+                        notes: notes
+                    };
 
-                        if (sessionId) {
-                            // Update existing session
-                            const { error: updateError } = await supabase.from('sessions').update(sessionData).eq('id', sessionId);
-                            if (updateError) throw updateError;
-                        } else {
-                            // Insert new session
-                            const { data: newSession, error: insertError } = await supabase.from('sessions').insert([sessionData]).select();
-                            if (insertError) throw insertError;
-                            sessionId = newSession[0].id;
-                            // Link session to appointment
-                            const { error: appUpdateError } = await supabase.from('appointments').update({ status: 'completed', session_id: sessionId }).eq('id', appointmentId);
-                            if (appUpdateError) throw appUpdateError;
-                        }
-
-                        // Deduct materials from inventory and record movements
-                        for (const item of materialsUsed) {
-                            const material = appState.materials.find(m => m.id === item.material_id);
-                            if (material) {
-                                const newStock = material.stock - item.quantity;
-                                await supabase.from('materials').update({ stock: newStock }).eq('id', item.material_id);
-                                await supabase.from('material_movements').insert([
-                                    {
-                                        material_id: item.material_id,
-                                        type: 'out',
-                                        quantity: item.quantity,
-                                        source_target: `session_${sessionId}`
-                                    }
-                                ]);
-                            }
-                        }
-
-                        showModal('Успех', 'Сеанс успешно сохранен и оплачен!', 'alert');
-                        fetchDataAndRerenderCurrentPage(); // Re-fetch and re-render
-                        window.location.hash = '#appointments'; // Go back to appointments
-                    } catch (error) {
-                        console.error('Ошибка сохранения сеанса:', error.message);
-                        showModal('Ошибка', `Не удалось сохранить сеанс: ${error.message}`, 'alert');
+                    var promise;
+                    if (sessionId) {
+                        // Update existing session
+                        promise = supabase.from('sessions').update(sessionData).eq('id', sessionId);
+                    } else {
+                        // Insert new session
+                        promise = supabase.from('sessions').insert([sessionData]).select()
+                            .then(function(newSessionResponse) {
+                                if (newSessionResponse.error) throw newSessionResponse.error;
+                                sessionId = newSessionResponse.data[0].id;
+                                // Link session to appointment
+                                return supabase.from('appointments').update({ status: 'completed', session_id: sessionId }).eq('id', appointmentId);
+                            });
                     }
+
+                    promise
+                        .then(function(response) {
+                            if (response.error) throw response.error;
+                            // Deduct materials from inventory and record movements
+                            var materialDeductionPromises = mapArray(materialsUsed, function(item) {
+                                var material = findInArray(appState.materials, function(m) { return m.id === item.material_id; });
+                                if (material) {
+                                    var newStock = material.stock - item.quantity;
+                                    return supabase.from('materials').update({ stock: newStock }).eq('id', item.material_id)
+                                        .then(function() {
+                                            return supabase.from('material_movements').insert([
+                                                {
+                                                    material_id: item.material_id,
+                                                    type: 'out',
+                                                    quantity: item.quantity,
+                                                    source_target: 'session_' + sessionId
+                                                }
+                                            ]);
+                                        });
+                                }
+                                return Promise.resolve(); // Resolve if material not found
+                            });
+                            return Promise.all(materialDeductionPromises);
+                        })
+                        .then(function() {
+                            showModal('Успех', 'Сеанс успешно сохранен и оплачен!', 'alert');
+                            fetchDataAndRerenderCurrentPage(); // Re-fetch and re-render
+                            window.location.hash = '#appointments'; // Go back to appointments
+                        })
+                        .catch(function(error) {
+                            console.error('Ошибка сохранения сеанса:', error.message);
+                            showModal('Ошибка', 'Не удалось сохранить сеанс: ' + error.message, 'alert');
+                        });
                 });
             });
 
-            function calculateSessionPrice(returnValues = false) {
-                const startTime = document.getElementById('session-start-time').value;
-                const endTime = document.getElementById('session-end-time').value;
-                const complexity = parseInt(document.getElementById('session-complexity').value);
-                const discount = parseFloat(document.getElementById('session-discount').value);
+            function calculateSessionPrice(returnValues) {
+                if (returnValues === void 0) { returnValues = false; }
+                var startTime = document.getElementById('session-start-time').value;
+                var endTime = document.getElementById('session-end-time').value;
+                var complexity = parseInt(document.getElementById('session-complexity').value);
+                var discount = parseFloat(document.getElementById('session-discount').value);
 
-                let totalWorkTime = 0;
+                var totalWorkTime = 0;
                 if (startTime && endTime) {
-                    const start = new Date(startTime);
-                    const end = new Date(endTime);
+                    var start = new Date(startTime);
+                    var end = new Date(endTime);
                     if (end > start) {
                         totalWorkTime = (end - start) / (1000 * 60 * 60); // in hours
                     }
                 }
 
-                let costPriceMaterials = 0;
-                const materialInputs = materialsUsedList.querySelectorAll('.material-select');
-                const quantityInputs = materialsUsedList.querySelectorAll('.material-quantity');
+                var costPriceMaterials = 0;
+                var materialInputs = materialsUsedList.querySelectorAll('.material-select');
+                var quantityInputs = materialsUsedList.querySelectorAll('.material-quantity');
 
-                for (let i = 0; i < materialInputs.length; i++) {
-                    const materialId = materialInputs[i].value;
-                    const quantity = parseFloat(quantityInputs[i].value);
+                for (var i = 0; i < materialInputs.length; i++) {
+                    var materialId = materialInputs[i].value;
+                    var quantity = parseFloat(quantityInputs[i].value);
                     if (materialId && !isNaN(quantity) && quantity > 0) {
-                        const material = appState.materials.find(m => m.id === materialId);
+                        var material = findInArray(appState.materials, function(m) { return m.id === materialId; });
                         if (material) {
                             costPriceMaterials += material.unit_price * quantity;
                         }
                     }
                 }
 
-                const workCost = totalWorkTime * hourlyRate;
-                const complexityMarkup = workCost * (complexity / 100); // Simple markup based on complexity (e.g., 10% for complexity 10)
-                const subtotal = workCost + complexityMarkup + costPriceMaterials;
-                const finalPrice = subtotal * (1 - (discount / 100));
+                var workCost = totalWorkTime * hourlyRate;
+                var complexityMarkup = workCost * (complexity / 100); // Simple markup based on complexity (e.g., 10% for complexity 10)
+                var subtotal = workCost + complexityMarkup + costPriceMaterials;
+                var finalPrice = subtotal * (1 - (discount / 100));
 
                 document.getElementById('calculated-work-time').textContent = totalWorkTime.toFixed(2);
                 document.getElementById('calculated-cost-price').textContent = formatCurrency(costPriceMaterials);
@@ -1048,15 +1145,15 @@
                 document.getElementById('calculated-total-price').textContent = formatCurrency(finalPrice);
 
                 if (returnValues) {
-                    return { totalWorkTime, costPriceMaterials, complexityMarkup, workCost, finalPrice };
+                    return { totalWorkTime: totalWorkTime, costPriceMaterials: costPriceMaterials, complexityMarkup: complexityMarkup, workCost: workCost, finalPrice: finalPrice };
                 }
             }
-        }
+        };
 
 
         // 4. Clients Module
-        function renderClients() {
-            const appContent = document.getElementById('app-content');
+        var renderClients = function() {
+            var appContent = document.getElementById('app-content');
             appContent.innerHTML = `
                 <div class="p-4 md:p-8 bg-gray-700 rounded-lg shadow-md">
                     <h2 class="text-3xl font-bold mb-6 text-blue-300">Клиенты</h2>
@@ -1104,59 +1201,61 @@
                 </div>
             `;
 
-            document.getElementById('add-client-btn').addEventListener('click', () => {
+            document.getElementById('add-client-btn').addEventListener('click', function() {
                 document.getElementById('client-form-container').classList.toggle('hidden');
                 document.getElementById('client-form').reset();
                 document.getElementById('client-id').value = ''; // Clear ID for new client
             });
 
-            document.getElementById('cancel-client-form').addEventListener('click', () => {
+            document.getElementById('cancel-client-form').addEventListener('click', function() {
                 document.getElementById('client-form-container').classList.add('hidden');
                 document.getElementById('client-form').reset();
             });
 
             document.getElementById('client-form').addEventListener('submit', handleAddEditClient);
             renderClientList();
-        }
+        };
 
-        async function handleAddEditClient(event) {
+        var handleAddEditClient = function(event) {
             event.preventDefault();
-            const form = event.target;
-            const clientId = form['client-id'].value;
-            const name = form['client-name'].value;
-            const contact = form['client-contact'].value;
-            const socialLinks = form['client-social'].value;
-            const notes = form['client-notes'].value;
-            const tags = form['client-tags'].value.split(',').map(tag => tag.trim()).filter(tag => tag !== '');
+            var form = event.target;
+            var clientId = form['client-id'].value;
+            var name = form['client-name'].value;
+            var contact = form['client-contact'].value;
+            var socialLinks = form['client-social'].value;
+            var notes = form['client-notes'].value;
+            var tags = filterArray(mapArray(form['client-tags'].value.split(','), function(tag) { return tag.trim(); }), function(tag) { return tag !== ''; });
 
             if (!name || !contact) {
                 showModal('Ошибка', 'Имя и контакты клиента обязательны.', 'alert');
                 return;
             }
 
-            try {
-                if (clientId) {
-                    // Update existing client
-                    const { error } = await supabase.from('clients').update({ name, contact, social_links: socialLinks, notes, tags }).eq('id', clientId);
-                    if (error) throw error;
-                    showModal('Успех', 'Данные клиента успешно обновлены!', 'alert');
-                } else {
-                    // Add new client
-                    const { error } = await supabase.from('clients').insert([{ name, contact, social_links: socialLinks, notes, tags }]);
-                    if (error) throw error;
-                    showModal('Успех', 'Новый клиент успешно добавлен!', 'alert');
-                }
-                form.reset();
-                document.getElementById('client-form-container').classList.add('hidden');
-                fetchDataAndRerenderCurrentPage();
-            } catch (error) {
-                console.error('Ошибка сохранения клиента:', error.message);
-                showModal('Ошибка', `Не удалось сохранить клиента: ${error.message}`, 'alert');
+            var promise;
+            if (clientId) {
+                // Update existing client
+                promise = supabase.from('clients').update({ name: name, contact: contact, social_links: socialLinks, notes: notes, tags: tags }).eq('id', clientId);
+            } else {
+                // Add new client
+                promise = supabase.from('clients').insert([{ name: name, contact: contact, social_links: socialLinks, notes: notes, tags: tags }]);
             }
-        }
 
-        function renderClientList() {
-            const listContainer = document.getElementById('clients-list');
+            promise
+                .then(function(response) {
+                    if (response.error) throw response.error;
+                    showModal('Успех', 'Данные клиента успешно ' + (clientId ? 'обновлены' : 'добавлены') + '!', 'alert');
+                    form.reset();
+                    document.getElementById('client-form-container').classList.add('hidden');
+                    fetchDataAndRerenderCurrentPage();
+                })
+                .catch(function(error) {
+                    console.error('Ошибка сохранения клиента:', error.message);
+                    showModal('Ошибка', 'Не удалось сохранить клиента: ' + error.message, 'alert');
+                });
+        };
+
+        var renderClientList = function() {
+            var listContainer = document.getElementById('clients-list');
             if (appState.clients.length === 0) {
                 listContainer.innerHTML = `
                     <div class="flex flex-col items-center justify-center py-10 text-gray-400">
@@ -1167,7 +1266,7 @@
                         </button>
                     </div>
                 `;
-                document.getElementById('add-client-from-empty-btn').addEventListener('click', () => {
+                document.getElementById('add-client-from-empty-btn').addEventListener('click', function() {
                     document.getElementById('client-form-container').classList.remove('hidden');
                 });
                 return;
@@ -1185,13 +1284,13 @@
                         </tr>
                     </thead>
                     <tbody class="text-gray-200 text-sm">
-                        ${appState.clients.map(client => {
-                            const clientSessions = appState.sessions.filter(s => {
-                                const app = appState.appointments.find(a => a.id === s.appointment_id);
+                        ${mapArray(appState.clients, function(client) {
+                            var clientSessions = filterArray(appState.sessions, function(s) {
+                                var app = findInArray(appState.appointments, function(a) { return a.id === s.appointment_id; });
                                 return app && app.client_id === client.id;
                             });
-                            const lastVisit = clientSessions.length > 0
-                                ? formatDate(clientSessions.sort((a, b) => new Date(b.start_time) - new Date(a.start_time))[0].start_time)
+                            var lastVisit = clientSessions.length > 0
+                                ? formatDate(clientSessions.sort(function(a, b) { return new Date(b.start_time) - new Date(a.start_time); })[0].start_time)
                                 : 'N/A';
                             return `
                                 <tr class="border-b border-gray-600 hover:bg-gray-700">
@@ -1211,10 +1310,11 @@
                 </table>
             `;
 
-            listContainer.querySelectorAll('.edit-client-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const clientId = e.target.dataset.id;
-                    const client = appState.clients.find(c => c.id === clientId);
+            var editClientButtons = listContainer.querySelectorAll('.edit-client-btn');
+            for (var i = 0; i < editClientButtons.length; i++) {
+                editClientButtons[i].addEventListener('click', function(e) {
+                    var clientId = e.target.dataset.id;
+                    var client = findInArray(appState.clients, function(c) { return c.id === clientId; });
                     if (client) {
                         document.getElementById('client-id').value = client.id;
                         document.getElementById('client-name').value = client.name;
@@ -1225,44 +1325,47 @@
                         document.getElementById('client-form-container').classList.remove('hidden');
                     }
                 });
-            });
+            }
 
-            listContainer.querySelectorAll('.delete-client-btn').forEach(button => {
-                button.addEventListener('click', async (e) => {
-                    const clientId = e.target.dataset.id;
-                    showModal('Удалить клиента', 'Вы уверены, что хотите удалить этого клиента? Все связанные записи и сеансы останутся, но клиент будет удален из базы.', 'confirm', async () => {
-                        try {
-                            const { error } = await supabase.from('clients').delete().eq('id', clientId);
-                            if (error) throw error;
-                            showModal('Успех', 'Клиент успешно удален!', 'alert');
-                            fetchDataAndRerenderCurrentPage();
-                        } catch (error) {
-                            console.error('Ошибка удаления клиента:', error.message);
-                            showModal('Ошибка', `Не удалось удалить клиента: ${error.message}`, 'alert');
-                        }
+            var deleteClientButtons = listContainer.querySelectorAll('.delete-client-btn');
+            for (var i = 0; i < deleteClientButtons.length; i++) {
+                deleteClientButtons[i].addEventListener('click', function(e) {
+                    var clientId = e.target.dataset.id;
+                    showModal('Удалить клиента', 'Вы уверены, что хотите удалить этого клиента? Все связанные записи и сеансы останутся, но клиент будет удален из базы.', 'confirm', function() {
+                        supabase.from('clients').delete().eq('id', clientId)
+                            .then(function(response) {
+                                if (response.error) throw response.error;
+                                showModal('Успех', 'Клиент успешно удален!', 'alert');
+                                fetchDataAndRerenderCurrentPage();
+                            })
+                            .catch(function(error) {
+                                console.error('Ошибка удаления клиента:', error.message);
+                                showModal('Ошибка', 'Не удалось удалить клиента: ' + error.message, 'alert');
+                            });
                     });
                 });
-            });
+            }
 
-            listContainer.querySelectorAll('.view-client-history-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const clientId = e.target.dataset.id;
+            var viewClientHistoryButtons = listContainer.querySelectorAll('.view-client-history-btn');
+            for (var i = 0; i < viewClientHistoryButtons.length; i++) {
+                viewClientHistoryButtons[i].addEventListener('click', function(e) {
+                    var clientId = e.target.dataset.id;
                     showClientHistoryModal(clientId);
                 });
-            });
-        }
+            }
+        };
 
-        function showClientHistoryModal(clientId) {
-            const client = appState.clients.find(c => c.id === clientId);
+        var showClientHistoryModal = function(clientId) {
+            var client = findInArray(appState.clients, function(c) { return c.id === clientId; });
             if (!client) {
                 showModal('Ошибка', 'Клиент не найден.', 'alert');
                 return;
             }
 
-            const clientAppointments = appState.appointments.filter(app => app.client_id === clientId)
-                .sort((a, b) => new Date(b.date + 'T' + b.time) - new Date(a.date + 'T' + a.time)); // Latest first
+            var clientAppointments = filterArray(appState.appointments, function(app) { return app.client_id === clientId; })
+                .sort(function(a, b) { return new Date(b.date + 'T' + b.time) - new Date(a.date + 'T' + a.time); }); // Latest first
 
-            let historyHtml = '';
+            var historyHtml = '';
             if (clientAppointments.length === 0) {
                 historyHtml = '<p class="text-gray-400">У этого клиента нет истории визитов.</p>';
             } else {
@@ -1280,8 +1383,8 @@
                                 </tr>
                             </thead>
                             <tbody class="text-gray-200">
-                                ${clientAppointments.map(app => {
-                                    const session = appState.sessions.find(s => s.appointment_id === app.id);
+                                ${mapArray(clientAppointments, function(app) {
+                                    var session = findInArray(appState.sessions, function(s) { return s.appointment_id === app.id; });
                                     return `
                                         <tr class="border-b border-gray-600 hover:bg-gray-700">
                                             <td class="py-2 px-4 whitespace-nowrap">${formatDate(app.date)}</td>
@@ -1314,7 +1417,7 @@
             }
 
             showModal(
-                `История визитов для ${client.name}`,
+                'История визитов для ' + client.name,
                 `<div class="mb-4">
                     <p class="text-gray-300"><strong>Контакты:</strong> ${client.contact}</p>
                     <p class="text-gray-300"><strong>Соцсети:</strong> ${client.social_links ? `<a href="${client.social_links}" target="_blank" class="text-blue-400 hover:underline">${client.social_links}</a>` : 'N/A'}</p>
@@ -1325,12 +1428,12 @@
                 ${historyHtml}`,
                 'alert' // Using alert type, but with rich HTML content
             );
-        }
+        };
 
 
         // 5. Inventory Module
-        function renderInventory() {
-            const appContent = document.getElementById('app-content');
+        var renderInventory = function() {
+            var appContent = document.getElementById('app-content');
             appContent.innerHTML = `
                 <div class="p-4 md:p-8 bg-gray-700 rounded-lg shadow-md">
                     <h2 class="text-3xl font-bold mb-6 text-blue-300">Матеріали</h2>
@@ -1339,7 +1442,7 @@
                         <div class="flex items-center space-x-4">
                             <select class="bg-gray-800 text-gray-200 border border-gray-600 rounded-md py-2 px-4 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                                 <option>Усі категорії</option>
-                                ${appState.materialCategories.map(cat => `<option value="${cat}">${cat}</option>`).join('')}
+                                ${mapArray(appState.materialCategories, function(cat) { return `<option value="${cat}">${cat}</option>`; }).join('')}
                             </select>
                             <div class="relative">
                                 <input type="text" placeholder="Пошук матеріалів ..." class="bg-gray-800 text-gray-200 border border-gray-600 rounded-md py-2 px-4 pl-10 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
@@ -1372,7 +1475,7 @@
                             <div>
                                 <label for="material-type" class="block text-sm font-medium text-gray-300">Категорія</label>
                                 <select id="material-type" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
-                                    ${appState.materialCategories.map(cat => `<option value="${cat}">${cat}</option>`).join('')}
+                                    ${mapArray(appState.materialCategories, function(cat) { return `<option value="${cat}">${cat}</option>`; }).join('')}
                                 </select>
                             </div>
                             <div>
@@ -1397,13 +1500,13 @@
                 </div>
             `;
 
-            document.getElementById('add-material-btn').addEventListener('click', () => {
+            document.getElementById('add-material-btn').addEventListener('click', function() {
                 document.getElementById('material-form-container').classList.toggle('hidden');
                 document.getElementById('material-form').reset();
                 document.getElementById('material-id').value = ''; // Clear ID for new material
             });
 
-            document.getElementById('cancel-material-form').addEventListener('click', () => {
+            document.getElementById('cancel-material-form').addEventListener('click', function() {
                 document.getElementById('material-form-container').classList.add('hidden');
                 document.getElementById('material-form').reset();
             });
@@ -1412,46 +1515,48 @@
             renderMaterialsList();
             renderMaterialMovements();
             checkLowStock();
-        }
+        };
 
-        async function handleAddEditMaterial(event) {
+        var handleAddEditMaterial = function(event) {
             event.preventDefault();
-            const form = event.target;
-            const materialId = form['material-id'].value;
-            const name = form['material-name'].value;
-            const unitPrice = parseFloat(form['material-price'].value);
-            const stock = parseFloat(form['material-stock'].value);
-            const type = form['material-type'].value;
-            const lowStockThreshold = parseFloat(form['material-low-threshold'].value);
+            var form = event.target;
+            var materialId = form['material-id'].value;
+            var name = form['material-name'].value;
+            var unitPrice = parseFloat(form['material-price'].value);
+            var stock = parseFloat(form['material-stock'].value);
+            var type = form['material-type'].value;
+            var lowStockThreshold = parseFloat(form['material-low-threshold'].value);
 
             if (!name || isNaN(unitPrice) || isNaN(stock) || !type || isNaN(lowStockThreshold)) {
                 showModal('Ошибка', 'Пожалуйста, заполните все обязательные поля.', 'alert');
                 return;
             }
 
-            try {
-                if (materialId) {
-                    // Update existing material
-                    const { error } = await supabase.from('materials').update({ name, unit_price: unitPrice, stock, type, low_stock_threshold: lowStockThreshold }).eq('id', materialId);
-                    if (error) throw error;
-                    showModal('Успех', 'Материал успешно обновлен!', 'alert');
-                } else {
-                    // Add new material
-                    const { error } = await supabase.from('materials').insert([{ name, unit_price: unitPrice, stock, type, low_stock_threshold: lowStockThreshold }]);
-                    if (error) throw error;
-                    showModal('Успех', 'Новый материал успешно добавлен!', 'alert');
-                }
-                form.reset();
-                document.getElementById('material-form-container').classList.add('hidden');
-                fetchDataAndRerenderCurrentPage();
-            } catch (error) {
-                console.error('Ошибка сохранения материала:', error.message);
-                showModal('Ошибка', `Не удалось сохранить материал: ${error.message}`, 'alert');
+            var promise;
+            if (materialId) {
+                // Update existing material
+                promise = supabase.from('materials').update({ name: name, unit_price: unitPrice, stock: stock, type: type, low_stock_threshold: lowStockThreshold }).eq('id', materialId);
+            } else {
+                // Add new material
+                promise = supabase.from('materials').insert([{ name: name, unit_price: unitPrice, stock: stock, type: type, low_stock_threshold: lowStockThreshold }]);
             }
-        }
 
-        function renderMaterialsList() {
-            const listContainer = document.getElementById('materials-list');
+            promise
+                .then(function(response) {
+                    if (response.error) throw response.error;
+                    showModal('Успех', 'Материал успешно ' + (materialId ? 'обновлен' : 'добавлен') + '!', 'alert');
+                    form.reset();
+                    document.getElementById('material-form-container').classList.add('hidden');
+                    fetchDataAndRerenderCurrentPage();
+                })
+                .catch(function(error) {
+                    console.error('Ошибка сохранения материала:', error.message);
+                    showModal('Ошибка', 'Не удалось сохранить материал: ' + error.message, 'alert');
+                });
+        };
+
+        var renderMaterialsList = function() {
+            var listContainer = document.getElementById('materials-list');
             if (appState.materials.length === 0) {
                 listContainer.innerHTML = `
                     <div class="flex flex-col items-center justify-center py-10 text-gray-400">
@@ -1462,7 +1567,7 @@
                         </button>
                     </div>
                 `;
-                document.getElementById('add-material-from-empty-btn').addEventListener('click', () => {
+                document.getElementById('add-material-from-empty-btn').addEventListener('click', function() {
                     document.getElementById('material-form-container').classList.remove('hidden');
                 });
                 return;
@@ -1480,26 +1585,29 @@
                         </tr>
                     </thead>
                     <tbody class="text-gray-200 text-sm">
-                        ${appState.materials.map(material => `
-                            <tr class="border-b border-gray-600 hover:bg-gray-700 ${material.stock <= material.low_stock_threshold ? 'bg-red-900/30' : ''}">
-                                <td class="py-3 px-6 text-left font-medium">${material.name}</td>
-                                <td class="py-3 px-6 text-left">${material.type}</td>
-                                <td class="py-3 px-6 text-left">${material.stock}</td>
-                                <td class="py-3 px-6 text-left">${formatCurrency(material.unit_price)}</td>
-                                <td class="py-3 px-6 text-center">
-                                    <button data-id="${material.id}" class="edit-material-btn bg-yellow-600 text-white px-3 py-1 rounded-md text-xs hover:bg-yellow-700 transition-colors mr-2">Редагувати</button>
-                                    <button data-id="${material.id}" class="delete-material-btn bg-red-600 text-white px-3 py-1 rounded-md text-xs hover:bg-red-700 transition-colors">Видалити</button>
-                                </td>
-                            </tr>
-                        `).join('')}
+                        ${mapArray(appState.materials, function(material) {
+                            return `
+                                <tr class="border-b border-gray-600 hover:bg-gray-700 ${material.stock <= material.low_stock_threshold ? 'bg-red-900/30' : ''}">
+                                    <td class="py-3 px-6 text-left font-medium">${material.name}</td>
+                                    <td class="py-3 px-6 text-left">${material.type}</td>
+                                    <td class="py-3 px-6 text-left">${material.stock}</td>
+                                    <td class="py-3 px-6 text-left">${formatCurrency(material.unit_price)}</td>
+                                    <td class="py-3 px-6 text-center">
+                                        <button data-id="${material.id}" class="edit-material-btn bg-yellow-600 text-white px-3 py-1 rounded-md text-xs hover:bg-yellow-700 transition-colors mr-2">Редагувати</button>
+                                        <button data-id="${material.id}" class="delete-material-btn bg-red-600 text-white px-3 py-1 rounded-md text-xs hover:bg-red-700 transition-colors">Видалити</button>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
                     </tbody>
                 </table>
             `;
 
-            listContainer.querySelectorAll('.edit-material-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const materialId = e.target.dataset.id;
-                    const material = appState.materials.find(m => m.id === materialId);
+            var editMaterialButtons = listContainer.querySelectorAll('.edit-material-btn');
+            for (var i = 0; i < editMaterialButtons.length; i++) {
+                editMaterialButtons[i].addEventListener('click', function(e) {
+                    var materialId = e.target.dataset.id;
+                    var material = findInArray(appState.materials, function(m) { return m.id === materialId; });
                     if (material) {
                         document.getElementById('material-id').value = material.id;
                         document.getElementById('material-name').value = material.name;
@@ -1510,102 +1618,114 @@
                         document.getElementById('material-form-container').classList.remove('hidden');
                     }
                 });
-            });
+            }
 
-            listContainer.querySelectorAll('.delete-material-btn').forEach(button => {
-                button.addEventListener('click', async (e) => {
-                    const materialId = e.target.dataset.id;
-                    showModal('Удалить материал', 'Вы уверены, что хотите удалить этот материал? Это действие необратимо.', 'confirm', async () => {
-                        try {
-                            const { error } = await supabase.from('materials').delete().eq('id', materialId);
-                            if (error) throw error;
-                            showModal('Успех', 'Материал успешно удален!', 'alert');
-                            fetchDataAndRerenderCurrentPage();
-                        } catch (error) {
-                            console.error('Ошибка удаления материала:', error.message);
-                            showModal('Ошибка', `Не удалось удалить материал: ${error.message}`, 'alert');
-                        }
+            var deleteMaterialButtons = listContainer.querySelectorAll('.delete-material-btn');
+            for (var i = 0; i < deleteMaterialButtons.length; i++) {
+                deleteMaterialButtons[i].addEventListener('click', function(e) {
+                    var materialId = e.target.dataset.id;
+                    showModal('Удалить материал', 'Вы уверены, что хотите удалить этот материал? Это действие необратимо.', 'confirm', function() {
+                        supabase.from('materials').delete().eq('id', materialId)
+                            .then(function(response) {
+                                if (response.error) throw response.error;
+                                showModal('Успех', 'Материал успешно удален!', 'alert');
+                                fetchDataAndRerenderCurrentPage();
+                            })
+                            .catch(function(error) {
+                                console.error('Ошибка удаления материала:', error.message);
+                                showModal('Ошибка', 'Не удалось удалить материал: ' + error.message, 'alert');
+                            });
                     });
                 });
-            });
-        }
+            }
+        };
 
-        async function renderMaterialMovements() {
-            const listContainer = document.getElementById('material-movements-list');
-            try {
-                const { data: movements, error } = await supabase.from('material_movements').select('*, materials(name)').order('date', { ascending: false });
-                if (error) throw error;
+        var renderMaterialMovements = function() {
+            var listContainer = document.getElementById('material-movements-list');
+            supabase.from('material_movements').select('*, materials(name)').order('date', { ascending: false })
+                .then(function(response) {
+                    if (response.error) throw response.error;
+                    var movements = response.data;
 
-                if (movements.length === 0) {
-                    listContainer.innerHTML = '<p class="text-gray-400">Нет истории движений материалов.</p>';
-                    return;
-                }
+                    if (movements.length === 0) {
+                        listContainer.innerHTML = '<p class="text-gray-400">Нет истории движений материалов.</p>';
+                        return;
+                    }
 
-                listContainer.innerHTML = `
-                    <table class="min-w-full bg-gray-800 rounded-lg shadow-sm">
-                        <thead>
-                            <tr class="bg-gray-700 text-gray-300 uppercase text-sm leading-normal">
-                                <th class="py-3 px-6 text-left rounded-tl-lg">Дата</th>
-                                <th class="py-3 px-6 text-left">Материал</th>
-                                <th class="py-3 px-6 text-left">Тип</th>
-                                <th class="py-3 px-6 text-left">Кол-во</th>
-                                <th class="py-3 px-6 text-left rounded-tr-lg">Источник/Цель</th>
-                            </tr>
-                        </thead>
-                        <tbody class="text-gray-200 text-sm">
-                            ${movements.map(move => `
-                                <tr class="border-b border-gray-600 hover:bg-gray-700">
-                                    <td class="py-3 px-6 text-left whitespace-nowrap">${new Date(move.date).toLocaleString('uk-UA')}</td>
-                                    <td class="py-3 px-6 text-left">${move.materials ? move.materials.name : 'Неизвестно'}</td>
-                                    <td class="py-3 px-6 text-left">
-                                        <span class="px-2 py-1 rounded-full text-xs font-semibold ${move.type === 'in' ? 'bg-blue-700 text-blue-100' : 'bg-orange-700 text-orange-100'}">
-                                            ${move.type === 'in' ? 'Приход' : 'Расход'}
-                                        </span>
-                                    </td>
-                                    <td class="py-3 px-6 text-left">${move.quantity}</td>
-                                    <td class="py-3 px-6 text-left">${move.source_target || 'N/A'}</td>
+                    listContainer.innerHTML = `
+                        <table class="min-w-full bg-gray-800 rounded-lg shadow-sm">
+                            <thead>
+                                <tr class="bg-gray-700 text-gray-300 uppercase text-sm leading-normal">
+                                    <th class="py-3 px-6 text-left rounded-tl-lg">Дата</th>
+                                    <th class="py-3 px-6 text-left">Материал</th>
+                                    <th class="py-3 px-6 text-left">Тип</th>
+                                    <th class="py-3 px-6 text-left">Кол-во</th>
+                                    <th class="py-3 px-6 text-left rounded-tr-lg">Источник/Цель</th>
                                 </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
-            } catch (error) {
-                console.error('Ошибка загрузки истории движений материалов:', error.message);
-                listContainer.innerHTML = `<p class="text-red-400">Ошибка загрузки истории: ${error.message}</p>`;
-            }
-        }
+                            </thead>
+                            <tbody class="text-gray-200 text-sm">
+                                ${mapArray(movements, function(move) {
+                                    return `
+                                        <tr class="border-b border-gray-600 hover:bg-gray-700">
+                                            <td class="py-3 px-6 text-left whitespace-nowrap">${new Date(move.date).toLocaleString('uk-UA')}</td>
+                                            <td class="py-3 px-6 text-left">${move.materials ? move.materials.name : 'Неизвестно'}</td>
+                                            <td class="py-3 px-6 text-left">
+                                                <span class="px-2 py-1 rounded-full text-xs font-semibold ${move.type === 'in' ? 'bg-blue-700 text-blue-100' : 'bg-orange-700 text-orange-100'}">
+                                                    ${move.type === 'in' ? 'Приход' : 'Расход'}
+                                                </span>
+                                            </td>
+                                            <td class="py-3 px-6 text-left">${move.quantity}</td>
+                                            <td class="py-3 px-6 text-left">${move.source_target || 'N/A'}</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                })
+                .catch(function(error) {
+                    console.error('Ошибка загрузки истории движений материалов:', error.message);
+                    listContainer.innerHTML = `<p class="text-red-400">Ошибка загрузки истории: ${error.message}</p>`;
+                });
+        };
 
-        function checkLowStock() {
-            const lowStockMaterials = appState.materials.filter(m => m.stock <= m.low_stock_threshold);
+        var checkLowStock = function() {
+            var lowStockMaterials = filterArray(appState.materials, function(m) { return m.stock <= m.low_stock_threshold; });
             if (lowStockMaterials.length > 0) {
-                const materialNames = lowStockMaterials.map(m => m.name).join(', ');
-                showModal('Низкий остаток материалов', `Следующие материалы имеют низкий остаток: ${materialNames}. Пожалуйста, пополните запасы.`, 'alert');
+                var materialNames = mapArray(lowStockMaterials, function(m) { return m.name; }).join(', ');
+                showModal('Низкий остаток материалов', 'Следующие материалы имеют низкий остаток: ' + materialNames + '. Пожалуйста, пополните запасы.', 'alert');
             }
-        }
+        };
 
 
         // 6. Finance Module
-        function renderFinance() {
-            const appContent = document.getElementById('app-content');
+        var renderFinance = function() {
+            var appContent = document.getElementById('app-content');
             appContent.innerHTML = `
                 <div class="p-4 md:p-8 bg-gray-700 rounded-lg shadow-md">
                     <h2 class="text-3xl font-bold mb-6 text-blue-300">Фінанси</h2>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                         <div class="bg-gray-800 p-5 rounded-lg shadow-sm">
-                            <h3 class="text-lg font-semibold text-gray-300 mb-1">Дохід (за місяць)</h3>
-                            <p class="text-3xl font-bold text-green-400" id="monthly-revenue-finance">${formatCurrency(calculateMonthlyRevenue())}</p>
-                            <p class="text-sm text-gray-400">+0% з минулого місяця</p>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-300 mb-1">Дохід (за місяць)</h3>
+                                <p class="text-3xl font-bold text-green-400" id="monthly-revenue-finance">${formatCurrency(calculateMonthlyRevenue())}</p>
+                                <p class="text-sm text-gray-400">+0% з минулого місяця</p>
+                            </div>
                         </div>
                         <div class="bg-gray-800 p-5 rounded-lg shadow-sm">
-                            <h3 class="text-lg font-semibold text-gray-300 mb-1">Витрати (за місяць)</h3>
-                            <p class="text-3xl font-bold text-red-400" id="monthly-expenses-finance">${formatCurrency(calculateMonthlyExpenses())}</p>
-                            <p class="text-sm text-gray-400">+0% з минулого місяця</p>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-300 mb-1">Витрати (за місяць)</h3>
+                                <p class="text-3xl font-bold text-red-400" id="monthly-expenses-finance">${formatCurrency(calculateMonthlyExpenses())}</p>
+                                <p class="text-sm text-gray-400">+0% з минулого місяця</p>
+                            </div>
                         </div>
                         <div class="bg-gray-800 p-5 rounded-lg shadow-sm">
-                            <h3 class="text-lg font-semibold text-gray-300 mb-1">Прибуток</h3>
-                            <p class="text-3xl font-bold text-blue-400" id="net-profit">${formatCurrency(calculateNetProfit())}</p>
-                            <p class="text-sm text-gray-400">Рентабельність: ${((calculateNetProfit() / calculateTotalRevenue()) * 100 || 0).toFixed(1)}%</p>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-300 mb-1">Прибуток</h3>
+                                <p class="text-3xl font-bold text-blue-400" id="net-profit">${formatCurrency(calculateNetProfit())}</p>
+                                <p class="text-sm text-gray-400">Рентабельність: ${((calculateNetProfit() / calculateTotalRevenue()) * 100 || 0).toFixed(1)}%</p>
+                            </div>
                         </div>
                     </div>
 
@@ -1673,12 +1793,12 @@
                 </div>
             `;
 
-            document.getElementById('add-expense-btn').addEventListener('click', () => {
+            document.getElementById('add-expense-btn').addEventListener('click', function() {
                 document.getElementById('expense-form-container').classList.toggle('hidden');
                 document.getElementById('expense-form').reset();
             });
 
-            document.getElementById('cancel-expense-form').addEventListener('click', () => {
+            document.getElementById('cancel-expense-form').addEventListener('click', function() {
                 document.getElementById('expense-form-container').classList.add('hidden');
                 document.getElementById('expense-form').reset();
             });
@@ -1687,76 +1807,79 @@
             renderFinanceTable();
             renderMonthlyRevenueReport();
             renderPaymentMethodReport();
-        }
+        };
 
-        function calculateTotalRevenue() {
-            return appState.sessions.reduce((sum, session) => sum + session.total_price, 0);
-        }
-
-        function calculateMonthlyExpenses() {
-            const now = new Date();
-            const currentMonth = now.getMonth();
-            const currentYear = now.getFullYear();
-            return appState.expenses.reduce((sum, expense) => {
-                const expenseDate = new Date(expense.date);
+        var calculateMonthlyExpenses = function() {
+            var now = new Date();
+            var currentMonth = now.getMonth();
+            var currentYear = now.getFullYear();
+            return reduceArray(appState.expenses, function(sum, expense) {
+                var expenseDate = new Date(expense.date);
                 if (expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear) {
                     return sum + expense.amount;
                 }
                 return sum;
             }, 0);
-        }
+        };
 
-        function calculateTotalExpenses() {
-            return appState.expenses.reduce((sum, expense) => sum + expense.amount, 0);
-        }
+        var calculateTotalExpenses = function() {
+            return reduceArray(appState.expenses, function(sum, expense) { return sum + expense.amount; }, 0);
+        };
 
-        function calculateNetProfit() {
+        var calculateNetProfit = function() {
             return calculateTotalRevenue() - calculateTotalExpenses();
-        }
+        };
 
-        async function handleAddExpense(event) {
+        var handleAddExpense = function(event) {
             event.preventDefault();
-            const form = event.target;
-            const date = form['expense-date'].value;
-            const amount = parseFloat(form['expense-amount'].value);
-            const description = form['expense-description'].value;
-            const category = form['expense-category'].value;
+            var form = event.target;
+            var date = form['expense-date'].value;
+            var amount = parseFloat(form['expense-amount'].value);
+            var description = form['expense-description'].value;
+            var category = form['expense-category'].value;
 
             if (!date || isNaN(amount) || !description || !category) {
                 showModal('Ошибка', 'Пожалуйста, заполните все поля расхода.', 'alert');
                 return;
             }
 
-            try {
-                const { error } = await supabase.from('expenses').insert([{ date, amount, description, category }]);
-                if (error) throw error;
-                showModal('Успех', 'Расход успешно добавлен!', 'alert');
-                form.reset();
-                document.getElementById('expense-form-container').classList.add('hidden');
-                fetchDataAndRerenderCurrentPage();
-            } catch (error) {
-                console.error('Ошибка добавления расхода:', error.message);
-                showModal('Ошибка', `Не удалось добавить расход: ${error.message}`, 'alert');
-            }
-        }
+            supabase.from('expenses').insert([{ date: date, amount: amount, description: description, category: category }])
+                .then(function(response) {
+                    if (response.error) throw response.error;
+                    showModal('Успех', 'Расход успешно добавлен!', 'alert');
+                    form.reset();
+                    document.getElementById('expense-form-container').classList.add('hidden');
+                    fetchDataAndRerenderCurrentPage();
+                })
+                .catch(function(error) {
+                    console.error('Ошибка добавления расхода:', error.message);
+                    showModal('Ошибка', 'Не удалось добавить расход: ' + error.message, 'alert');
+                });
+        };
 
-        function renderFinanceTable() {
-            const tableContainer = document.getElementById('finance-table');
-            const combinedData = [];
+        var renderFinanceTable = function() {
+            var tableContainer = document.getElementById('finance-table');
+            var combinedData = [];
 
-            appState.sessions.forEach(session => {
-                const sessionDate = new Date(session.start_time);
+            mapArray(appState.sessions, function(session) {
+                var sessionDate = new Date(session.start_time);
                 combinedData.push({
                     type: 'Доход',
                     date: sessionDate.toISOString().split('T')[0],
-                    description: `Сеанс (${appState.clients.find(c => c.id === appState.appointments.find(a => a.id === session.appointment_id)?.client_id)?.name || 'Неизвестно'})`,
+                    description: 'Сеанс (' + (findInArray(appState.clients, function(c) {
+                        var app = findInArray(appState.appointments, function(a) { return a.id === session.appointment_id; });
+                        return app ? c.id === app.client_id : false;
+                    }) ? findInArray(appState.clients, function(c) {
+                        var app = findInArray(appState.appointments, function(a) { return a.id === session.appointment_id; });
+                        return app ? c.id === app.client_id : false;
+                    }).name : 'Неизвестно') + ')',
                     amount: session.total_price,
                     category: 'Тату-сеанс',
                     paymentMethod: session.payment_method
                 });
             });
 
-            appState.expenses.forEach(expense => {
+            mapArray(appState.expenses, function(expense) {
                 combinedData.push({
                     type: 'Расход',
                     date: expense.date,
@@ -1767,7 +1890,7 @@
                 });
             });
 
-            combinedData.sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date, newest first
+            combinedData.sort(function(a, b) { return new Date(b.date) - new Date(a.date); }); // Sort by date, newest first
 
             if (combinedData.length === 0) {
                 tableContainer.innerHTML = '<p class="text-gray-400">Нет финансовых операций.</p>';
@@ -1787,39 +1910,41 @@
                         </tr>
                     </thead>
                     <tbody class="text-gray-200 text-sm">
-                        ${combinedData.map(item => `
-                            <tr class="border-b border-gray-600 hover:bg-gray-700">
-                                <td class="py-3 px-6 text-left whitespace-nowrap">${formatDate(item.date)}</td>
-                                <td class="py-3 px-6 text-left">
-                                    <span class="px-2 py-1 rounded-full text-xs font-semibold ${item.type === 'Доход' ? 'bg-green-700 text-green-100' : 'bg-red-700 text-red-100'}">
-                                        ${item.type}
-                                    </span>
-                                </td>
-                                <td class="py-3 px-6 text-left">${item.description}</td>
-                                <td class="py-3 px-6 text-left">${item.category}</td>
-                                <td class="py-3 px-6 text-left">${item.paymentMethod === 'cash' ? 'Наличные' : item.paymentMethod === 'card' ? 'Карта' : item.paymentMethod === 'transfer' ? 'Перевод' : item.paymentMethod}</td>
-                                <td class="py-3 px-6 text-left font-semibold ${item.type === 'Доход' ? 'text-green-400' : 'text-red-400'}">${formatCurrency(item.amount)}</td>
-                            </tr>
-                        `).join('')}
+                        ${mapArray(combinedData, function(item) {
+                            return `
+                                <tr class="border-b border-gray-600 hover:bg-gray-700">
+                                    <td class="py-3 px-6 text-left whitespace-nowrap">${formatDate(item.date)}</td>
+                                    <td class="py-3 px-6 text-left">
+                                        <span class="px-2 py-1 rounded-full text-xs font-semibold ${item.type === 'Доход' ? 'bg-green-700 text-green-100' : 'bg-red-700 text-red-100'}">
+                                            ${item.type}
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-6 text-left">${item.description}</td>
+                                    <td class="py-3 px-6 text-left">${item.category}</td>
+                                    <td class="py-3 px-6 text-left">${item.paymentMethod === 'cash' ? 'Наличные' : item.paymentMethod === 'card' ? 'Карта' : item.paymentMethod === 'transfer' ? 'Перевод' : item.paymentMethod}</td>
+                                    <td class="py-3 px-6 text-left font-semibold ${item.type === 'Доход' ? 'text-green-400' : 'text-red-400'}">${formatCurrency(item.amount)}</td>
+                                </tr>
+                            `;
+                        }).join('')}
                     </tbody>
                 </table>
             `;
-        }
+        };
 
-        function renderMonthlyRevenueReport() {
-            const reportContainer = document.getElementById('monthly-revenue-report');
-            const monthlyData = {};
+        var renderMonthlyRevenueReport = function() {
+            var reportContainer = document.getElementById('monthly-revenue-report');
+            var monthlyData = {};
 
-            appState.sessions.forEach(session => {
-                const sessionDate = new Date(session.start_time);
-                const monthYear = `${sessionDate.getFullYear()}-${(sessionDate.getMonth() + 1).toString().padStart(2, '0')}`;
+            mapArray(appState.sessions, function(session) {
+                var sessionDate = new Date(session.start_time);
+                var monthYear = sessionDate.getFullYear() + '-' + customPadStart((sessionDate.getMonth() + 1), 2, '0');
                 if (!monthlyData[monthYear]) {
                     monthlyData[monthYear] = 0;
                 }
                 monthlyData[monthYear] += session.total_price;
             });
 
-            const sortedMonths = Object.keys(monthlyData).sort();
+            var sortedMonths = Object.keys(monthlyData).sort();
 
             if (sortedMonths.length === 0) {
                 reportContainer.innerHTML = '<p class="text-gray-400">Нет данных о выручке по месяцам.</p>';
@@ -1828,28 +1953,30 @@
 
             reportContainer.innerHTML = `
                 <ul class="list-disc list-inside space-y-1 text-gray-200">
-                    ${sortedMonths.map(month => `
+                    ${mapArray(sortedMonths, function(month) {
+                        return `
                         <li>${month}: <span class="font-semibold">${formatCurrency(monthlyData[month])}</span></li>
-                    `).join('')}
+                    `;
+                    }).join('')}
                 </ul>
             `;
-        }
+        };
 
-        function renderPaymentMethodReport() {
-            const reportContainer = document.getElementById('payment-method-report');
-            const paymentMethodData = {
+        var renderPaymentMethodReport = function() {
+            var reportContainer = document.getElementById('payment-method-report');
+            var paymentMethodData = {
                 cash: 0,
                 card: 0,
                 transfer: 0
             };
 
-            appState.sessions.forEach(session => {
+            mapArray(appState.sessions, function(session) {
                 if (paymentMethodData.hasOwnProperty(session.payment_method)) {
                     paymentMethodData[session.payment_method] += session.total_price;
                 }
             });
 
-            const totalRevenue = calculateTotalRevenue();
+            var totalRevenue = calculateTotalRevenue();
 
             if (totalRevenue === 0) {
                 reportContainer.innerHTML = '<p class="text-gray-400">Нет данных о выручке по методам оплаты.</p>';
@@ -1858,17 +1985,17 @@
 
             reportContainer.innerHTML = `
                 <ul class="list-disc list-inside space-y-1 text-gray-200">
-                    <li>Наличные: <span class="font-semibold">${formatCurrency(paymentMethodData.cash)} (${((paymentMethodData.cash / totalRevenue) * 100).toFixed(1)}%)</span></li>
-                    <li>Карта: <span class="font-semibold">${formatCurrency(paymentMethodData.card)} (${((paymentMethodData.card / totalRevenue) * 100).toFixed(1)}%)</span></li>
-                    <li>Перевод: <span class="font-semibold">${formatCurrency(paymentMethodData.transfer)} (${((paymentMethodData.transfer / totalRevenue) * 100).toFixed(1)}%)</span></li>
+                    <li>Наличные: <span class="font-semibold">${formatCurrency(paymentMethodData.cash)} (${((paymentMethodData.cash / totalRevenue) * 100 || 0).toFixed(1)}%)</span></li>
+                    <li>Карта: <span class="font-semibold">${formatCurrency(paymentMethodData.card)} (${((paymentMethodData.card / totalRevenue) * 100 || 0).toFixed(1)}%)</span></li>
+                    <li>Перевод: <span class="font-semibold">${formatCurrency(paymentMethodData.transfer)} (${((paymentMethodData.transfer / totalRevenue) * 100 || 0).toFixed(1)}%)</span></li>
                 </ul>
             `;
-        }
+        };
 
 
         // 7. Settings Module
-        function renderSettings() {
-            const appContent = document.getElementById('app-content');
+        var renderSettings = function() {
+            var appContent = document.getElementById('app-content');
             appContent.innerHTML = `
                 <div class="p-4 md:p-8 bg-gray-700 rounded-lg shadow-md">
                     <h2 class="text-3xl font-bold mb-6 text-blue-300">Налаштування</h2>
@@ -1913,7 +2040,8 @@
                     <div class="bg-gray-800 p-6 rounded-lg shadow-inner mb-8">
                         <h3 class="text-xl font-semibold mb-4 text-blue-300">Категорії витрат</h3>
                         <div id="expense-categories-list" class="mb-4">
-                            ${appState.materialCategories.map(cat => `
+                            ${mapArray(appState.materialCategories, function(cat) { // Using materialCategories for now, should be separate expenseCategories
+                                return `
                                 <div class="flex items-center justify-between bg-gray-700 p-3 rounded-md mb-2">
                                     <span class="text-gray-200">${cat}</span>
                                     <div class="flex space-x-2">
@@ -1921,7 +2049,8 @@
                                         <button class="text-red-400 hover:text-red-300"><i class="fas fa-trash-alt"></i></button>
                                     </div>
                                 </div>
-                            `).join('')}
+                            `;
+                            }).join('')}
                         </div>
                         <div class="flex space-x-2">
                             <input type="text" id="new-expense-category" placeholder="Назва нової категорії" class="flex-1 p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
@@ -1934,7 +2063,8 @@
                     <div class="bg-gray-800 p-6 rounded-lg shadow-inner">
                         <h3 class="text-xl font-semibold mb-4 text-blue-300">Категорії матеріалів</h3>
                         <div id="material-categories-list" class="mb-4">
-                            ${appState.materialCategories.map(cat => `
+                            ${mapArray(appState.materialCategories, function(cat) {
+                                return `
                                 <div class="flex items-center justify-between bg-gray-700 p-3 rounded-md mb-2">
                                     <span class="text-gray-200">${cat}</span>
                                     <div class="flex space-x-2">
@@ -1942,7 +2072,8 @@
                                         <button class="text-red-400 hover:text-red-300"><i class="fas fa-trash-alt"></i></button>
                                     </div>
                                 </div>
-                            `).join('')}
+                            `;
+                            }).join('')}
                         </div>
                         <div class="flex space-x-2">
                             <input type="text" id="new-material-category" placeholder="Назва нової категорії" class="flex-1 p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
@@ -1957,62 +2088,77 @@
             document.getElementById('settings-form').addEventListener('submit', handleSaveSettings);
 
             // Add/Edit category logic (simplified, full implementation would require more state management)
-            document.getElementById('add-expense-category-btn').addEventListener('click', () => {
-                const newCatInput = document.getElementById('new-expense-category');
+            document.getElementById('add-expense-category-btn').addEventListener('click', function() {
+                var newCatInput = document.getElementById('new-expense-category');
                 if (newCatInput.value.trim() !== '') {
-                    appState.materialCategories.push(newCatInput.value.trim()); // Using materialCategories for now
+                    // For now, adding to materialCategories for demonstration.
+                    // In a real app, you'd have a separate array for expense categories.
+                    appState.materialCategories.push(newCatInput.value.trim());
                     newCatInput.value = '';
                     renderSettings(); // Re-render settings to show new category
                 }
             });
-            document.getElementById('add-material-category-btn').addEventListener('click', () => {
-                const newCatInput = document.getElementById('new-material-category');
+            document.getElementById('add-material-category-btn').addEventListener('click', function() {
+                var newCatInput = document.getElementById('new-material-category');
                 if (newCatInput.value.trim() !== '') {
-                    appState.materialCategories.push(newCatInput.value.trim()); // Using materialCategories for now
+                    appState.materialCategories.push(newCatInput.value.trim());
                     newCatInput.value = '';
                     renderSettings(); // Re-render settings to show new category
                 }
             });
-        }
+        };
 
-        async function handleSaveSettings(event) {
+        var handleSaveSettings = function(event) {
             event.preventDefault();
-            const form = event.target;
-            const hourlyRate = parseFloat(form['hourly-rate'].value);
-            const materialCategories = form['material-categories'].value.split(',').map(cat => cat.trim()).filter(cat => cat !== '');
+            var form = event.target;
+            var hourlyRate = parseFloat(form['hourly-rate'].value);
+            var materialCategories = filterArray(mapArray(form['material-categories'].value.split(','), function(cat) { return cat.trim(); }), function(cat) { return cat !== ''; });
 
             if (isNaN(hourlyRate) || hourlyRate < 0) {
                 showModal('Ошибка', 'Ставка за час должна быть положительным числом.', 'alert');
                 return;
             }
 
-            try {
-                // Assuming there's only one settings row, update it
-                const { data, error } = await supabase.from('settings').update({ hourly_rate: hourlyRate, material_categories: materialCategories }).eq('id', appState.settings && appState.settings.length > 0 ? appState.settings[0].id : null);
-                if (error) {
-                    // If no settings row exists, insert one
-                    if (error.code === 'PGRST116') { // Specific error for no row found on update
-                        const { error: insertError } = await supabase.from('settings').insert([{ hourly_rate: hourlyRate, material_categories: materialCategories }]);
-                        if (insertError) throw insertError;
-                    } else {
-                        throw error;
-                    }
-                }
-                showModal('Успех', 'Настройки успешно сохранены!', 'alert');
-                fetchDataAndRerenderCurrentPage();
-            } catch (error) {
-                console.error('Ошибка сохранения настроек:', error.message);
-                showModal('Ошибка', `Не удалось сохранить настройки: ${error.message}`, 'alert');
+            // Assuming there's only one settings row, update it
+            var settingsId = appState.settings && appState.settings.length > 0 ? appState.settings[0].id : null;
+            var promise;
+
+            if (settingsId) {
+                promise = supabase.from('settings').update({ hourly_rate: hourlyRate, material_categories: materialCategories }).eq('id', settingsId);
+            } else {
+                promise = supabase.from('settings').insert([{ hourly_rate: hourlyRate, material_categories: materialCategories }]);
             }
-        }
+
+            promise
+                .then(function(response) {
+                    if (response.error) {
+                        // If no settings row exists, insert one (PGRST116 is a common code for no rows found on update)
+                        if (response.error.code === 'PGRST116' || response.error.message.includes('no rows found')) {
+                            return supabase.from('settings').insert([{ hourly_rate: hourlyRate, material_categories: materialCategories }]);
+                        } else {
+                            throw response.error;
+                        }
+                    }
+                    return response; // Pass through successful update response
+                })
+                .then(function() {
+                    showModal('Успех', 'Настройки успешно сохранены!', 'alert');
+                    fetchDataAndRerenderCurrentPage();
+                })
+                .catch(function(error) {
+                    console.error('Ошибка сохранения настроек:', error.message);
+                    showModal('Ошибка', 'Не удалось сохранить настройки: ' + error.message, 'alert');
+                });
+        };
 
 
         // Initial load and event listeners
         window.addEventListener('hashchange', handleRouteChange);
-        window.addEventListener('load', async () => {
-            await fetchData();
-            setupRealtimeSubscriptions();
-            handleRouteChange(); // Initial route handling after data is loaded
+        window.addEventListener('load', function() {
+            fetchData().then(function() {
+                setupRealtimeSubscriptions();
+                handleRouteChange(); // Initial route handling after data is loaded
+            });
         });
     </script>
 </body>
