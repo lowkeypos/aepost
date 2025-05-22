@@ -6,22 +6,25 @@
     <title>CRM/POS для Тату-мастера</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-            color: #374151;
+            background-color: #1a202c; /* Темный фон */
+            color: #e2e8f0; /* Светлый текст */
         }
         .container {
-            max-width: 100vw; /* Full width for tablet landscape */
-            min-height: 100vh; /* Full height */
+            max-width: 100vw;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
+            background-color: #2d3748; /* Чуть светлее темного */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15); /* Темная тень */
         }
         .main-content {
             flex-grow: 1;
-            overflow-y: auto; /* Enable scrolling for content if needed */
+            overflow-y: auto;
         }
         /* Custom scrollbar for better aesthetics */
         ::-webkit-scrollbar {
@@ -29,33 +32,32 @@
             height: 8px;
         }
         ::-webkit-scrollbar-track {
-            background: #e0e0e0;
+            background: #4a5568; /* Темный трек */
             border-radius: 10px;
         }
         ::-webkit-scrollbar-thumb {
-            background: #a0a0a0;
+            background: #718096; /* Темный скролл */
             border-radius: 10px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #808080;
+            background: #a0aec0; /* Светлее при наведении */
         }
         .nav-link.active {
-            background-color: #4a5568;
+            background-color: #374151; /* Активный пункт навигации */
             color: #ffffff;
         }
-        input[type="date"]::-webkit-calendar-picker-indicator {
-            filter: invert(0.5); /* Adjust color for visibility */
-        }
+        /* Adjust calendar/time picker indicator for dark theme */
+        input[type="date"]::-webkit-calendar-picker-indicator,
         input[type="time"]::-webkit-calendar-picker-indicator {
-            filter: invert(0.5);
+            filter: invert(1) brightness(0.8); /* Инвертировать и затемнить для видимости */
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
         .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: #6366f1;
+            border: 4px solid rgba(255, 255, 255, 0.2); /* Светлый спиннер */
+            border-left-color: #63b3ed; /* Синий цвет */
             border-radius: 50%;
             width: 40px;
             height: 40px;
@@ -63,59 +65,96 @@
         }
         /* Style for custom modal */
         .modal {
-            display: none; /* Hidden by default */
-            position: fixed; /* Stay in place */
-            z-index: 1000; /* Sit on top */
+            display: none;
+            position: fixed;
+            z-index: 1000;
             left: 0;
             top: 0;
-            width: 100%; /* Full width */
-            height: 100%; /* Full height */
-            overflow: auto; /* Enable scroll if needed */
-            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6); /* Более темный оверлей */
             display: flex;
             justify-content: center;
             align-items: center;
         }
         .modal-content {
-            background-color: #fefefe;
+            background-color: #2d3748; /* Фон модального окна */
+            color: #e2e8f0; /* Текст модального окна */
             margin: auto;
             padding: 20px;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-radius: 0.75rem; /* Более округлые углы */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
             width: 90%;
             max-width: 500px;
         }
         .close-button {
-            color: #aaa;
+            color: #a0aec0; /* Цвет кнопки закрытия */
             float: right;
             font-size: 28px;
             font-weight: bold;
         }
         .close-button:hover,
         .close-button:focus {
-            color: black;
+            color: #ffffff; /* Светлее при наведении */
             text-decoration: none;
             cursor: pointer;
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col">
-    <div class="container bg-white shadow-lg rounded-lg overflow-hidden md:flex md:flex-row">
-        <nav class="bg-gray-800 text-white p-4 md:w-48 md:min-h-screen flex flex-col justify-start items-center md:items-stretch">
-            <h1 class="text-2xl font-bold mb-6 text-center">Тату CRM</h1>
+<body class="bg-gray-900 min-h-screen flex flex-col">
+    <div class="container bg-gray-800 shadow-xl rounded-lg overflow-hidden md:flex md:flex-row">
+        <nav class="bg-gray-950 text-white p-4 md:w-48 md:min-h-screen flex flex-col justify-start items-center md:items-stretch">
+            <h1 class="text-2xl font-bold mb-6 text-center text-blue-300">Tattoo CRM</h1>
             <ul class="flex flex-row md:flex-col space-x-4 md:space-x-0 md:space-y-2 w-full justify-center md:justify-start">
-                <li><a href="#dashboard" class="nav-link block p-3 rounded-lg hover:bg-gray-700 transition-colors text-center md:text-left">Панель</a></li>
-                <li><a href="#appointments" class="nav-link block p-3 rounded-lg hover:bg-gray-700 transition-colors text-center md:text-left">Записи</a></li>
-                <li><a href="#clients" class="nav-link block p-3 rounded-lg hover:bg-gray-700 transition-colors text-center md:text-left">Клиенты</a></li>
-                <li><a href="#inventory" class="nav-link block p-3 rounded-lg hover:bg-gray-700 transition-colors text-center md:text-left">Инвентарь</a></li>
-                <li><a href="#finance" class="nav-link block p-3 rounded-lg hover:bg-gray-700 transition-colors text-center md:text-left">Финансы</a></li>
-                <li><a href="#settings" class="nav-link block p-3 rounded-lg hover:bg-gray-700 transition-colors text-center md:text-left">Настройки</a></li>
+                <li><a href="#dashboard" class="nav-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors text-center md:text-left">
+                    <i class="fas fa-tachometer-alt mr-3"></i>Панель
+                </a></li>
+                <li><a href="#appointments" class="nav-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors text-center md:text-left">
+                    <i class="fas fa-calendar-alt mr-3"></i>Записи
+                </a></li>
+                <li><a href="#clients" class="nav-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors text-center md:text-left">
+                    <i class="fas fa-users mr-3"></i>Клиенты
+                </a></li>
+                <li><a href="#inventory" class="nav-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors text-center md:text-left">
+                    <i class="fas fa-box-open mr-3"></i>Инвентарь
+                </a></li>
+                <li><a href="#finance" class="nav-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors text-center md:text-left">
+                    <i class="fas fa-dollar-sign mr-3"></i>Финансы
+                </a></li>
+                <li><a href="#settings" class="nav-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors text-center md:text-left">
+                    <i class="fas fa-cog mr-3"></i>Настройки
+                </a></li>
             </ul>
+            <div class="mt-auto pt-4 border-t border-gray-700 w-full">
+                <a href="#" class="nav-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors text-center md:text-left">
+                    <i class="fas fa-sign-out-alt mr-3"></i>Выйти
+                </a>
+            </div>
         </nav>
 
         <main id="app-content" class="main-content p-6 flex-1">
-            <div class="flex justify-center items-center h-full">
-                <div class="spinner" id="loading-spinner"></div>
+            <div class="bg-gray-900 p-4 rounded-lg shadow-md mb-6 flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <h2 id="page-title" class="text-xl font-semibold text-blue-300">Панель</h2>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <input type="text" placeholder="Пошук ..." class="bg-gray-700 text-gray-200 border border-gray-600 rounded-full py-2 px-4 pl-10 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                    <button class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fas fa-bell text-xl"></i>
+                    </button>
+                    <div class="flex items-center space-x-2 bg-gray-700 rounded-full px-3 py-1">
+                        <div class="bg-blue-500 text-white rounded-full h-8 w-8 flex items-center justify-center font-bold">TM</div>
+                        <span class="text-gray-200">Tattoo Master</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-center items-center h-full" id="initial-loading-spinner">
+                <div class="spinner"></div>
             </div>
         </main>
     </div>
@@ -131,12 +170,11 @@
     </div>
 
     <script>
-    const SUPABASE_CONFIG = {
-    url: 'https://iedrcmbvegttznaxpevd.supabase.co',
-    key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllZHJjbWJ2ZWd0dHpuYXhwZXZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0MDQyMzEsImV4cCI6MjA2Mjk4MDIzMX0.5K7nHzHI10tXQRP1ha8iH1CD-gjTtpzFSQSRIPofj1A'
-};
-        // Исправлено: Supabase.createClient на supabase.createClient
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // Supabase Client Initialization
+        const SUPABASE_URL = 'https://iedrcmbvegttznaxpevd.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllZHJjbWJ2ZWd0dHpuYXhwZXZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0MDQyMzEsImV4cCI6MjA2Mjk4MDIzMX0.5K7nHzHI10tXQRP1ha8iH1CD-gjTtpzFSQSRIPofj1A';
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // Global state variables
         let appState = {
@@ -158,24 +196,23 @@
             const modalActions = document.getElementById('modal-actions');
 
             modalTitle.textContent = title;
-            modalMessage.textContent = message;
+            modalMessage.innerHTML = message; // Use innerHTML for rich content
             modalActions.innerHTML = ''; // Clear previous buttons
 
             if (type === 'alert') {
                 const okButton = document.createElement('button');
                 okButton.textContent = 'ОК';
-                okButton.className = 'px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors';
+                okButton.className = 'px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors';
                 okButton.onclick = () => modal.classList.add('hidden');
                 modalActions.appendChild(okButton);
             } else if (type === 'confirm') {
                 const cancelButton = document.createElement('button');
                 cancelButton.textContent = 'Отмена';
-                cancelButton.className = 'px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition-colors';
-                cancelButton.onclick = () => modal.classList.add('hidden');
-
+                cancelButton.className = 'px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors';
                 const confirmButton = document.createElement('button');
                 confirmButton.textContent = 'Подтвердить';
-                confirmButton.className = 'px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors';
+                confirmButton.className = 'px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors';
+                cancelButton.onclick = () => modal.classList.add('hidden');
                 confirmButton.onclick = () => {
                     if (onConfirm) onConfirm();
                     modal.classList.add('hidden');
@@ -213,7 +250,7 @@
 
         // --- Data Fetching and Realtime Subscriptions ---
         async function fetchData() {
-            document.getElementById('loading-spinner').classList.remove('hidden');
+            document.getElementById('initial-loading-spinner').classList.remove('hidden');
             try {
                 const { data: settingsData, error: settingsError } = await supabase.from('settings').select('*').limit(1);
                 if (settingsError) throw settingsError;
@@ -248,12 +285,12 @@
                 appState.sessions = sessions;
 
                 appState.isDataLoaded = true;
-                document.getElementById('loading-spinner').classList.add('hidden');
+                document.getElementById('initial-loading-spinner').classList.add('hidden');
                 handleRouteChange(); // Render content after data is loaded
             } catch (error) {
                 console.error('Ошибка загрузки данных:', error.message);
                 showModal('Ошибка', `Не удалось загрузить данные: ${error.message}. Пожалуйста, проверьте подключение к Supabase и настройки таблиц.`, 'alert');
-                document.getElementById('loading-spinner').classList.add('hidden');
+                document.getElementById('initial-loading-spinner').classList.add('hidden');
             }
         }
 
@@ -315,6 +352,7 @@
         function handleRouteChange() {
             const path = window.location.hash.substring(1);
             const appContent = document.getElementById('app-content');
+            const pageTitle = document.getElementById('page-title');
             appContent.innerHTML = ''; // Clear content
 
             // Remove active class from all nav links
@@ -331,11 +369,14 @@
                 if (activeLink) {
                     activeLink.classList.add('active');
                 }
+                // Update page title
+                pageTitle.textContent = activeLink ? activeLink.textContent.trim().replace(/[\s\S]*?(Панель|Записи|Клиенты|Инвентарь|Финансы|Настройки)/, '$1') : 'Неизвестно';
             } else {
                 // Default to dashboard if path is not found or empty
                 window.location.hash = '#dashboard';
                 renderDashboard();
                 document.querySelector('.nav-link[href="#dashboard"]').classList.add('active');
+                pageTitle.textContent = 'Панель';
             }
         }
 
@@ -345,39 +386,66 @@
         function renderDashboard() {
             const appContent = document.getElementById('app-content');
             appContent.innerHTML = `
-                <div class="p-4 md:p-8 bg-white rounded-lg shadow-md">
-                    <h2 class="text-3xl font-bold mb-6 text-gray-800">Панель управления</h2>
+                <div class="p-4 md:p-8 bg-gray-700 rounded-lg shadow-md">
+                    <h2 class="text-3xl font-bold mb-6 text-blue-300">Дашборд</h2>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                        <div class="bg-blue-100 p-5 rounded-lg shadow-sm">
-                            <h3 class="text-lg font-semibold text-blue-800 mb-2">Предстоящие визиты</h3>
-                            <p class="text-3xl font-bold text-blue-900">${appState.appointments.filter(a => a.status === 'pending' || a.status === 'confirmed').length}</p>
-                        </div>
-                        <div class="bg-green-100 p-5 rounded-lg shadow-sm">
-                            <h3 class="text-lg font-semibold text-green-800 mb-2">Выручка за месяц</h3>
-                            <p class="text-3xl font-bold text-green-900" id="monthly-revenue">${formatCurrency(calculateMonthlyRevenue())}</p>
-                        </div>
-                        <div class="bg-yellow-100 p-5 rounded-lg shadow-sm">
-                            <h3 class="text-lg font-semibold text-yellow-800 mb-2">Низкий остаток материалов</h3>
-                            <p class="text-3xl font-bold text-yellow-900">${appState.materials.filter(m => m.stock <= m.low_stock_threshold).length}</p>
-                        </div>
-                    </div>
-
-                    <div class="mb-8">
-                        <h3 class="text-2xl font-semibold mb-4 text-gray-800">Последние записи</h3>
-                        <div id="latest-appointments-list" class="overflow-x-auto">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-gray-800 p-5 rounded-lg shadow-sm flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-300 mb-1">Дохід</h3>
+                                <p class="text-3xl font-bold text-green-400">${formatCurrency(calculateTotalRevenue())}</p>
+                                <p class="text-sm text-gray-400">+0% з минулого місяця</p>
                             </div>
+                            <i class="fas fa-wallet text-4xl text-green-600"></i>
+                        </div>
+                        <div class="bg-gray-800 p-5 rounded-lg shadow-sm flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-300 mb-1">Клієнти</h3>
+                                <p class="text-3xl font-bold text-blue-400">${appState.clients.length}</p>
+                                <p class="text-sm text-gray-400">+0 нових</p>
+                            </div>
+                            <i class="fas fa-users text-4xl text-blue-600"></i>
+                        </div>
+                        <div class="bg-gray-800 p-5 rounded-lg shadow-sm flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-300 mb-1">Сеанси</h3>
+                                <p class="text-3xl font-bold text-purple-400">${appState.sessions.length}</p>
+                                <p class="text-sm text-gray-400">${appState.appointments.filter(a => a.status === 'pending' || a.status === 'confirmed').length} заплановано</p>
+                            </div>
+                            <i class="fas fa-calendar-check text-4xl text-purple-600"></i>
+                        </div>
+                        <div class="bg-gray-800 p-5 rounded-lg shadow-sm flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-300 mb-1">Матеріали</h3>
+                                <p class="text-3xl font-bold text-yellow-400">${appState.materials.length}</p>
+                                <p class="text-sm text-gray-400">${appState.materials.filter(m => m.stock <= m.low_stock_threshold).length} закінчується</p>
+                            </div>
+                            <i class="fas fa-box-open text-4xl text-yellow-600"></i>
+                        </div>
                     </div>
 
-                    <div>
-                        <h3 class="text-2xl font-semibold mb-4 text-gray-800">Последние расходы</h3>
-                        <div id="latest-expenses-list" class="overflow-x-auto">
+                    <div class="bg-gray-800 p-6 rounded-lg shadow-inner mb-8">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-2xl font-semibold text-blue-300">Дохід за останні 30 днів</h3>
+                            <select class="bg-gray-700 text-gray-200 border border-gray-600 rounded-md py-1 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <option>30 днів</option>
+                                <option>90 днів</option>
+                                <option>12 місяців</option>
+                            </select>
+                        </div>
+                        <div class="h-64 bg-gray-900 rounded-md flex items-center justify-center text-gray-500">
+                            Графік доходу
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-800 p-6 rounded-lg shadow-inner">
+                        <h3 class="text-2xl font-semibold mb-4 text-blue-300">Найближчі сеанси</h3>
+                        <div id="latest-appointments-list" class="overflow-x-auto">
                             </div>
                     </div>
                 </div>
             `;
             renderLatestAppointments();
-            renderLatestExpenses();
         }
 
         function calculateMonthlyRevenue() {
@@ -401,28 +469,33 @@
                 .slice(0, 5); // Show top 5
 
             if (latestAppointments.length === 0) {
-                listContainer.innerHTML = '<p class="text-gray-600">Нет предстоящих записей.</p>';
+                listContainer.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-10 text-gray-400">
+                        <i class="fas fa-calendar-alt text-6xl mb-4"></i>
+                        <p class="text-lg">Немає запланованих сеансів</p>
+                    </div>
+                `;
                 return;
             }
 
             listContainer.innerHTML = `
-                <table class="min-w-full bg-white rounded-lg shadow-sm">
+                <table class="min-w-full bg-gray-800 rounded-lg shadow-sm">
                     <thead>
-                        <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                        <tr class="bg-gray-700 text-gray-300 uppercase text-sm leading-normal">
                             <th class="py-3 px-6 text-left rounded-tl-lg">Дата</th>
                             <th class="py-3 px-6 text-left">Время</th>
                             <th class="py-3 px-6 text-left">Клиент</th>
                             <th class="py-3 px-6 text-left rounded-tr-lg">Статус</th>
                         </tr>
                     </thead>
-                    <tbody class="text-gray-700 text-sm">
+                    <tbody class="text-gray-200 text-sm">
                         ${latestAppointments.map(app => `
-                            <tr class="border-b border-gray-200 hover:bg-gray-100">
+                            <tr class="border-b border-gray-600 hover:bg-gray-700">
                                 <td class="py-3 px-6 text-left whitespace-nowrap">${formatDate(app.date)}</td>
                                 <td class="py-3 px-6 text-left">${formatTime(app.time)}</td>
                                 <td class="py-3 px-6 text-left">${app.clients ? app.clients.name : 'Неизвестно'}</td>
                                 <td class="py-3 px-6 text-left">
-                                    <span class="px-2 py-1 rounded-full text-xs font-semibold ${app.status === 'confirmed' ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800'}">
+                                    <span class="px-2 py-1 rounded-full text-xs font-semibold ${app.status === 'confirmed' ? 'bg-green-700 text-green-100' : 'bg-yellow-700 text-yellow-100'}">
                                         ${app.status === 'pending' ? 'Ожидает' : 'Подтверждено'}
                                     </span>
                                 </td>
@@ -434,33 +507,35 @@
         }
 
         function renderLatestExpenses() {
+            // This function is not explicitly shown in the dashboard screenshot,
+            // but keeping it for consistency if needed elsewhere.
             const listContainer = document.getElementById('latest-expenses-list');
             const latestExpenses = appState.expenses
                 .sort((a, b) => new Date(b.date) - new Date(a.date))
                 .slice(0, 5); // Show top 5
 
             if (latestExpenses.length === 0) {
-                listContainer.innerHTML = '<p class="text-gray-600">Нет недавних расходов.</p>';
+                listContainer.innerHTML = '<p class="text-gray-400">Нет недавних расходов.</p>';
                 return;
             }
 
             listContainer.innerHTML = `
-                <table class="min-w-full bg-white rounded-lg shadow-sm">
+                <table class="min-w-full bg-gray-800 rounded-lg shadow-sm">
                     <thead>
-                        <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                        <tr class="bg-gray-700 text-gray-300 uppercase text-sm leading-normal">
                             <th class="py-3 px-6 text-left rounded-tl-lg">Дата</th>
                             <th class="py-3 px-6 text-left">Описание</th>
                             <th class="py-3 px-6 text-left">Категория</th>
                             <th class="py-3 px-6 text-left rounded-tr-lg">Сумма</th>
                         </tr>
                     </thead>
-                    <tbody class="text-gray-700 text-sm">
+                    <tbody class="text-gray-200 text-sm">
                         ${latestExpenses.map(exp => `
-                            <tr class="border-b border-gray-200 hover:bg-gray-100">
+                            <tr class="border-b border-gray-600 hover:bg-gray-700">
                                 <td class="py-3 px-6 text-left whitespace-nowrap">${formatDate(exp.date)}</td>
                                 <td class="py-3 px-6 text-left">${exp.description}</td>
                                 <td class="py-3 px-6 text-left">${exp.category}</td>
-                                <td class="py-3 px-6 text-left font-semibold text-red-600">${formatCurrency(exp.amount)}</td>
+                                <td class="py-3 px-6 text-left font-semibold text-red-400">${formatCurrency(exp.amount)}</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -473,51 +548,59 @@
         function renderAppointments() {
             const appContent = document.getElementById('app-content');
             appContent.innerHTML = `
-                <div class="p-4 md:p-8 bg-white rounded-lg shadow-md">
-                    <h2 class="text-3xl font-bold mb-6 text-gray-800">Система записи и подтверждения визита</h2>
+                <div class="p-4 md:p-8 bg-gray-700 rounded-lg shadow-md">
+                    <h2 class="text-3xl font-bold mb-6 text-blue-300">Записи</h2>
 
-                    <button id="add-appointment-btn" class="mb-6 px-6 py-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors">
-                        Добавить новую запись
-                    </button>
+                    <div class="flex justify-between items-center mb-6">
+                        <select class="bg-gray-800 text-gray-200 border border-gray-600 rounded-md py-2 px-4 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            <option>Усі дати</option>
+                            <option>Сьогодні</option>
+                            <option>Цей тиждень</option>
+                            <option>Цей місяць</option>
+                        </select>
+                        <button id="add-appointment-btn" class="px-6 py-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors flex items-center">
+                            <i class="fas fa-plus mr-2"></i>Додати запис
+                        </button>
+                    </div>
 
-                    <div id="appointment-form-container" class="hidden bg-gray-50 p-6 rounded-lg shadow-inner mb-8">
-                        <h3 class="text-xl font-semibold mb-4 text-gray-800">Создать новую запись</h3>
+                    <div id="appointment-form-container" class="hidden bg-gray-800 p-6 rounded-lg shadow-inner mb-8">
+                        <h3 class="text-xl font-semibold mb-4 text-blue-300">Створити нову запис</h3>
                         <form id="appointment-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label for="appointment-client" class="block text-sm font-medium text-gray-700">Клиент</label>
-                                <select id="appointment-client" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <label for="appointment-client" class="block text-sm font-medium text-gray-300">Клиент</label>
+                                <select id="appointment-client" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-gray-200">
                                     <option value="">Выберите клиента</option>
                                     ${appState.clients.map(client => `<option value="${client.id}">${client.name}</option>`).join('')}
                                 </select>
                             </div>
                             <div>
-                                <label for="appointment-date" class="block text-sm font-medium text-gray-700">Дата</label>
-                                <input type="date" id="appointment-date" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <label for="appointment-date" class="block text-sm font-medium text-gray-300">Дата</label>
+                                <input type="date" id="appointment-date" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-gray-200">
                             </div>
                             <div>
-                                <label for="appointment-time" class="block text-sm font-medium text-gray-700">Время</label>
-                                <input type="time" id="appointment-time" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <label for="appointment-time" class="block text-sm font-medium text-gray-300">Время</label>
+                                <input type="time" id="appointment-time" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-gray-200">
                             </div>
                             <div>
-                                <label for="appointment-duration" class="block text-sm font-medium text-gray-700">Предполагаемая длительность (часов)</label>
-                                <input type="number" id="appointment-duration" step="0.5" min="0.5" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <label for="appointment-duration" class="block text-sm font-medium text-gray-300">Предполагаемая длительность (часов)</label>
+                                <input type="number" id="appointment-duration" step="0.5" min="0.5" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-gray-200">
                             </div>
                             <div>
-                                <label for="appointment-complexity" class="block text-sm font-medium text-gray-700">Сложность (1-10)</label>
-                                <input type="number" id="appointment-complexity" min="1" max="10" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <label for="appointment-complexity" class="block text-sm font-medium text-gray-300">Сложность (1-10)</label>
+                                <input type="number" id="appointment-complexity" min="1" max="10" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-gray-200">
                             </div>
                             <div>
-                                <label for="appointment-sketch" class="block text-sm font-medium text-gray-700">Эскиз (URL)</label>
-                                <input type="url" id="appointment-sketch" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="http://example.com/sketch.jpg">
+                                <label for="appointment-sketch" class="block text-sm font-medium text-gray-300">Эскиз (URL)</label>
+                                <input type="url" id="appointment-sketch" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-gray-200" placeholder="http://example.com/sketch.jpg">
                             </div>
                             <div class="md:col-span-2 flex justify-end space-x-3">
-                                <button type="button" id="cancel-appointment-form" class="px-5 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition-colors">Отмена</button>
+                                <button type="button" id="cancel-appointment-form" class="px-5 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors">Отмена</button>
                                 <button type="submit" class="px-5 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">Сохранить запись</button>
                             </div>
                         </form>
                     </div>
 
-                    <h3 class="text-2xl font-semibold mb-4 text-gray-800">Предстоящие визиты</h3>
+                    <h3 class="text-2xl font-semibold mb-4 text-blue-300">Предстоящие визиты</h3>
                     <div id="upcoming-appointments-list" class="overflow-x-auto">
                         </div>
                 </div>
@@ -581,14 +664,26 @@
                 .sort((a, b) => new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time));
 
             if (upcomingAppointments.length === 0) {
-                listContainer.innerHTML = '<p class="text-gray-600">Нет предстоящих визитов.</p>';
+                listContainer.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-10 text-gray-400">
+                        <i class="fas fa-calendar-times text-6xl mb-4"></i>
+                        <p class="text-lg">Немає записів</p>
+                        <p class="text-md mb-4">Створіть перший запис клієнта</p>
+                        <button id="add-appointment-from-empty-btn" class="px-6 py-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors flex items-center">
+                            <i class="fas fa-plus mr-2"></i>Додати запис
+                        </button>
+                    </div>
+                `;
+                document.getElementById('add-appointment-from-empty-btn').addEventListener('click', () => {
+                    document.getElementById('appointment-form-container').classList.remove('hidden');
+                });
                 return;
             }
 
             listContainer.innerHTML = `
-                <table class="min-w-full bg-white rounded-lg shadow-sm">
+                <table class="min-w-full bg-gray-800 rounded-lg shadow-sm">
                     <thead>
-                        <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                        <tr class="bg-gray-700 text-gray-300 uppercase text-sm leading-normal">
                             <th class="py-3 px-6 text-left rounded-tl-lg">Дата</th>
                             <th class="py-3 px-6 text-left">Время</th>
                             <th class="py-3 px-6 text-left">Клиент</th>
@@ -598,25 +693,25 @@
                             <th class="py-3 px-6 text-center rounded-tr-lg">Действия</th>
                         </tr>
                     </thead>
-                    <tbody class="text-gray-700 text-sm">
+                    <tbody class="text-gray-200 text-sm">
                         ${upcomingAppointments.map(app => `
-                            <tr class="border-b border-gray-200 hover:bg-gray-100">
+                            <tr class="border-b border-gray-600 hover:bg-gray-700">
                                 <td class="py-3 px-6 text-left whitespace-nowrap">${formatDate(app.date)}</td>
                                 <td class="py-3 px-6 text-left">${formatTime(app.time)}</td>
                                 <td class="py-3 px-6 text-left">${app.clients ? app.clients.name : 'Неизвестно'}</td>
                                 <td class="py-3 px-6 text-left">${app.duration} ч</td>
                                 <td class="py-3 px-6 text-left">${app.complexity}</td>
                                 <td class="py-3 px-6 text-left">
-                                    <span class="px-2 py-1 rounded-full text-xs font-semibold ${app.status === 'confirmed' ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800'}">
+                                    <span class="px-2 py-1 rounded-full text-xs font-semibold ${app.status === 'confirmed' ? 'bg-green-700 text-green-100' : 'bg-yellow-700 text-yellow-100'}">
                                         ${app.status === 'pending' ? 'Ожидает' : 'Подтверждено'}
                                     </span>
                                 </td>
                                 <td class="py-3 px-6 text-center">
                                     ${app.status === 'pending' ? `
-                                        <button data-id="${app.id}" class="confirm-appointment-btn bg-green-500 text-white px-3 py-1 rounded-md text-xs hover:bg-green-600 transition-colors mr-2">Подтвердить</button>
-                                        <button data-id="${app.id}" class="cancel-appointment-btn bg-red-500 text-white px-3 py-1 rounded-md text-xs hover:bg-red-600 transition-colors">Отменить</button>
+                                        <button data-id="${app.id}" class="confirm-appointment-btn bg-green-600 text-white px-3 py-1 rounded-md text-xs hover:bg-green-700 transition-colors mr-2">Подтвердить</button>
+                                        <button data-id="${app.id}" class="cancel-appointment-btn bg-red-600 text-white px-3 py-1 rounded-md text-xs hover:bg-red-700 transition-colors">Отменить</button>
                                     ` : `
-                                        <a href="#session/${app.id}" class="bg-purple-500 text-white px-3 py-1 rounded-md text-xs hover:bg-purple-600 transition-colors">Открыть калькулятор</a>
+                                        <a href="#session/${app.id}" class="bg-purple-600 text-white px-3 py-1 rounded-md text-xs hover:bg-purple-700 transition-colors">Открыть калькулятор</a>
                                     `}
                                 </td>
                             </tr>
@@ -666,7 +761,7 @@
             const appointment = appState.appointments.find(app => app.id === appointmentId);
 
             if (!appointment) {
-                appContent.innerHTML = `<div class="p-4 bg-red-100 text-red-800 rounded-lg">Визит не найден или не подтвержден.</div>`;
+                appContent.innerHTML = `<div class="p-4 bg-red-900 text-red-200 rounded-lg">Визит не найден или не подтвержден.</div>`;
                 return;
             }
 
@@ -674,62 +769,62 @@
             const hourlyRate = appState.hourlyRate;
 
             appContent.innerHTML = `
-                <div class="p-4 md:p-8 bg-white rounded-lg shadow-md">
-                    <h2 class="text-3xl font-bold mb-6 text-gray-800">Калькулятор тату-сеанса</h2>
-                    <h3 class="text-xl font-semibold mb-4 text-gray-800">Визит клиента: ${client ? client.name : 'Неизвестно'} (${formatDate(appointment.date)} ${formatTime(appointment.time)})</h3>
+                <div class="p-4 md:p-8 bg-gray-700 rounded-lg shadow-md">
+                    <h2 class="text-3xl font-bold mb-6 text-blue-300">Калькулятор тату-сеанса</h2>
+                    <h3 class="text-xl font-semibold mb-4 text-blue-300">Визит клиента: ${client ? client.name : 'Неизвестно'} (${formatDate(appointment.date)} ${formatTime(appointment.time)})</h3>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                         <div class="space-y-4">
                             <div>
-                                <label for="session-start-time" class="block text-sm font-medium text-gray-700">Время начала</label>
-                                <input type="datetime-local" id="session-start-time" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <label for="session-start-time" class="block text-sm font-medium text-gray-300">Время начала</label>
+                                <input type="datetime-local" id="session-start-time" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
                             </div>
                             <div>
-                                <label for="session-end-time" class="block text-sm font-medium text-gray-700">Время окончания</label>
-                                <input type="datetime-local" id="session-end-time" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <label for="session-end-time" class="block text-sm font-medium text-gray-300">Время окончания</label>
+                                <input type="datetime-local" id="session-end-time" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
                             </div>
                             <div>
-                                <label for="session-complexity" class="block text-sm font-medium text-gray-700">Сложность (1-10)</label>
-                                <input type="number" id="session-complexity" min="1" max="10" value="${appointment.complexity}" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <label for="session-complexity" class="block text-sm font-medium text-gray-300">Сложность (1-10)</label>
+                                <input type="number" id="session-complexity" min="1" max="10" value="${appointment.complexity}" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
                             </div>
                             <div>
-                                <label for="session-discount" class="block text-sm font-medium text-gray-700">Скидка (%)</label>
-                                <input type="number" id="session-discount" min="0" max="100" value="0" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <label for="session-discount" class="block text-sm font-medium text-gray-300">Скидка (%)</label>
+                                <input type="number" id="session-discount" min="0" max="100" value="0" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
                             </div>
                             <div>
-                                <label for="session-notes" class="block text-sm font-medium text-gray-700">Заметки по сеансу</label>
-                                <textarea id="session-notes" rows="3" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
+                                <label for="session-notes" class="block text-sm font-medium text-gray-300">Заметки по сеансу</label>
+                                <textarea id="session-notes" rows="3" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200"></textarea>
                             </div>
                             ${appointment.sketch_url ? `
                                 <div class="mt-4">
-                                    <h4 class="text-lg font-semibold mb-2">Эскиз:</h4>
-                                    <img src="${appointment.sketch_url}" alt="Эскиз тату" class="w-full h-48 object-contain rounded-lg shadow-md border border-gray-200" onerror="this.onerror=null;this.src='https://placehold.co/300x200/cccccc/333333?text=Нет+эскиза';">
+                                    <h4 class="text-lg font-semibold mb-2 text-gray-300">Эскиз:</h4>
+                                    <img src="${appointment.sketch_url}" alt="Эскиз тату" class="w-full h-48 object-contain rounded-lg shadow-md border border-gray-600" onerror="this.onerror=null;this.src='https://placehold.co/300x200/4a5568/a0aec0?text=Нет+эскиза';">
                                 </div>
-                            ` : `<p class="text-gray-600 mt-4">Эскиз не прикреплен.</p>`}
+                            ` : `<p class="text-gray-400 mt-4">Эскиз не прикреплен.</p>`}
                         </div>
 
                         <div class="space-y-4">
                             <div>
-                                <h4 class="text-lg font-semibold mb-2 text-gray-800">Использованные расходники</h4>
+                                <h4 class="text-lg font-semibold mb-2 text-gray-300">Использованные расходники</h4>
                                 <div id="materials-used-list" class="space-y-3">
                                     </div>
-                                <button id="add-material-btn" class="mt-3 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors">
+                                <button id="add-material-btn" class="mt-3 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors">
                                     Добавить расходник
                                 </button>
                             </div>
 
-                            <div class="bg-blue-50 p-5 rounded-lg shadow-inner mt-6">
-                                <h4 class="text-xl font-bold mb-3 text-blue-800">Итого:</h4>
-                                <p class="text-lg text-blue-700">Время работы: <span id="calculated-work-time">0</span> ч</p>
-                                <p class="text-lg text-blue-700">Себестоимость материалов: <span id="calculated-cost-price">${formatCurrency(0)}</span></p>
-                                <p class="text-lg text-blue-700">Наценка за сложность: <span id="calculated-complexity-markup">${formatCurrency(0)}</span></p>
-                                <p class="text-lg text-blue-700">Стоимость работы: <span id="calculated-work-cost">${formatCurrency(0)}</span></p>
-                                <p class="text-2xl font-bold text-blue-900 mt-4">Итоговая цена: <span id="calculated-total-price">${formatCurrency(0)}</span></p>
+                            <div class="bg-blue-900 p-5 rounded-lg shadow-inner mt-6">
+                                <h4 class="text-xl font-bold mb-3 text-blue-200">Итого:</h4>
+                                <p class="text-lg text-blue-100">Время работы: <span id="calculated-work-time">0</span> ч</p>
+                                <p class="text-lg text-blue-100">Себестоимость материалов: <span id="calculated-cost-price">${formatCurrency(0)}</span></p>
+                                <p class="text-lg text-blue-100">Наценка за сложность: <span id="calculated-complexity-markup">${formatCurrency(0)}</span></p>
+                                <p class="text-lg text-blue-100">Стоимость работы: <span id="calculated-work-cost">${formatCurrency(0)}</span></p>
+                                <p class="text-2xl font-bold text-blue-50 mt-4">Итоговая цена: <span id="calculated-total-price">${formatCurrency(0)}</span></p>
                             </div>
 
                             <div class="mt-6">
-                                <label for="payment-method" class="block text-sm font-medium text-gray-700">Метод оплаты</label>
-                                <select id="payment-method" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <label for="payment-method" class="block text-sm font-medium text-gray-300">Метод оплаты</label>
+                                <select id="payment-method" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
                                     <option value="cash">Наличные</option>
                                     <option value="card">Карта</option>
                                     <option value="transfer">Перевод</option>
@@ -757,15 +852,13 @@
                 const materialDiv = document.createElement('div');
                 materialDiv.className = 'flex items-center space-x-2';
                 materialDiv.innerHTML = `
-                    <select class="material-select block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    <select class="material-select block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
                         <option value="">Выберите материал</option>
                         ${appState.materials.map(m => `<option value="${m.id}" data-price="${m.unit_price}" ${material && material.material_id === m.id ? 'selected' : ''}>${m.name} (${formatCurrency(m.unit_price)}/ед.)</option>`).join('')}
                     </select>
-                    <input type="number" min="0.01" step="0.01" placeholder="Кол-во" value="${material ? material.quantity : ''}" class="material-quantity w-24 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                    <button class="remove-material-btn text-red-500 hover:text-red-700 p-2 rounded-full">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm6 0a1 1 0 11-2 0v6a1 1 0 112 0V8z" clip-rule="evenodd" />
-                        </svg>
+                    <input type="number" min="0.01" step="0.01" placeholder="Кол-во" value="${material ? material.quantity : ''}" class="material-quantity w-24 p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
+                    <button class="remove-material-btn text-red-500 hover:text-red-400 p-2 rounded-full">
+                        <i class="fas fa-trash-alt"></i>
                     </button>
                 `;
                 materialsUsedList.appendChild(materialDiv);
@@ -965,45 +1058,47 @@
         function renderClients() {
             const appContent = document.getElementById('app-content');
             appContent.innerHTML = `
-                <div class="p-4 md:p-8 bg-white rounded-lg shadow-md">
-                    <h2 class="text-3xl font-bold mb-6 text-gray-800">База клиентов</h2>
+                <div class="p-4 md:p-8 bg-gray-700 rounded-lg shadow-md">
+                    <h2 class="text-3xl font-bold mb-6 text-blue-300">Клиенты</h2>
 
-                    <button id="add-client-btn" class="mb-6 px-6 py-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors">
-                        Добавить нового клиента
-                    </button>
+                    <div class="flex justify-end mb-6">
+                        <button id="add-client-btn" class="px-6 py-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors flex items-center">
+                            <i class="fas fa-plus mr-2"></i>Додати клієнта
+                        </button>
+                    </div>
 
-                    <div id="client-form-container" class="hidden bg-gray-50 p-6 rounded-lg shadow-inner mb-8">
-                        <h3 class="text-xl font-semibold mb-4 text-gray-800">Добавить/Редактировать клиента</h3>
+                    <div id="client-form-container" class="hidden bg-gray-800 p-6 rounded-lg shadow-inner mb-8">
+                        <h3 class="text-xl font-semibold mb-4 text-blue-300">Додати/Редагувати клієнта</h3>
                         <form id="client-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <input type="hidden" id="client-id">
                             <div>
-                                <label for="client-name" class="block text-sm font-medium text-gray-700">Имя</label>
-                                <input type="text" id="client-name" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <label for="client-name" class="block text-sm font-medium text-gray-300">Ім'я</label>
+                                <input type="text" id="client-name" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
                             </div>
                             <div>
-                                <label for="client-contact" class="block text-sm font-medium text-gray-700">Контакты (телефон/email)</label>
-                                <input type="text" id="client-contact" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <label for="client-contact" class="block text-sm font-medium text-gray-300">Контакти (телефон/email)</label>
+                                <input type="text" id="client-contact" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
                             </div>
                             <div class="md:col-span-2">
-                                <label for="client-social" class="block text-sm font-medium text-gray-700">Ссылки на соцсети</label>
-                                <input type="text" id="client-social" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="https://instagram.com/user">
+                                <label for="client-social" class="block text-sm font-medium text-gray-300">Посилання на соцмережі</label>
+                                <input type="text" id="client-social" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200" placeholder="https://instagram.com/user">
                             </div>
                             <div class="md:col-span-2">
-                                <label for="client-notes" class="block text-sm font-medium text-gray-700">Заметки</label>
-                                <textarea id="client-notes" rows="3" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
+                                <label for="client-notes" class="block text-sm font-medium text-gray-300">Заметки</label>
+                                <textarea id="client-notes" rows="3" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200"></textarea>
                             </div>
                             <div class="md:col-span-2">
-                                <label for="client-tags" class="block text-sm font-medium text-gray-700">Метки (через запятую)</label>
-                                <input type="text" id="client-tags" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Постоянный, Пропускал">
+                                <label for="client-tags" class="block text-sm font-medium text-gray-300">Метки (через запятую)</label>
+                                <input type="text" id="client-tags" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200" placeholder="Постоянный, Пропускал">
                             </div>
                             <div class="md:col-span-2 flex justify-end space-x-3">
-                                <button type="button" id="cancel-client-form" class="px-5 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition-colors">Отмена</button>
+                                <button type="button" id="cancel-client-form" class="px-5 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors">Отмена</button>
                                 <button type="submit" class="px-5 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">Сохранить клиента</button>
                             </div>
                         </form>
                     </div>
 
-                    <h3 class="text-2xl font-semibold mb-4 text-gray-800">Список клиентов</h3>
+                    <h3 class="text-2xl font-semibold mb-4 text-blue-300">Список клиентов</h3>
                     <div id="clients-list" class="overflow-x-auto">
                         </div>
                 </div>
@@ -1063,39 +1158,55 @@
         function renderClientList() {
             const listContainer = document.getElementById('clients-list');
             if (appState.clients.length === 0) {
-                listContainer.innerHTML = '<p class="text-gray-600">Нет зарегистрированных клиентов.</p>';
+                listContainer.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-10 text-gray-400">
+                        <i class="fas fa-users text-6xl mb-4"></i>
+                        <p class="text-lg">База клієнтів порожня</p>
+                        <button id="add-client-from-empty-btn" class="mt-4 px-6 py-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors flex items-center">
+                            <i class="fas fa-plus mr-2"></i>Додати клієнта
+                        </button>
+                    </div>
+                `;
+                document.getElementById('add-client-from-empty-btn').addEventListener('click', () => {
+                    document.getElementById('client-form-container').classList.remove('hidden');
+                });
                 return;
             }
 
             listContainer.innerHTML = `
-                <table class="min-w-full bg-white rounded-lg shadow-sm">
+                <table class="min-w-full bg-gray-800 rounded-lg shadow-sm">
                     <thead>
-                        <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
-                            <th class="py-3 px-6 text-left rounded-tl-lg">Имя</th>
-                            <th class="py-3 px-6 text-left">Контакты</th>
-                            <th class="py-3 px-6 text-left">Соцсети</th>
-                            <th class="py-3 px-6 text-left">Метки</th>
-                            <th class="py-3 px-6 text-center rounded-tr-lg">Действия</th>
+                        <tr class="bg-gray-700 text-gray-300 uppercase text-sm leading-normal">
+                            <th class="py-3 px-6 text-left rounded-tl-lg">Ім'я</th>
+                            <th class="py-3 px-6 text-left">Контакти</th>
+                            <th class="py-3 px-6 text-left">Сеанси</th>
+                            <th class="py-3 px-6 text-left">Останній візит</th>
+                            <th class="py-3 px-6 text-center rounded-tr-lg">Дії</th>
                         </tr>
                     </thead>
-                    <tbody class="text-gray-700 text-sm">
-                        ${appState.clients.map(client => `
-                            <tr class="border-b border-gray-200 hover:bg-gray-100">
-                                <td class="py-3 px-6 text-left font-medium">${client.name}</td>
-                                <td class="py-3 px-6 text-left">${client.contact}</td>
-                                <td class="py-3 px-6 text-left">
-                                    ${client.social_links ? `<a href="${client.social_links}" target="_blank" class="text-blue-500 hover:underline">Ссылка</a>` : 'N/A'}
-                                </td>
-                                <td class="py-3 px-6 text-left">
-                                    ${client.tags && client.tags.length > 0 ? client.tags.map(tag => `<span class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full mr-1">${tag}</span>`).join('') : 'Нет'}
-                                </td>
-                                <td class="py-3 px-6 text-center">
-                                    <button data-id="${client.id}" class="edit-client-btn bg-yellow-500 text-white px-3 py-1 rounded-md text-xs hover:bg-yellow-600 transition-colors mr-2">Редактировать</button>
-                                    <button data-id="${client.id}" class="view-client-history-btn bg-purple-500 text-white px-3 py-1 rounded-md text-xs hover:bg-purple-600 transition-colors mr-2">История</button>
-                                    <button data-id="${client.id}" class="delete-client-btn bg-red-500 text-white px-3 py-1 rounded-md text-xs hover:bg-red-600 transition-colors">Удалить</button>
-                                </td>
-                            </tr>
-                        `).join('')}
+                    <tbody class="text-gray-200 text-sm">
+                        ${appState.clients.map(client => {
+                            const clientSessions = appState.sessions.filter(s => {
+                                const app = appState.appointments.find(a => a.id === s.appointment_id);
+                                return app && app.client_id === client.id;
+                            });
+                            const lastVisit = clientSessions.length > 0
+                                ? formatDate(clientSessions.sort((a, b) => new Date(b.start_time) - new Date(a.start_time))[0].start_time)
+                                : 'N/A';
+                            return `
+                                <tr class="border-b border-gray-600 hover:bg-gray-700">
+                                    <td class="py-3 px-6 text-left font-medium">${client.name}</td>
+                                    <td class="py-3 px-6 text-left">${client.contact}</td>
+                                    <td class="py-3 px-6 text-left">${clientSessions.length}</td>
+                                    <td class="py-3 px-6 text-left">${lastVisit}</td>
+                                    <td class="py-3 px-6 text-center">
+                                        <button data-id="${client.id}" class="edit-client-btn bg-yellow-600 text-white px-3 py-1 rounded-md text-xs hover:bg-yellow-700 transition-colors mr-2">Редагувати</button>
+                                        <button data-id="${client.id}" class="view-client-history-btn bg-purple-600 text-white px-3 py-1 rounded-md text-xs hover:bg-purple-700 transition-colors mr-2">Історія</button>
+                                        <button data-id="${client.id}" class="delete-client-btn bg-red-600 text-white px-3 py-1 rounded-md text-xs hover:bg-red-700 transition-colors">Видалити</button>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
                     </tbody>
                 </table>
             `;
@@ -1153,13 +1264,13 @@
 
             let historyHtml = '';
             if (clientAppointments.length === 0) {
-                historyHtml = '<p class="text-gray-600">У этого клиента нет истории визитов.</p>';
+                historyHtml = '<p class="text-gray-400">У этого клиента нет истории визитов.</p>';
             } else {
                 historyHtml = `
                     <div class="overflow-x-auto max-h-96">
-                        <table class="min-w-full bg-white rounded-lg shadow-sm text-sm">
+                        <table class="min-w-full bg-gray-800 rounded-lg shadow-sm text-sm">
                             <thead>
-                                <tr class="bg-gray-200 text-gray-600 uppercase text-xs leading-normal">
+                                <tr class="bg-gray-700 text-gray-300 uppercase text-xs leading-normal">
                                     <th class="py-2 px-4 text-left rounded-tl-lg">Дата</th>
                                     <th class="py-2 px-4 text-left">Время</th>
                                     <th class="py-2 px-4 text-left">Статус</th>
@@ -1168,19 +1279,19 @@
                                     <th class="py-2 px-4 text-left rounded-tr-lg">Заметки</th>
                                 </tr>
                             </thead>
-                            <tbody class="text-gray-700">
+                            <tbody class="text-gray-200">
                                 ${clientAppointments.map(app => {
                                     const session = appState.sessions.find(s => s.appointment_id === app.id);
                                     return `
-                                        <tr class="border-b border-gray-200 hover:bg-gray-100">
+                                        <tr class="border-b border-gray-600 hover:bg-gray-700">
                                             <td class="py-2 px-4 whitespace-nowrap">${formatDate(app.date)}</td>
                                             <td class="py-2 px-4">${formatTime(app.time)}</td>
                                             <td class="py-2 px-4">
                                                 <span class="px-2 py-1 rounded-full text-xs font-semibold ${
-                                                    app.status === 'completed' ? 'bg-green-200 text-green-800' :
-                                                    app.status === 'confirmed' ? 'bg-blue-200 text-blue-800' :
-                                                    app.status === 'pending' ? 'bg-yellow-200 text-yellow-800' :
-                                                    'bg-red-200 text-red-800'
+                                                    app.status === 'completed' ? 'bg-green-700 text-green-100' :
+                                                    app.status === 'confirmed' ? 'bg-blue-700 text-blue-100' :
+                                                    app.status === 'pending' ? 'bg-yellow-700 text-yellow-100' :
+                                                    'bg-red-700 text-red-100'
                                                 }">
                                                     ${app.status === 'completed' ? 'Завершено' :
                                                       app.status === 'confirmed' ? 'Подтверждено' :
@@ -1190,7 +1301,7 @@
                                             </td>
                                             <td class="py-2 px-4 font-semibold">${session ? formatCurrency(session.total_price) : 'N/A'}</td>
                                             <td class="py-2 px-4">
-                                                ${app.sketch_url ? `<a href="${app.sketch_url}" target="_blank" class="text-blue-500 hover:underline">Показать</a>` : 'Нет'}
+                                                ${app.sketch_url ? `<a href="${app.sketch_url}" target="_blank" class="text-blue-400 hover:underline">Показать</a>` : 'Нет'}
                                             </td>
                                             <td class="py-2 px-4">${session ? (session.notes || 'Нет') : 'Нет'}</td>
                                         </tr>
@@ -1205,12 +1316,12 @@
             showModal(
                 `История визитов для ${client.name}`,
                 `<div class="mb-4">
-                    <p><strong>Контакты:</strong> ${client.contact}</p>
-                    <p><strong>Соцсети:</strong> ${client.social_links ? `<a href="${client.social_links}" target="_blank" class="text-blue-500 hover:underline">${client.social_links}</a>` : 'N/A'}</p>
-                    <p><strong>Заметки:</strong> ${client.notes || 'Нет'}</p>
-                    <p><strong>Метки:</strong> ${client.tags && client.tags.length > 0 ? client.tags.join(', ') : 'Нет'}</p>
+                    <p class="text-gray-300"><strong>Контакты:</strong> ${client.contact}</p>
+                    <p class="text-gray-300"><strong>Соцсети:</strong> ${client.social_links ? `<a href="${client.social_links}" target="_blank" class="text-blue-400 hover:underline">${client.social_links}</a>` : 'N/A'}</p>
+                    <p class="text-gray-300"><strong>Заметки:</strong> ${client.notes || 'Нет'}</p>
+                    <p class="text-gray-300"><strong>Метки:</strong> ${client.tags && client.tags.length > 0 ? client.tags.join(', ') : 'Нет'}</p>
                 </div>
-                <h4 class="text-lg font-semibold mb-2">История сеансов:</h4>
+                <h4 class="text-lg font-semibold mb-2 text-gray-300">История сеансов:</h4>
                 ${historyHtml}`,
                 'alert' // Using alert type, but with rich HTML content
             );
@@ -1221,51 +1332,66 @@
         function renderInventory() {
             const appContent = document.getElementById('app-content');
             appContent.innerHTML = `
-                <div class="p-4 md:p-8 bg-white rounded-lg shadow-md">
-                    <h2 class="text-3xl font-bold mb-6 text-gray-800">Учёт расходников и инвентаризация</h2>
+                <div class="p-4 md:p-8 bg-gray-700 rounded-lg shadow-md">
+                    <h2 class="text-3xl font-bold mb-6 text-blue-300">Матеріали</h2>
 
-                    <button id="add-material-btn" class="mb-6 px-6 py-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors">
-                        Добавить новый материал
-                    </button>
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="flex items-center space-x-4">
+                            <select class="bg-gray-800 text-gray-200 border border-gray-600 rounded-md py-2 px-4 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <option>Усі категорії</option>
+                                ${appState.materialCategories.map(cat => `<option value="${cat}">${cat}</option>`).join('')}
+                            </select>
+                            <div class="relative">
+                                <input type="text" placeholder="Пошук матеріалів ..." class="bg-gray-800 text-gray-200 border border-gray-600 rounded-md py-2 px-4 pl-10 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            </div>
+                        </div>
+                        <button id="add-material-btn" class="px-6 py-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors flex items-center">
+                            <i class="fas fa-plus mr-2"></i>Додати матеріал
+                        </button>
+                    </div>
 
-                    <div id="material-form-container" class="hidden bg-gray-50 p-6 rounded-lg shadow-inner mb-8">
-                        <h3 class="text-xl font-semibold mb-4 text-gray-800">Добавить/Редактировать материал</h3>
+                    <p class="text-gray-400 mb-4">Показано ${appState.materials.length} матеріалів</p>
+
+                    <div id="material-form-container" class="hidden bg-gray-800 p-6 rounded-lg shadow-inner mb-8">
+                        <h3 class="text-xl font-semibold mb-4 text-blue-300">Додати/Редагувати матеріал</h3>
                         <form id="material-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <input type="hidden" id="material-id">
                             <div>
-                                <label for="material-name" class="block text-sm font-medium text-gray-700">Название</label>
-                                <input type="text" id="material-name" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <label for="material-name" class="block text-sm font-medium text-gray-300">Назва</label>
+                                <input type="text" id="material-name" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
                             </div>
                             <div>
-                                <label for="material-price" class="block text-sm font-medium text-gray-700">Цена за единицу (грн)</label>
-                                <input type="number" id="material-price" step="0.01" min="0" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <label for="material-price" class="block text-sm font-medium text-gray-300">Ціна за одиницю (грн)</label>
+                                <input type="number" id="material-price" step="0.01" min="0" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
                             </div>
                             <div>
-                                <label for="material-stock" class="block text-sm font-medium text-gray-700">Остаток</label>
-                                <input type="number" id="material-stock" step="0.01" min="0" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <label for="material-stock" class="block text-sm font-medium text-gray-300">Кількість</label>
+                                <input type="number" id="material-stock" step="0.01" min="0" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
                             </div>
                             <div>
-                                <label for="material-type" class="block text-sm font-medium text-gray-700">Вид</label>
-                                <select id="material-type" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <label for="material-type" class="block text-sm font-medium text-gray-300">Категорія</label>
+                                <select id="material-type" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
                                     ${appState.materialCategories.map(cat => `<option value="${cat}">${cat}</option>`).join('')}
                                 </select>
                             </div>
                             <div>
-                                <label for="material-low-threshold" class="block text-sm font-medium text-gray-700">Порог низкого остатка</label>
-                                <input type="number" id="material-low-threshold" step="0.01" min="0" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <label for="material-low-threshold" class="block text-sm font-medium text-gray-300">Поріг низького остатку</label>
+                                <input type="number" id="material-low-threshold" step="0.01" min="0" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
                             </div>
                             <div class="md:col-span-2 flex justify-end space-x-3">
-                                <button type="button" id="cancel-material-form" class="px-5 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition-colors">Отмена</button>
+                                <button type="button" id="cancel-material-form" class="px-5 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors">Отмена</button>
                                 <button type="submit" class="px-5 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">Сохранить материал</button>
                             </div>
                         </form>
                     </div>
 
-                    <h3 class="text-2xl font-semibold mb-4 text-gray-800">Список материалов</h3>
                     <div id="materials-list" class="overflow-x-auto mb-8">
                         </div>
 
-                    <h3 class="text-2xl font-semibold mb-4 text-gray-800">История движений материалов</h3>
+                    <p class="text-gray-400 mt-4">Двічі клік по матеріалу для швидкого редагування</p>
+
+                    <h3 class="text-2xl font-semibold mb-4 text-blue-300 mt-8">Історія рухів матеріалів</h3>
                     <div id="material-movements-list" class="overflow-x-auto">
                         </div>
                 </div>
@@ -1327,33 +1453,42 @@
         function renderMaterialsList() {
             const listContainer = document.getElementById('materials-list');
             if (appState.materials.length === 0) {
-                listContainer.innerHTML = '<p class="text-gray-600">Нет зарегистрированных материалов.</p>';
+                listContainer.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-10 text-gray-400">
+                        <i class="fas fa-box-open text-6xl mb-4"></i>
+                        <p class="text-lg">Немає матеріалів на складі</p>
+                        <button id="add-material-from-empty-btn" class="mt-4 px-6 py-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors flex items-center">
+                            <i class="fas fa-plus mr-2"></i>Додати матеріал
+                        </button>
+                    </div>
+                `;
+                document.getElementById('add-material-from-empty-btn').addEventListener('click', () => {
+                    document.getElementById('material-form-container').classList.remove('hidden');
+                });
                 return;
             }
 
             listContainer.innerHTML = `
-                <table class="min-w-full bg-white rounded-lg shadow-sm">
+                <table class="min-w-full bg-gray-800 rounded-lg shadow-sm">
                     <thead>
-                        <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
-                            <th class="py-3 px-6 text-left rounded-tl-lg">Название</th>
-                            <th class="py-3 px-6 text-left">Цена за ед.</th>
-                            <th class="py-3 px-6 text-left">Остаток</th>
-                            <th class="py-3 px-6 text-left">Вид</th>
-                            <th class="py-3 px-6 text-left">Порог низкого остатка</th>
-                            <th class="py-3 px-6 text-center rounded-tr-lg">Действия</th>
+                        <tr class="bg-gray-700 text-gray-300 uppercase text-sm leading-normal">
+                            <th class="py-3 px-6 text-left rounded-tl-lg">Назва</th>
+                            <th class="py-3 px-6 text-left">Категорія</th>
+                            <th class="py-3 px-6 text-left">Кількість</th>
+                            <th class="py-3 px-6 text-left">Ціна</th>
+                            <th class="py-3 px-6 text-center rounded-tr-lg">Дії</th>
                         </tr>
                     </thead>
-                    <tbody class="text-gray-700 text-sm">
+                    <tbody class="text-gray-200 text-sm">
                         ${appState.materials.map(material => `
-                            <tr class="border-b border-gray-200 hover:bg-gray-100 ${material.stock <= material.low_stock_threshold ? 'bg-red-50' : ''}">
+                            <tr class="border-b border-gray-600 hover:bg-gray-700 ${material.stock <= material.low_stock_threshold ? 'bg-red-900/30' : ''}">
                                 <td class="py-3 px-6 text-left font-medium">${material.name}</td>
-                                <td class="py-3 px-6 text-left">${formatCurrency(material.unit_price)}</td>
-                                <td class="py-3 px-6 text-left">${material.stock}</td>
                                 <td class="py-3 px-6 text-left">${material.type}</td>
-                                <td class="py-3 px-6 text-left">${material.low_stock_threshold}</td>
+                                <td class="py-3 px-6 text-left">${material.stock}</td>
+                                <td class="py-3 px-6 text-left">${formatCurrency(material.unit_price)}</td>
                                 <td class="py-3 px-6 text-center">
-                                    <button data-id="${material.id}" class="edit-material-btn bg-yellow-500 text-white px-3 py-1 rounded-md text-xs hover:bg-yellow-600 transition-colors mr-2">Редактировать</button>
-                                    <button data-id="${material.id}" class="delete-material-btn bg-red-500 text-white px-3 py-1 rounded-md text-xs hover:bg-red-600 transition-colors">Удалить</button>
+                                    <button data-id="${material.id}" class="edit-material-btn bg-yellow-600 text-white px-3 py-1 rounded-md text-xs hover:bg-yellow-700 transition-colors mr-2">Редагувати</button>
+                                    <button data-id="${material.id}" class="delete-material-btn bg-red-600 text-white px-3 py-1 rounded-md text-xs hover:bg-red-700 transition-colors">Видалити</button>
                                 </td>
                             </tr>
                         `).join('')}
@@ -1402,14 +1537,14 @@
                 if (error) throw error;
 
                 if (movements.length === 0) {
-                    listContainer.innerHTML = '<p class="text-gray-600">Нет истории движений материалов.</p>';
+                    listContainer.innerHTML = '<p class="text-gray-400">Нет истории движений материалов.</p>';
                     return;
                 }
 
                 listContainer.innerHTML = `
-                    <table class="min-w-full bg-white rounded-lg shadow-sm">
+                    <table class="min-w-full bg-gray-800 rounded-lg shadow-sm">
                         <thead>
-                            <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                            <tr class="bg-gray-700 text-gray-300 uppercase text-sm leading-normal">
                                 <th class="py-3 px-6 text-left rounded-tl-lg">Дата</th>
                                 <th class="py-3 px-6 text-left">Материал</th>
                                 <th class="py-3 px-6 text-left">Тип</th>
@@ -1417,13 +1552,13 @@
                                 <th class="py-3 px-6 text-left rounded-tr-lg">Источник/Цель</th>
                             </tr>
                         </thead>
-                        <tbody class="text-gray-700 text-sm">
+                        <tbody class="text-gray-200 text-sm">
                             ${movements.map(move => `
-                                <tr class="border-b border-gray-200 hover:bg-gray-100">
+                                <tr class="border-b border-gray-600 hover:bg-gray-700">
                                     <td class="py-3 px-6 text-left whitespace-nowrap">${new Date(move.date).toLocaleString('uk-UA')}</td>
                                     <td class="py-3 px-6 text-left">${move.materials ? move.materials.name : 'Неизвестно'}</td>
                                     <td class="py-3 px-6 text-left">
-                                        <span class="px-2 py-1 rounded-full text-xs font-semibold ${move.type === 'in' ? 'bg-blue-200 text-blue-800' : 'bg-orange-200 text-orange-800'}">
+                                        <span class="px-2 py-1 rounded-full text-xs font-semibold ${move.type === 'in' ? 'bg-blue-700 text-blue-100' : 'bg-orange-700 text-orange-100'}">
                                             ${move.type === 'in' ? 'Приход' : 'Расход'}
                                         </span>
                                     </td>
@@ -1436,7 +1571,7 @@
                 `;
             } catch (error) {
                 console.error('Ошибка загрузки истории движений материалов:', error.message);
-                listContainer.innerHTML = `<p class="text-red-600">Ошибка загрузки истории: ${error.message}</p>`;
+                listContainer.innerHTML = `<p class="text-red-400">Ошибка загрузки истории: ${error.message}</p>`;
             }
         }
 
@@ -1453,66 +1588,85 @@
         function renderFinance() {
             const appContent = document.getElementById('app-content');
             appContent.innerHTML = `
-                <div class="p-4 md:p-8 bg-white rounded-lg shadow-md">
-                    <h2 class="text-3xl font-bold mb-6 text-gray-800">Финансовый модуль</h2>
+                <div class="p-4 md:p-8 bg-gray-700 rounded-lg shadow-md">
+                    <h2 class="text-3xl font-bold mb-6 text-blue-300">Фінанси</h2>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                        <div class="bg-indigo-100 p-5 rounded-lg shadow-sm">
-                            <h3 class="text-lg font-semibold text-indigo-800 mb-2">Общая выручка</h3>
-                            <p class="text-3xl font-bold text-indigo-900" id="total-revenue">${formatCurrency(calculateTotalRevenue())}</p>
+                        <div class="bg-gray-800 p-5 rounded-lg shadow-sm">
+                            <h3 class="text-lg font-semibold text-gray-300 mb-1">Дохід (за місяць)</h3>
+                            <p class="text-3xl font-bold text-green-400" id="monthly-revenue-finance">${formatCurrency(calculateMonthlyRevenue())}</p>
+                            <p class="text-sm text-gray-400">+0% з минулого місяця</p>
                         </div>
-                        <div class="bg-rose-100 p-5 rounded-lg shadow-sm">
-                            <h3 class="text-lg font-semibold text-rose-800 mb-2">Общие расходы</h3>
-                            <p class="text-3xl font-bold text-rose-900" id="total-expenses">${formatCurrency(calculateTotalExpenses())}</p>
+                        <div class="bg-gray-800 p-5 rounded-lg shadow-sm">
+                            <h3 class="text-lg font-semibold text-gray-300 mb-1">Витрати (за місяць)</h3>
+                            <p class="text-3xl font-bold text-red-400" id="monthly-expenses-finance">${formatCurrency(calculateMonthlyExpenses())}</p>
+                            <p class="text-sm text-gray-400">+0% з минулого місяця</p>
                         </div>
-                        <div class="bg-teal-100 p-5 rounded-lg shadow-sm">
-                            <h3 class="text-lg font-semibold text-teal-800 mb-2">Чистая прибыль</h3>
-                            <p class="text-3xl font-bold text-teal-900" id="net-profit">${formatCurrency(calculateNetProfit())}</p>
+                        <div class="bg-gray-800 p-5 rounded-lg shadow-sm">
+                            <h3 class="text-lg font-semibold text-gray-300 mb-1">Прибуток</h3>
+                            <p class="text-3xl font-bold text-blue-400" id="net-profit">${formatCurrency(calculateNetProfit())}</p>
+                            <p class="text-sm text-gray-400">Рентабельність: ${((calculateNetProfit() / calculateTotalRevenue()) * 100 || 0).toFixed(1)}%</p>
                         </div>
                     </div>
 
-                    <button id="add-expense-btn" class="mb-6 px-6 py-3 bg-red-600 text-white rounded-lg shadow-md hover:bg-red-700 transition-colors">
-                        Добавить расход
-                    </button>
+                    <div class="flex justify-end mb-6">
+                        <button id="add-expense-btn" class="px-6 py-3 bg-red-600 text-white rounded-lg shadow-md hover:bg-red-700 transition-colors flex items-center">
+                            <i class="fas fa-plus mr-2"></i>Додати витрату
+                        </button>
+                    </div>
 
-                    <div id="expense-form-container" class="hidden bg-gray-50 p-6 rounded-lg shadow-inner mb-8">
-                        <h3 class="text-xl font-semibold mb-4 text-gray-800">Добавить новый расход</h3>
+                    <div id="expense-form-container" class="hidden bg-gray-800 p-6 rounded-lg shadow-inner mb-8">
+                        <h3 class="text-xl font-semibold mb-4 text-blue-300">Додати новий расход</h3>
                         <form id="expense-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label for="expense-date" class="block text-sm font-medium text-gray-700">Дата</label>
-                                <input type="date" id="expense-date" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <label for="expense-date" class="block text-sm font-medium text-gray-300">Дата</label>
+                                <input type="date" id="expense-date" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
                             </div>
                             <div>
-                                <label for="expense-amount" class="block text-sm font-medium text-gray-700">Сумма (грн)</label>
-                                <input type="number" id="expense-amount" step="0.01" min="0" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <label for="expense-amount" class="block text-sm font-medium text-gray-300">Сумма (грн)</label>
+                                <input type="number" id="expense-amount" step="0.01" min="0" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
                             </div>
                             <div class="md:col-span-2">
-                                <label for="expense-description" class="block text-sm font-medium text-gray-700">Описание</label>
-                                <input type="text" id="expense-description" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <label for="expense-description" class="block text-sm font-medium text-gray-300">Описание</label>
+                                <input type="text" id="expense-description" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
                             </div>
                             <div>
-                                <label for="expense-category" class="block text-sm font-medium text-gray-700">Категория</label>
-                                <input type="text" id="expense-category" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Аренда, Реклама, Коммунальные">
+                                <label for="expense-category" class="block text-sm font-medium text-gray-300">Категория</label>
+                                <input type="text" id="expense-category" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200" placeholder="Аренда, Реклама, Коммунальные">
                             </div>
                             <div class="md:col-span-2 flex justify-end space-x-3">
-                                <button type="button" id="cancel-expense-form" class="px-5 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition-colors">Отмена</button>
+                                <button type="button" id="cancel-expense-form" class="px-5 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors">Отмена</button>
                                 <button type="submit" class="px-5 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">Добавить расход</button>
                             </div>
                         </form>
                     </div>
 
-                    <h3 class="text-2xl font-semibold mb-4 text-gray-800">Таблица доходов и расходов</h3>
+                    <div class="bg-gray-800 p-6 rounded-lg shadow-inner mb-8">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-2xl font-semibold text-blue-300">Дохід vs Витрати</h3>
+                            <select class="bg-gray-700 text-gray-200 border border-gray-600 rounded-md py-1 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <option>12 місяців</option>
+                                <option>6 місяців</option>
+                                <option>3 місяці</option>
+                            </select>
+                        </div>
+                        <div class="h-64 bg-gray-900 rounded-md flex items-center justify-center text-gray-500">
+                            Графік Дохід vs Витрати
+                        </div>
+                    </div>
+
+                    <h3 class="text-2xl font-semibold mb-4 text-blue-300">Останні операції</h3>
                     <div id="finance-table" class="overflow-x-auto mb-8">
                         </div>
 
-                    <h3 class="text-2xl font-semibold mb-4 text-gray-800">Отчёты</h3>
+                    <h3 class="text-2xl font-semibold mb-4 text-blue-300">Отчёты</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="bg-gray-50 p-5 rounded-lg shadow-inner">
-                            <h4 class="text-lg font-semibold mb-3">Выручка по месяцам</h4>
+                        <div class="bg-gray-800 p-5 rounded-lg shadow-inner">
+                            <h4 class="text-lg font-semibold mb-3 text-gray-300">Выручка по месяцам</h4>
                             <div id="monthly-revenue-report"></div>
                         </div>
-                        <div class="bg-gray-50 p-5 rounded-lg shadow-inner">
-                            <h4 class="text-lg font-semibold mb-3">Выручка по методам оплаты</h4>
+                        <div class="bg-gray-800 p-5 rounded-lg shadow-inner">
+                            <h4 class="text-lg font-semibold mb-3 text-gray-300">Выручка по методам оплаты</h4>
                             <div id="payment-method-report"></div>
                         </div>
                     </div>
@@ -1537,6 +1691,19 @@
 
         function calculateTotalRevenue() {
             return appState.sessions.reduce((sum, session) => sum + session.total_price, 0);
+        }
+
+        function calculateMonthlyExpenses() {
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+            return appState.expenses.reduce((sum, expense) => {
+                const expenseDate = new Date(expense.date);
+                if (expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear) {
+                    return sum + expense.amount;
+                }
+                return sum;
+            }, 0);
         }
 
         function calculateTotalExpenses() {
@@ -1603,14 +1770,14 @@
             combinedData.sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date, newest first
 
             if (combinedData.length === 0) {
-                tableContainer.innerHTML = '<p class="text-gray-600">Нет финансовых операций.</p>';
+                tableContainer.innerHTML = '<p class="text-gray-400">Нет финансовых операций.</p>';
                 return;
             }
 
             tableContainer.innerHTML = `
-                <table class="min-w-full bg-white rounded-lg shadow-sm">
+                <table class="min-w-full bg-gray-800 rounded-lg shadow-sm">
                     <thead>
-                        <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                        <tr class="bg-gray-700 text-gray-300 uppercase text-sm leading-normal">
                             <th class="py-3 px-6 text-left rounded-tl-lg">Дата</th>
                             <th class="py-3 px-6 text-left">Тип</th>
                             <th class="py-3 px-6 text-left">Описание</th>
@@ -1619,19 +1786,19 @@
                             <th class="py-3 px-6 text-left rounded-tr-lg">Сумма</th>
                         </tr>
                     </thead>
-                    <tbody class="text-gray-700 text-sm">
+                    <tbody class="text-gray-200 text-sm">
                         ${combinedData.map(item => `
-                            <tr class="border-b border-gray-200 hover:bg-gray-100">
+                            <tr class="border-b border-gray-600 hover:bg-gray-700">
                                 <td class="py-3 px-6 text-left whitespace-nowrap">${formatDate(item.date)}</td>
                                 <td class="py-3 px-6 text-left">
-                                    <span class="px-2 py-1 rounded-full text-xs font-semibold ${item.type === 'Доход' ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}">
+                                    <span class="px-2 py-1 rounded-full text-xs font-semibold ${item.type === 'Доход' ? 'bg-green-700 text-green-100' : 'bg-red-700 text-red-100'}">
                                         ${item.type}
                                     </span>
                                 </td>
                                 <td class="py-3 px-6 text-left">${item.description}</td>
                                 <td class="py-3 px-6 text-left">${item.category}</td>
                                 <td class="py-3 px-6 text-left">${item.paymentMethod === 'cash' ? 'Наличные' : item.paymentMethod === 'card' ? 'Карта' : item.paymentMethod === 'transfer' ? 'Перевод' : item.paymentMethod}</td>
-                                <td class="py-3 px-6 text-left font-semibold ${item.type === 'Доход' ? 'text-green-600' : 'text-red-600'}">${formatCurrency(item.amount)}</td>
+                                <td class="py-3 px-6 text-left font-semibold ${item.type === 'Доход' ? 'text-green-400' : 'text-red-400'}">${formatCurrency(item.amount)}</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -1655,12 +1822,12 @@
             const sortedMonths = Object.keys(monthlyData).sort();
 
             if (sortedMonths.length === 0) {
-                reportContainer.innerHTML = '<p class="text-gray-600">Нет данных о выручке по месяцам.</p>';
+                reportContainer.innerHTML = '<p class="text-gray-400">Нет данных о выручке по месяцам.</p>';
                 return;
             }
 
             reportContainer.innerHTML = `
-                <ul class="list-disc list-inside space-y-1">
+                <ul class="list-disc list-inside space-y-1 text-gray-200">
                     ${sortedMonths.map(month => `
                         <li>${month}: <span class="font-semibold">${formatCurrency(monthlyData[month])}</span></li>
                     `).join('')}
@@ -1685,12 +1852,12 @@
             const totalRevenue = calculateTotalRevenue();
 
             if (totalRevenue === 0) {
-                reportContainer.innerHTML = '<p class="text-gray-600">Нет данных о выручке по методам оплаты.</p>';
+                reportContainer.innerHTML = '<p class="text-gray-400">Нет данных о выручке по методам оплаты.</p>';
                 return;
             }
 
             reportContainer.innerHTML = `
-                <ul class="list-disc list-inside space-y-1">
+                <ul class="list-disc list-inside space-y-1 text-gray-200">
                     <li>Наличные: <span class="font-semibold">${formatCurrency(paymentMethodData.cash)} (${((paymentMethodData.cash / totalRevenue) * 100).toFixed(1)}%)</span></li>
                     <li>Карта: <span class="font-semibold">${formatCurrency(paymentMethodData.card)} (${((paymentMethodData.card / totalRevenue) * 100).toFixed(1)}%)</span></li>
                     <li>Перевод: <span class="font-semibold">${formatCurrency(paymentMethodData.transfer)} (${((paymentMethodData.transfer / totalRevenue) * 100).toFixed(1)}%)</span></li>
@@ -1703,31 +1870,109 @@
         function renderSettings() {
             const appContent = document.getElementById('app-content');
             appContent.innerHTML = `
-                <div class="p-4 md:p-8 bg-white rounded-lg shadow-md">
-                    <h2 class="text-3xl font-bold mb-6 text-gray-800">Настройки</h2>
+                <div class="p-4 md:p-8 bg-gray-700 rounded-lg shadow-md">
+                    <h2 class="text-3xl font-bold mb-6 text-blue-300">Налаштування</h2>
 
-                    <div class="bg-gray-50 p-6 rounded-lg shadow-inner mb-8">
-                        <h3 class="text-xl font-semibold mb-4 text-gray-800">Основные настройки</h3>
+                    <div class="bg-gray-800 p-6 rounded-lg shadow-inner mb-8">
+                        <h3 class="text-xl font-semibold mb-4 text-blue-300">Основні налаштування</h3>
                         <form id="settings-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label for="hourly-rate" class="block text-sm font-medium text-gray-700">Ставка за час (грн)</label>
-                                <input type="number" id="hourly-rate" step="0.01" min="0" value="${appState.hourlyRate}" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <label for="hourly-rate" class="block text-sm font-medium text-gray-300">Почасова ставка (грн)</label>
+                                <input type="number" id="hourly-rate" step="0.01" min="0" value="${appState.hourlyRate}" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
                             </div>
-                            <div class="md:col-span-2">
-                                <label for="material-categories" class="block text-sm font-medium text-gray-700">Категории материалов (через запятую)</label>
-                                <input type="text" id="material-categories" value="${appState.materialCategories.join(', ')}" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Краски, Иглы, Средства гигиены">
+                            <div>
+                                <label for="currency" class="block text-sm font-medium text-gray-300">Валюта</label>
+                                <select id="currency" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
+                                    <option value="UAH">Гривня (грн)</option>
+                                    <option value="USD">Доллар (USD)</option>
+                                    <option value="EUR">Евро (EUR)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="language" class="block text-sm font-medium text-gray-300">Мова інтерфейсу</label>
+                                <select id="language" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
+                                    <option value="uk-UA">Українська</option>
+                                    <option value="en-US">English</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="date-format" class="block text-sm font-medium text-gray-300">Формат дати</label>
+                                <select id="date-format" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
+                                    <option value="DD.MM.YYYY">ДД.ММ.ГГГГ</option>
+                                    <option value="MM/DD/YYYY">ММ/ДД/ГГГГ</option>
+                                </select>
                             </div>
                             <div class="md:col-span-2 flex justify-end">
                                 <button type="submit" class="px-6 py-3 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 transition-colors">
-                                    Сохранить настройки
+                                    Зберегти налаштування
                                 </button>
                             </div>
                         </form>
+                    </div>
+
+                    <div class="bg-gray-800 p-6 rounded-lg shadow-inner mb-8">
+                        <h3 class="text-xl font-semibold mb-4 text-blue-300">Категорії витрат</h3>
+                        <div id="expense-categories-list" class="mb-4">
+                            ${appState.materialCategories.map(cat => `
+                                <div class="flex items-center justify-between bg-gray-700 p-3 rounded-md mb-2">
+                                    <span class="text-gray-200">${cat}</span>
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-400 hover:text-blue-300"><i class="fas fa-pencil-alt"></i></button>
+                                        <button class="text-red-400 hover:text-red-300"><i class="fas fa-trash-alt"></i></button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="flex space-x-2">
+                            <input type="text" id="new-expense-category" placeholder="Назва нової категорії" class="flex-1 p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
+                            <button id="add-expense-category-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-800 p-6 rounded-lg shadow-inner">
+                        <h3 class="text-xl font-semibold mb-4 text-blue-300">Категорії матеріалів</h3>
+                        <div id="material-categories-list" class="mb-4">
+                            ${appState.materialCategories.map(cat => `
+                                <div class="flex items-center justify-between bg-gray-700 p-3 rounded-md mb-2">
+                                    <span class="text-gray-200">${cat}</span>
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-400 hover:text-blue-300"><i class="fas fa-pencil-alt"></i></button>
+                                        <button class="text-red-400 hover:text-red-300"><i class="fas fa-trash-alt"></i></button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="flex space-x-2">
+                            <input type="text" id="new-material-category" placeholder="Назва нової категорії" class="flex-1 p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
+                            <button id="add-material-category-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
 
             document.getElementById('settings-form').addEventListener('submit', handleSaveSettings);
+
+            // Add/Edit category logic (simplified, full implementation would require more state management)
+            document.getElementById('add-expense-category-btn').addEventListener('click', () => {
+                const newCatInput = document.getElementById('new-expense-category');
+                if (newCatInput.value.trim() !== '') {
+                    appState.materialCategories.push(newCatInput.value.trim()); // Using materialCategories for now
+                    newCatInput.value = '';
+                    renderSettings(); // Re-render settings to show new category
+                }
+            });
+            document.getElementById('add-material-category-btn').addEventListener('click', () => {
+                const newCatInput = document.getElementById('new-material-category');
+                if (newCatInput.value.trim() !== '') {
+                    appState.materialCategories.push(newCatInput.value.trim()); // Using materialCategories for now
+                    newCatInput.value = '';
+                    renderSettings(); // Re-render settings to show new category
+                }
+            });
         }
 
         async function handleSaveSettings(event) {
