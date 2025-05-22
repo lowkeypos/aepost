@@ -195,7 +195,12 @@
     <script>
         // Supabase Client Initialization
         var SUPABASE_URL = 'https://iedrcmbvegttznaxpevd.supabase.co';
-        var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllZHJjbWJ2ZWd0dHpuYXhwZXZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0MDQyMzEsImV4cCI6MjA2Mjk4MDIzMX0.5K7nHzHI10tXQRP1ha8iH1CD-gjTtpzFSQSRIPofj1A'; // Updated key for testing
+        // Вставьте ваш Supabase Anon Key здесь. Вы можете найти его в настройках проекта Supabase -> API.
+        // Убедитесь, что ваш ключ имеет разрешения на чтение для всех таблиц, используемых в приложении.
+        // Также проверьте политики RLS (Row Level Security) в вашей базе данных Supabase.
+        // Для начала разработки, вы можете отключить RLS для таблиц 'clients', 'materials', 'appointments', 'expenses', 'sessions', 'settings'
+        // или настроить политики, разрешающие SELECT для 'anon' роли.
+        var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllZHJjbWJ2ZWd0dHpuYXhwZXZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0MDQyMzEsImV4cCI6MjA2Mjk4MDIzMX0.5K7nHzHI10tXQRP1ha8iH1CD-gjTtpzFSQSRIPofj1A';
 
         var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -277,8 +282,7 @@
                 }
             }
             return result;
-        };
-
+        }
         // Helper to map an array (replacing Array.prototype.map)
         var mapArray = function(array, callback) {
             var result = [];
@@ -360,7 +364,11 @@
         // --- Data Fetching and Realtime Subscriptions ---
         var fetchData = function() {
             return new Promise(function(resolve, reject) {
-                document.getElementById('initial-loading-spinner').classList.remove('hidden');
+                var spinner = document.getElementById('initial-loading-spinner');
+                if (spinner) {
+                    spinner.classList.remove('hidden');
+                }
+
                 supabase.from('settings').select('*').limit(1)
                     .then(function(settingsResponse) {
                         if (settingsResponse.error) throw settingsResponse.error;
@@ -375,7 +383,8 @@
                                     material_categories: ['Краски', 'Иглы', 'Средства гигиены', 'Другое'],
                                     expense_categories: ['Аренда', 'Реклама', 'Коммунальные', 'Зарплата'] // Default expense categories
                                 }])
-                                .then(function() {
+                                .then(function(insertResponse) {
+                                    if (insertResponse.error) throw insertResponse.error;
                                     appState.hourlyRate = 500;
                                     appState.materialCategories = ['Краски', 'Иглы', 'Средства гигиены', 'Другое'];
                                     appState.expenseCategories = ['Аренда', 'Реклама', 'Коммунальные', 'Зарплата'];
@@ -412,20 +421,30 @@
                         appState.sessions = sessionsResponse.data;
 
                         appState.isDataLoaded = true;
-                        document.getElementById('initial-loading-spinner').classList.add('hidden');
+                        if (spinner) {
+                            spinner.classList.add('hidden');
+                        }
                         handleRouteChange(); // Render content after data is loaded
                         resolve();
                     })
                     .catch(function(error) {
                         console.error('Ошибка загрузки данных:', error.message);
-                        showModal('Ошибка', 'Не удалось загрузить данные: ' + error.message + '. Пожалуйста, проверьте подключение к Supabase и настройки таблиц.', 'alert');
-                        document.getElementById('initial-loading-spinner').classList.add('hidden');
+                        showModal('Ошибка', 'Не удалось загрузить данные: ' + error.message + '. Пожалуйста, проверьте подключение к Supabase, ваш Anon Key и настройки RLS (Row Level Security) для всех таблиц.', 'alert');
+                        if (spinner) {
+                            spinner.classList.add('hidden');
+                        }
                         reject(error);
                     });
             });
         };
 
         var setupRealtimeSubscriptions = function() {
+            // Only subscribe if supabase object is valid and key is present
+            if (!supabase || !SUPABASE_ANON_KEY) {
+                console.warn("Supabase client not fully initialized, skipping realtime subscriptions.");
+                return;
+            }
+
             supabase.channel('public:materials')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'materials' }, function(payload) {
                     fetchDataAndRerenderCurrentPage();
@@ -517,7 +536,10 @@
                 // Default to dashboard if path is not found or empty
                 window.location.hash = '#dashboard';
                 renderDashboard();
-                document.querySelector('.nav-link[href="#dashboard"]').classList.add('active');
+                var defaultLink = document.querySelector('.nav-link[href="#dashboard"]');
+                if (defaultLink) {
+                    defaultLink.classList.add('active');
+                }
                 if (pageTitle) {
                     pageTitle.textContent = 'Панель';
                 }
@@ -866,9 +888,15 @@
                         </button>
                     </div>
                 `;
-                document.getElementById('add-appointment-from-empty-btn').addEventListener('click', function() {
-                    document.getElementById('appointment-form-container').classList.remove('hidden');
-                });
+                var addAppointmentFromEmptyBtn = document.getElementById('add-appointment-from-empty-btn');
+                if (addAppointmentFromEmptyBtn) {
+                    addAppointmentFromEmptyBtn.addEventListener('click', function() {
+                        var formContainer = document.getElementById('appointment-form-container');
+                        if (formContainer) {
+                            formContainer.classList.remove('hidden');
+                        }
+                    });
+                }
                 return;
             }
 
@@ -1073,7 +1101,11 @@
                 });
             }
 
-            document.getElementById('add-material-btn').addEventListener('click', function() { addMaterialInput(); });
+            var addMaterialBtn = document.getElementById('add-material-btn');
+            if (addMaterialBtn) {
+                addMaterialBtn.addEventListener('click', function() { addMaterialInput(); });
+            }
+
 
             // Load existing materials if session was already calculated (e.g., editing a completed session)
             var existingSession = findInArray(appState.sessions, function(s) { return s.appointment_id === appointmentId; });
@@ -1097,136 +1129,151 @@
 
 
             // Event listeners for calculations
-            document.getElementById('session-start-time').addEventListener('input', calculateSessionPrice);
-            document.getElementById('session-end-time').addEventListener('input', calculateSessionPrice);
-            document.getElementById('session-complexity').addEventListener('input', calculateSessionPrice);
-            document.getElementById('session-discount').addEventListener('input', calculateSessionPrice);
+            var sessionStartTime = document.getElementById('session-start-time');
+            if (sessionStartTime) sessionStartTime.addEventListener('input', calculateSessionPrice);
+            var sessionEndTime = document.getElementById('session-end-time');
+            if (sessionEndTime) sessionEndTime.addEventListener('input', calculateSessionPrice);
+            var sessionComplexity = document.getElementById('session-complexity');
+            if (sessionComplexity) sessionComplexity.addEventListener('input', calculateSessionPrice);
+            var sessionDiscount = document.getElementById('session-discount');
+            if (sessionDiscount) sessionDiscount.addEventListener('input', calculateSessionPrice);
 
             // Initial calculation
             calculateSessionPrice();
 
-            document.getElementById('save-session-btn').addEventListener('click', function() {
-                var startTime = document.getElementById('session-start-time').value;
-                var endTime = document.getElementById('session-end-time').value;
-                var complexity = parseInt(document.getElementById('session-complexity').value);
-                var discount = parseFloat(document.getElementById('session-discount').value);
-                var paymentMethod = document.getElementById('payment-method').value;
-                var notes = document.getElementById('session-notes').value;
+            var saveSessionBtn = document.getElementById('save-session-btn');
+            if (saveSessionBtn) {
+                saveSessionBtn.addEventListener('click', function() {
+                    var startTime = document.getElementById('session-start-time').value;
+                    var endTime = document.getElementById('session-end-time').value;
+                    var complexity = parseInt(document.getElementById('session-complexity').value);
+                    var discount = parseFloat(document.getElementById('session-discount').value);
+                    var paymentMethod = document.getElementById('payment-method').value;
+                    var notes = document.getElementById('session-notes').value;
 
-                if (!startTime || !endTime || isNaN(complexity) || isNaN(discount)) {
-                    showModal('Ошибка', 'Пожалуйста, заполните все поля времени, сложности и скидки.', 'alert');
-                    return;
-                }
-
-                var start = new Date(startTime);
-                var end = new Date(endTime);
-
-                if (end <= start) {
-                    showModal('Ошибка', 'Время окончания должно быть позже времени начала.', 'alert');
-                    return;
-                }
-
-                var calculationResults = calculateSessionPrice(true);
-                var totalWorkTime = calculationResults.totalWorkTime;
-                var costPriceMaterials = calculationResults.costPriceMaterials;
-                var complexityMarkup = calculationResults.complexityMarkup;
-                var workCost = calculationResults.workCost;
-                var finalPrice = calculationResults.finalPrice;
-
-                var materialsUsed = mapArray(materialsUsedList.children, function(div) {
-                    var select = div.querySelector('.material-select');
-                    var quantity = div.querySelector('.material-quantity');
-                    return {
-                        material_id: select.value,
-                        quantity: parseFloat(quantity.value)
-                    };
-                });
-                materialsUsed = filterArray(materialsUsed, function(m) { return m.material_id && m.quantity > 0; }); // Filter out empty or zero quantity materials
-
-                // Check for duplicate materials
-                var materialCounts = {};
-                for (var i = 0; i < materialsUsed.length; i++) {
-                    var mat = materialsUsed[i];
-                    materialCounts[mat.material_id] = (materialCounts[mat.material_id] || 0) + 1;
-                    if (materialCounts[mat.material_id] > 1) {
-                        showModal('Ошибка', 'Обнаружены дубликаты материалов. Пожалуйста, объедините их или удалите лишние.', 'alert');
+                    if (!startTime || !endTime || isNaN(complexity) || isNaN(discount)) {
+                        showModal('Ошибка', 'Пожалуйста, заполните все поля времени, сложности и скидки.', 'alert');
                         return;
                     }
-                }
 
-                showModal('Подтверждение оплаты', 'Итого к оплате: ' + formatCurrency(finalPrice) + '. Подтвердить?', 'confirm', function() {
-                    var sessionId = existingSession ? existingSession.id : null;
-                    var sessionData = {
-                        appointment_id: appointmentId,
-                        start_time: startTime,
-                        end_time: endTime,
-                        hourly_rate_used: hourlyRate,
-                        complexity_score: complexity,
-                        materials_used: JSON.stringify(materialsUsed), // Store as JSON string
-                        total_price: finalPrice,
-                        cost_price: costPriceMaterials,
-                        discount: discount,
-                        payment_method: paymentMethod,
-                        notes: notes
-                    };
+                    var start = new Date(startTime);
+                    var end = new Date(endTime);
 
-                    var promise;
-                    if (sessionId) {
-                        // Update existing session
-                        promise = supabase.from('sessions').update(sessionData).eq('id', sessionId);
-                    } else {
-                        // Insert new session
-                        promise = supabase.from('sessions').insert([sessionData]).select()
-                            .then(function(newSessionResponse) {
-                                if (newSessionResponse.error) throw newSessionResponse.error;
-                                sessionId = newSessionResponse.data[0].id;
-                                // Link session to appointment
-                                return supabase.from('appointments').update({ status: 'completed', session_id: sessionId }).eq('id', appointmentId);
-                            });
+                    if (end <= start) {
+                        showModal('Ошибка', 'Время окончания должно быть позже времени начала.', 'alert');
+                        return;
                     }
 
-                    promise
-                        .then(function(response) {
-                            if (response.error) throw response.error;
-                            // Deduct materials from inventory and record movements
-                            var materialDeductionPromises = mapArray(materialsUsed, function(item) {
-                                var material = findInArray(appState.materials, function(m) { return m.id === item.material_id; });
-                                if (material) {
-                                    var newStock = material.stock - item.quantity;
-                                    return supabase.from('materials').update({ stock: newStock }).eq('id', item.material_id)
-                                        .then(function() {
-                                            return supabase.from('material_movements').insert([
-                                                {
-                                                    material_id: item.material_id,
-                                                    type: 'out',
-                                                    quantity: item.quantity,
-                                                    source_target: 'session_' + sessionId
-                                                }
-                                            ]);
-                                        });
-                                }
-                                return Promise.resolve(); // Resolve if material not found
+                    var calculationResults = calculateSessionPrice(true);
+                    var totalWorkTime = calculationResults.totalWorkTime;
+                    var costPriceMaterials = calculationResults.costPriceMaterials;
+                    var complexityMarkup = calculationResults.complexityMarkup;
+                    var workCost = calculationResults.workCost;
+                    var finalPrice = calculationResults.finalPrice;
+
+                    var materialsUsed = mapArray(materialsUsedList.children, function(div) {
+                        var select = div.querySelector('.material-select');
+                        var quantity = div.querySelector('.material-quantity');
+                        return {
+                            material_id: select ? select.value : null,
+                            quantity: parseFloat(quantity ? quantity.value : 0)
+                        };
+                    });
+                    materialsUsed = filterArray(materialsUsed, function(m) { return m.material_id && m.quantity > 0; }); // Filter out empty or zero quantity materials
+
+                    // Check for duplicate materials
+                    var materialCounts = {};
+                    for (var i = 0; i < materialsUsed.length; i++) {
+                        var mat = materialsUsed[i];
+                        if (mat.material_id) { // Only count if material_id is present
+                            materialCounts[mat.material_id] = (materialCounts[mat.material_id] || 0) + 1;
+                            if (materialCounts[mat.material_id] > 1) {
+                                showModal('Ошибка', 'Обнаружены дубликаты материалов. Пожалуйста, объедините их или удалите лишние.', 'alert');
+                                return;
+                            }
+                        }
+                    }
+
+                    showModal('Подтверждение оплаты', 'Итого к оплате: ' + formatCurrency(finalPrice) + '. Подтвердить?', 'confirm', function() {
+                        var sessionId = existingSession ? existingSession.id : null;
+                        var sessionData = {
+                            appointment_id: appointmentId,
+                            start_time: startTime,
+                            end_time: endTime,
+                            hourly_rate_used: hourlyRate,
+                            complexity_score: complexity,
+                            materials_used: JSON.stringify(materialsUsed), // Store as JSON string
+                            total_price: finalPrice,
+                            cost_price: costPriceMaterials,
+                            discount: discount,
+                            payment_method: paymentMethod,
+                            notes: notes
+                        };
+
+                        var promise;
+                        if (sessionId) {
+                            // Update existing session
+                            promise = supabase.from('sessions').update(sessionData).eq('id', sessionId);
+                        } else {
+                            // Insert new session
+                            promise = supabase.from('sessions').insert([sessionData]).select()
+                                .then(function(newSessionResponse) {
+                                    if (newSessionResponse.error) throw newSessionResponse.error;
+                                    sessionId = newSessionResponse.data[0].id;
+                                    // Link session to appointment
+                                    return supabase.from('appointments').update({ status: 'completed', session_id: sessionId }).eq('id', appointmentId);
+                                });
+                        }
+
+                        promise
+                            .then(function(response) {
+                                if (response.error) throw response.error;
+                                // Deduct materials from inventory and record movements
+                                var materialDeductionPromises = mapArray(materialsUsed, function(item) {
+                                    var material = findInArray(appState.materials, function(m) { return m.id === item.material_id; });
+                                    if (material) {
+                                        var newStock = material.stock - item.quantity;
+                                        return supabase.from('materials').update({ stock: newStock }).eq('id', item.material_id)
+                                            .then(function() {
+                                                return supabase.from('material_movements').insert([
+                                                    {
+                                                        material_id: item.material_id,
+                                                        type: 'out',
+                                                        quantity: item.quantity,
+                                                        source_target: 'session_' + sessionId
+                                                    }
+                                                ]);
+                                            });
+                                    }
+                                    return Promise.resolve(); // Resolve if material not found
+                                });
+                                return Promise.all(materialDeductionPromises);
+                            })
+                            .then(function() {
+                                showModal('Успех', 'Сеанс успешно сохранен и оплачен!', 'alert');
+                                fetchDataAndRerenderCurrentPage(); // Re-fetch and re-render
+                                window.location.hash = '#appointments'; // Go back to appointments
+                            })
+                            .catch(function(error) {
+                                console.error('Ошибка сохранения сеанса:', error.message);
+                                showModal('Ошибка', 'Не удалось сохранить сеанс: ' + error.message, 'alert');
                             });
-                            return Promise.all(materialDeductionPromises);
-                        })
-                        .then(function() {
-                            showModal('Успех', 'Сеанс успешно сохранен и оплачен!', 'alert');
-                            fetchDataAndRerenderCurrentPage(); // Re-fetch and re-render
-                            window.location.hash = '#appointments'; // Go back to appointments
-                        })
-                        .catch(function(error) {
-                            console.error('Ошибка сохранения сеанса:', error.message);
-                            showModal('Ошибка', 'Не удалось сохранить сеанс: ' + error.message, 'alert');
-                        });
+                    });
                 });
-            });
+            }
+
 
             function calculateSessionPrice(returnValues) {
                 if (returnValues === void 0) { returnValues = false; }
-                var startTime = document.getElementById('session-start-time').value;
-                var endTime = document.getElementById('session-end-time').value;
-                var complexity = parseInt(document.getElementById('session-complexity').value);
-                var discount = parseFloat(document.getElementById('session-discount').value);
+                var startTimeEl = document.getElementById('session-start-time');
+                var endTimeEl = document.getElementById('session-end-time');
+                var complexityEl = document.getElementById('session-complexity');
+                var discountEl = document.getElementById('session-discount');
+
+                var startTime = startTimeEl ? startTimeEl.value : '';
+                var endTime = endTimeEl ? endTimeEl.value : '';
+                var complexity = complexityEl ? parseInt(complexityEl.value) : 0;
+                var discount = discountEl ? parseFloat(discountEl.value) : 0;
 
                 var totalWorkTime = 0;
                 if (startTime && endTime) {
@@ -1257,11 +1304,16 @@
                 var subtotal = workCost + complexityMarkup + costPriceMaterials;
                 var finalPrice = subtotal * (1 - (discount / 100));
 
-                document.getElementById('calculated-work-time').textContent = totalWorkTime.toFixed(2);
-                document.getElementById('calculated-cost-price').textContent = formatCurrency(costPriceMaterials);
-                document.getElementById('calculated-complexity-markup').textContent = formatCurrency(complexityMarkup);
-                document.getElementById('calculated-work-cost').textContent = formatCurrency(workCost);
-                document.getElementById('calculated-total-price').textContent = formatCurrency(finalPrice);
+                var calculatedWorkTimeEl = document.getElementById('calculated-work-time');
+                if (calculatedWorkTimeEl) calculatedWorkTimeEl.textContent = totalWorkTime.toFixed(2);
+                var calculatedCostPriceEl = document.getElementById('calculated-cost-price');
+                if (calculatedCostPriceEl) calculatedCostPriceEl.textContent = formatCurrency(costPriceMaterials);
+                var calculatedComplexityMarkupEl = document.getElementById('calculated-complexity-markup');
+                if (calculatedComplexityMarkupEl) calculatedComplexityMarkupEl.textContent = formatCurrency(complexityMarkup);
+                var calculatedWorkCostEl = document.getElementById('calculated-work-cost');
+                if (calculatedWorkCostEl) calculatedWorkCostEl.textContent = formatCurrency(workCost);
+                var calculatedTotalPriceEl = document.getElementById('calculated-total-price');
+                if (calculatedTotalPriceEl) calculatedTotalPriceEl.textContent = formatCurrency(finalPrice);
 
                 if (returnValues) {
                     return { totalWorkTime: totalWorkTime, costPriceMaterials: costPriceMaterials, complexityMarkup: complexityMarkup, workCost: workCost, finalPrice: finalPrice };
@@ -1320,18 +1372,32 @@
                 </div>
             `;
 
-            document.getElementById('add-client-btn').addEventListener('click', function() {
-                document.getElementById('client-form-container').classList.toggle('hidden');
-                document.getElementById('client-form').reset();
-                document.getElementById('client-id').value = ''; // Clear ID for new client
-            });
+            var addClientBtn = document.getElementById('add-client-btn');
+            if (addClientBtn) {
+                addClientBtn.addEventListener('click', function() {
+                    var formContainer = document.getElementById('client-form-container');
+                    var clientForm = document.getElementById('client-form');
+                    var clientIdInput = document.getElementById('client-id');
+                    if (formContainer) formContainer.classList.toggle('hidden');
+                    if (clientForm) clientForm.reset();
+                    if (clientIdInput) clientIdInput.value = ''; // Clear ID for new client
+                });
+            }
 
-            document.getElementById('cancel-client-form').addEventListener('click', function() {
-                document.getElementById('client-form-container').classList.add('hidden');
-                document.getElementById('client-form').reset();
-            });
+            var cancelClientFormBtn = document.getElementById('cancel-client-form');
+            if (cancelClientFormBtn) {
+                cancelClientFormBtn.addEventListener('click', function() {
+                    var formContainer = document.getElementById('client-form-container');
+                    var clientForm = document.getElementById('client-form');
+                    if (formContainer) formContainer.classList.add('hidden');
+                    if (clientForm) clientForm.reset();
+                });
+            }
 
-            document.getElementById('client-form').addEventListener('submit', handleAddEditClient);
+            var clientForm = document.getElementById('client-form');
+            if (clientForm) {
+                clientForm.addEventListener('submit', handleAddEditClient);
+            }
             renderClientList();
         };
 
@@ -1364,7 +1430,8 @@
                     if (response.error) throw response.error;
                     showModal('Успех', 'Данные клиента успешно ' + (clientId ? 'обновлены' : 'добавлены') + '!', 'alert');
                     form.reset();
-                    document.getElementById('client-form-container').classList.add('hidden');
+                    var formContainer = document.getElementById('client-form-container');
+                    if (formContainer) formContainer.classList.add('hidden');
                     fetchDataAndRerenderCurrentPage();
                 })
                 .catch(function(error) {
@@ -1385,9 +1452,15 @@
                         </button>
                     </div>
                 `;
-                document.getElementById('add-client-from-empty-btn').addEventListener('click', function() {
-                    document.getElementById('client-form-container').classList.remove('hidden');
-                });
+                var addClientFromEmptyBtn = document.getElementById('add-client-from-empty-btn');
+                if (addClientFromEmptyBtn) {
+                    addClientFromEmptyBtn.addEventListener('click', function() {
+                        var formContainer = document.getElementById('client-form-container');
+                        if (formContainer) {
+                            formContainer.classList.remove('hidden');
+                        }
+                    });
+                }
                 return;
             }
 
@@ -1435,13 +1508,21 @@
                     var clientId = e.target.dataset.id;
                     var client = findInArray(appState.clients, function(c) { return c.id === clientId; });
                     if (client) {
-                        document.getElementById('client-id').value = client.id;
-                        document.getElementById('client-name').value = client.name;
-                        document.getElementById('client-contact').value = client.contact;
-                        document.getElementById('client-social').value = client.social_links || '';
-                        document.getElementById('client-notes').value = client.notes || '';
-                        document.getElementById('client-tags').value = client.tags ? client.tags.join(', ') : '';
-                        document.getElementById('client-form-container').classList.remove('hidden');
+                        var clientIdInput = document.getElementById('client-id');
+                        var clientNameInput = document.getElementById('client-name');
+                        var clientContactInput = document.getElementById('client-contact');
+                        var clientSocialInput = document.getElementById('client-social');
+                        var clientNotesInput = document.getElementById('client-notes');
+                        var clientTagsInput = document.getElementById('client-tags');
+                        var formContainer = document.getElementById('client-form-container');
+
+                        if (clientIdInput) clientIdInput.value = client.id;
+                        if (clientNameInput) clientNameInput.value = client.name;
+                        if (clientContactInput) clientContactInput.value = client.contact;
+                        if (clientSocialInput) clientSocialInput.value = client.social_links || '';
+                        if (clientNotesInput) clientNotesInput.value = client.notes || '';
+                        if (clientTagsInput) clientTagsInput.value = client.tags ? client.tags.join(', ') : '';
+                        if (formContainer) formContainer.classList.remove('hidden');
                     }
                 });
             }
@@ -1619,18 +1700,32 @@
                 </div>
             `;
 
-            document.getElementById('add-material-btn').addEventListener('click', function() {
-                document.getElementById('material-form-container').classList.toggle('hidden');
-                document.getElementById('material-form').reset();
-                document.getElementById('material-id').value = ''; // Clear ID for new material
-            });
+            var addMaterialBtn = document.getElementById('add-material-btn');
+            if (addMaterialBtn) {
+                addMaterialBtn.addEventListener('click', function() {
+                    var formContainer = document.getElementById('material-form-container');
+                    var materialForm = document.getElementById('material-form');
+                    var materialIdInput = document.getElementById('material-id');
+                    if (formContainer) formContainer.classList.toggle('hidden');
+                    if (materialForm) materialForm.reset();
+                    if (materialIdInput) materialIdInput.value = ''; // Clear ID for new material
+                });
+            }
 
-            document.getElementById('cancel-material-form').addEventListener('click', function() {
-                document.getElementById('material-form-container').classList.add('hidden');
-                document.getElementById('material-form').reset();
-            });
+            var cancelMaterialFormBtn = document.getElementById('cancel-material-form');
+            if (cancelMaterialFormBtn) {
+                cancelMaterialFormBtn.addEventListener('click', function() {
+                    var formContainer = document.getElementById('material-form-container');
+                    var materialForm = document.getElementById('material-form');
+                    if (formContainer) formContainer.classList.add('hidden');
+                    if (materialForm) materialForm.reset();
+                });
+            }
 
-            document.getElementById('material-form').addEventListener('submit', handleAddEditMaterial);
+            var materialForm = document.getElementById('material-form');
+            if (materialForm) {
+                materialForm.addEventListener('submit', handleAddEditMaterial);
+            }
             renderMaterialsList();
             renderMaterialMovements();
             checkLowStock();
@@ -1665,7 +1760,8 @@
                     if (response.error) throw response.error;
                     showModal('Успех', 'Материал успешно ' + (materialId ? 'обновлен' : 'добавлен') + '!', 'alert');
                     form.reset();
-                    document.getElementById('material-form-container').classList.add('hidden');
+                    var formContainer = document.getElementById('material-form-container');
+                    if (formContainer) formContainer.classList.add('hidden');
                     fetchDataAndRerenderCurrentPage();
                 })
                 .catch(function(error) {
@@ -1686,9 +1782,15 @@
                         </button>
                     </div>
                 `;
-                document.getElementById('add-material-from-empty-btn').addEventListener('click', function() {
-                    document.getElementById('material-form-container').classList.remove('hidden');
-                });
+                var addMaterialFromEmptyBtn = document.getElementById('add-material-from-empty-btn');
+                if (addMaterialFromEmptyBtn) {
+                    addMaterialFromEmptyBtn.addEventListener('click', function() {
+                        var formContainer = document.getElementById('material-form-container');
+                        if (formContainer) {
+                            formContainer.classList.remove('hidden');
+                        }
+                    });
+                }
                 return;
             }
 
@@ -1728,13 +1830,21 @@
                     var materialId = e.target.dataset.id;
                     var material = findInArray(appState.materials, function(m) { return m.id === materialId; });
                     if (material) {
-                        document.getElementById('material-id').value = material.id;
-                        document.getElementById('material-name').value = material.name;
-                        document.getElementById('material-price').value = material.unit_price;
-                        document.getElementById('material-stock').value = material.stock;
-                        document.getElementById('material-type').value = material.type;
-                        document.getElementById('material-low-threshold').value = material.low_stock_threshold;
-                        document.getElementById('material-form-container').classList.remove('hidden');
+                        var materialIdInput = document.getElementById('material-id');
+                        var materialNameInput = document.getElementById('material-name');
+                        var materialPriceInput = document.getElementById('material-price');
+                        var materialStockInput = document.getElementById('material-stock');
+                        var materialTypeSelect = document.getElementById('material-type');
+                        var materialLowThresholdInput = document.getElementById('material-low-threshold');
+                        var formContainer = document.getElementById('material-form-container');
+
+                        if (materialIdInput) materialIdInput.value = material.id;
+                        if (materialNameInput) materialNameInput.value = material.name;
+                        if (materialPriceInput) materialPriceInput.value = material.unit_price;
+                        if (materialStockInput) materialStockInput.value = material.stock;
+                        if (materialTypeSelect) materialTypeSelect.value = material.type;
+                        if (materialLowThresholdInput) materialLowThresholdInput.value = material.low_stock_threshold;
+                        if (formContainer) formContainer.classList.remove('hidden');
                     }
                 });
             }
@@ -1804,7 +1914,9 @@
                 })
                 .catch(function(error) {
                     console.error('Ошибка загрузки истории движений материалов:', error.message);
-                    listContainer.innerHTML = `<p class="text-red-400">Ошибка загрузки истории: ${error.message}</p>`;
+                    if (listContainer) {
+                        listContainer.innerHTML = `<p class="text-red-400">Ошибка загрузки истории: ${error.message}</p>`;
+                    }
                 });
         };
 
@@ -1914,17 +2026,30 @@
                 </div>
             `;
 
-            document.getElementById('add-expense-btn').addEventListener('click', function() {
-                document.getElementById('expense-form-container').classList.toggle('hidden');
-                document.getElementById('expense-form').reset();
-            });
+            var addExpenseBtn = document.getElementById('add-expense-btn');
+            if (addExpenseBtn) {
+                addExpenseBtn.addEventListener('click', function() {
+                    var formContainer = document.getElementById('expense-form-container');
+                    var expenseForm = document.getElementById('expense-form');
+                    if (formContainer) formContainer.classList.toggle('hidden');
+                    if (expenseForm) expenseForm.reset();
+                });
+            }
 
-            document.getElementById('cancel-expense-form').addEventListener('click', function() {
-                document.getElementById('expense-form-container').classList.add('hidden');
-                document.getElementById('expense-form').reset();
-            });
+            var cancelExpenseFormBtn = document.getElementById('cancel-expense-form');
+            if (cancelExpenseFormBtn) {
+                cancelExpenseFormBtn.addEventListener('click', function() {
+                    var formContainer = document.getElementById('expense-form-container');
+                    var expenseForm = document.getElementById('expense-form');
+                    if (formContainer) formContainer.classList.add('hidden');
+                    if (expenseForm) expenseForm.reset();
+                });
+            }
 
-            document.getElementById('expense-form').addEventListener('submit', handleAddExpense);
+            var expenseForm = document.getElementById('expense-form');
+            if (expenseForm) {
+                expenseForm.addEventListener('submit', handleAddExpense);
+            }
             renderFinanceTable();
             renderMonthlyRevenueReport();
             renderPaymentMethodReport();
@@ -1969,7 +2094,8 @@
                     if (response.error) throw response.error;
                     showModal('Успех', 'Расход успешно добавлен!', 'alert');
                     form.reset();
-                    document.getElementById('expense-form-container').classList.add('hidden');
+                    var formContainer = document.getElementById('expense-form-container');
+                    if (formContainer) formContainer.classList.add('hidden');
                     fetchDataAndRerenderCurrentPage();
                 })
                 .catch(function(error) {
@@ -2014,7 +2140,9 @@
             combinedData.sort(function(a, b) { return new Date(b.date) - new Date(a.date); }); // Sort by date, newest first
 
             if (combinedData.length === 0) {
-                tableContainer.innerHTML = '<p class="text-gray-400">Нет финансовых операций.</p>';
+                if (tableContainer) {
+                    tableContainer.innerHTML = '<p class="text-gray-400">Нет финансовых операций.</p>';
+                }
                 return;
             }
 
@@ -2068,7 +2196,9 @@
             var sortedMonths = Object.keys(monthlyData).sort();
 
             if (sortedMonths.length === 0) {
-                reportContainer.innerHTML = '<p class="text-gray-400">Нет данных о выручке по месяцам.</p>';
+                if (reportContainer) {
+                    reportContainer.innerHTML = '<p class="text-gray-400">Нет данных о выручке по месяцам.</p>';
+                }
                 return;
             }
 
@@ -2100,7 +2230,9 @@
             var totalRevenue = calculateTotalRevenue();
 
             if (totalRevenue === 0) {
-                reportContainer.innerHTML = '<p class="text-gray-400">Нет данных о выручке по методам оплаты.</p>';
+                if (reportContainer) {
+                    reportContainer.innerHTML = '<p class="text-gray-400">Нет данных о выручке по методам оплаты.</p>';
+                }
                 return;
             }
 
@@ -2166,8 +2298,8 @@
                                 <div class="flex items-center justify-between bg-gray-700 p-3 rounded-md mb-2">
                                     <span class="text-gray-200">${cat}</span>
                                     <div class="flex space-x-2">
-                                        <button class="text-blue-400 hover:text-blue-300"><i class="fas fa-pencil-alt"></i></button>
-                                        <button class="text-red-400 hover:text-red-300"><i class="fas fa-trash-alt"></i></button>
+                                        <button class="edit-expense-category-btn text-blue-400 hover:text-blue-300" data-category="${cat}"><i class="fas fa-pencil-alt"></i></button>
+                                        <button class="delete-expense-category-btn text-red-400 hover:text-red-300" data-category="${cat}"><i class="fas fa-trash-alt"></i></button>
                                     </div>
                                 </div>
                             `;
@@ -2189,8 +2321,8 @@
                                 <div class="flex items-center justify-between bg-gray-700 p-3 rounded-md mb-2">
                                     <span class="text-gray-200">${cat}</span>
                                     <div class="flex space-x-2">
-                                        <button class="text-blue-400 hover:text-blue-300"><i class="fas fa-pencil-alt"></i></button>
-                                        <button class="text-red-400 hover:text-red-300"><i class="fas fa-trash-alt"></i></button>
+                                        <button class="edit-material-category-btn text-blue-400 hover:text-blue-300" data-category="${cat}"><i class="fas fa-pencil-alt"></i></button>
+                                        <button class="delete-material-category-btn text-red-400 hover:text-red-300" data-category="${cat}"><i class="fas fa-trash-alt"></i></button>
                                     </div>
                                 </div>
                             `;
@@ -2206,34 +2338,90 @@
                 </div>
             `;
 
-            document.getElementById('settings-form').addEventListener('submit', handleSaveSettings);
+            var settingsForm = document.getElementById('settings-form');
+            if (settingsForm) {
+                settingsForm.addEventListener('submit', handleSaveSettings);
+            }
 
             // Add/Edit category logic for Expense Categories
-            document.getElementById('add-expense-category-btn').addEventListener('click', function() {
-                var newCatInput = document.getElementById('new-expense-category');
-                if (newCatInput.value.trim() !== '') {
-                    appState.expenseCategories.push(newCatInput.value.trim());
-                    newCatInput.value = '';
-                    handleSaveSettings(null, true); // Save settings and re-render
-                }
-            });
+            var addExpenseCategoryBtn = document.getElementById('add-expense-category-btn');
+            if (addExpenseCategoryBtn) {
+                addExpenseCategoryBtn.addEventListener('click', function() {
+                    var newCatInput = document.getElementById('new-expense-category');
+                    if (newCatInput && newCatInput.value.trim() !== '') {
+                        appState.expenseCategories.push(newCatInput.value.trim());
+                        newCatInput.value = '';
+                        handleSaveSettings(null, true); // Save settings and re-render
+                    }
+                });
+            }
+
+            var expenseCategoriesList = document.getElementById('expense-categories-list');
+            if (expenseCategoriesList) {
+                expenseCategoriesList.addEventListener('click', function(e) {
+                    if (e.target.closest('.edit-expense-category-btn')) {
+                        var oldCategory = e.target.closest('.edit-expense-category-btn').dataset.category;
+                        var newCategory = prompt('Редагувати категорію витрат:', oldCategory);
+                        if (newCategory !== null && newCategory.trim() !== '' && newCategory.trim() !== oldCategory) {
+                            var index = appState.expenseCategories.indexOf(oldCategory);
+                            if (index > -1) {
+                                appState.expenseCategories[index] = newCategory.trim();
+                                handleSaveSettings(null, true);
+                            }
+                        }
+                    } else if (e.target.closest('.delete-expense-category-btn')) {
+                        var categoryToDelete = e.target.closest('.delete-expense-category-btn').dataset.category;
+                        showModal('Удалить категорию', 'Вы уверены, что хотите удалить категорию "' + categoryToDelete + '"?', 'confirm', function() {
+                            appState.expenseCategories = filterArray(appState.expenseCategories, function(cat) { return cat !== categoryToDelete; });
+                            handleSaveSettings(null, true);
+                        });
+                    }
+                });
+            }
+
 
             // Add/Edit category logic for Material Categories
-            document.getElementById('add-material-category-btn').addEventListener('click', function() {
-                var newCatInput = document.getElementById('new-material-category');
-                if (newCatInput.value.trim() !== '') {
-                    appState.materialCategories.push(newCatInput.value.trim());
-                    newCatInput.value = '';
-                    handleSaveSettings(null, true); // Save settings and re-render
-                }
-            });
+            var addMaterialCategoryBtn = document.getElementById('add-material-category-btn');
+            if (addMaterialCategoryBtn) {
+                addMaterialCategoryBtn.addEventListener('click', function() {
+                    var newCatInput = document.getElementById('new-material-category');
+                    if (newCatInput && newCatInput.value.trim() !== '') {
+                        appState.materialCategories.push(newCatInput.value.trim());
+                        newCatInput.value = '';
+                        handleSaveSettings(null, true); // Save settings and re-render
+                    }
+                });
+            }
+
+            var materialCategoriesList = document.getElementById('material-categories-list');
+            if (materialCategoriesList) {
+                materialCategoriesList.addEventListener('click', function(e) {
+                    if (e.target.closest('.edit-material-category-btn')) {
+                        var oldCategory = e.target.closest('.edit-material-category-btn').dataset.category;
+                        var newCategory = prompt('Редагувати категорію матеріалів:', oldCategory);
+                        if (newCategory !== null && newCategory.trim() !== '' && newCategory.trim() !== oldCategory) {
+                            var index = appState.materialCategories.indexOf(oldCategory);
+                            if (index > -1) {
+                                appState.materialCategories[index] = newCategory.trim();
+                                handleSaveSettings(null, true);
+                            }
+                        }
+                    } else if (e.target.closest('.delete-material-category-btn')) {
+                        var categoryToDelete = e.target.closest('.delete-material-category-btn').dataset.category;
+                        showModal('Удалить категорию', 'Вы уверены, что хотите удалить категорию "' + categoryToDelete + '"?', 'confirm', function() {
+                            appState.materialCategories = filterArray(appState.materialCategories, function(cat) { return cat !== categoryToDelete; });
+                            handleSaveSettings(null, true);
+                        });
+                    }
+                });
+            }
         };
 
         var handleSaveSettings = function(event, isCategoryUpdate) {
             if (event) event.preventDefault(); // Prevent default form submission if called from form
 
-            var form = document.getElementById('settings-form'); // Get form reference
-            var hourlyRate = parseFloat(form['hourly-rate'].value);
+            var hourlyRateInput = document.getElementById('hourly-rate');
+            var hourlyRate = hourlyRateInput ? parseFloat(hourlyRateInput.value) : appState.hourlyRate; // Use current state if input not found
 
             if (isNaN(hourlyRate) || hourlyRate < 0) {
                 showModal('Ошибка', 'Ставка за час должна быть положительным числом.', 'alert');
@@ -2260,7 +2448,7 @@
                 .then(function(response) {
                     if (response.error) {
                         // If no settings row exists, insert one (PGRST116 is a common code for no rows found on update)
-                        if (response.error.code === 'PGRST116' || response.error.message.includes('no rows found')) {
+                        if (response.error.code === 'PGRST116' || (response.error.message && response.error.message.includes('no rows found'))) {
                             return supabase.from('settings').insert([settingsToSave]);
                         } else {
                             throw response.error;
