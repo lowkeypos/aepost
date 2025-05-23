@@ -227,6 +227,7 @@
             appointments: [],
             expenses: [],
             sessions: [],
+            settings: [], // Added to store settings data directly
             isDataLoaded: false
         };
 
@@ -434,6 +435,76 @@
             if (inputField) inputField.focus();
         };
 
+        // New modal function for handling client contact conflicts
+        var showConflictModal = function(newClientName, existingClient) {
+            var modal = document.getElementById('custom-modal'); // Reusing the custom-modal for flexibility
+            var modalTitle = document.getElementById('modal-title');
+            var modalMessage = document.getElementById('modal-message');
+            var modalActions = document.getElementById('modal-actions');
+
+            if (modalTitle) modalTitle.textContent = 'Конфликт клиента';
+            if (modalMessage) modalMessage.innerHTML = `
+                <p class="mb-2">Клиент с контактом <strong>${escapeHtml(existingClient.contact)}</strong> уже существует под именем <strong>"${escapeHtml(existingClient.name)}"</strong>.</p>
+                <p class="mb-4">Что вы хотите сделать?</p>
+            `;
+            if (modalActions) modalActions.innerHTML = '';
+
+            var useExistingButton = document.createElement('button');
+            useExistingButton.textContent = 'Использовать существующего клиента';
+            useExistingButton.className = 'px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors mr-2';
+            useExistingButton.onclick = function() {
+                if (modal) modal.classList.add('hidden');
+                // Proceed with appointment using existing client's ID
+                createAppointment(existingClient.id,
+                                  pendingAppointmentData.date,
+                                  pendingAppointmentData.time,
+                                  pendingAppointmentData.duration,
+                                  pendingAppointmentData.complexity,
+                                  pendingAppointmentData.sketchUrl);
+                pendingAppointmentData = null; // Clear pending data
+            };
+            if (modalActions) modalActions.appendChild(useExistingButton);
+
+            var updateNameButton = document.createElement('button');
+            updateNameButton.textContent = `Обновить имя на "${escapeHtml(newClientName)}"`;
+            updateNameButton.className = 'px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors mr-2';
+            updateNameButton.onclick = function() {
+                if (modal) modal.classList.add('hidden');
+                // Update client name in DB, then proceed with appointment
+                supabase.from('clients').update({ name: newClientName }).eq('id', existingClient.id)
+                    .then(function(response) {
+                        if (response.error) throw response.error;
+                        showModal('Успех', 'Имя клиента обновлено!', 'alert', function() {
+                            fetchData().then(function() { // Re-fetch data to update appState.clients
+                                createAppointment(existingClient.id,
+                                                  pendingAppointmentData.date,
+                                                  pendingAppointmentData.time,
+                                                  pendingAppointmentData.duration,
+                                                  pendingAppointmentData.complexity,
+                                                  pendingAppointmentData.sketchUrl);
+                                pendingAppointmentData = null; // Clear pending data
+                            });
+                        });
+                    })
+                    .catch(function(error) {
+                        console.error('Ошибка обновления имени клиента:', error.message);
+                        showModal('Ошибка', 'Не удалось обновить имя клиента: ' + escapeHtml(error.message), 'alert');
+                    });
+            };
+            if (modalActions) modalActions.appendChild(updateNameButton);
+
+            var cancelButton = document.createElement('button');
+            cancelButton.textContent = 'Отмена';
+            cancelButton.className = 'px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors';
+            cancelButton.onclick = function() {
+                if (modal) modal.classList.add('hidden');
+                pendingAppointmentData = null; // Clear pending data if user cancels
+            };
+            if (modalActions) modalActions.appendChild(cancelButton);
+
+            if (modal) modal.classList.remove('hidden');
+        };
+
 
         // --- Data Fetching and Realtime Subscriptions ---
         var fetchData = function() {
@@ -451,23 +522,27 @@
                         console.log("Settings fetch response:", settingsResponse);
                         if (settingsResponse.error) throw settingsResponse.error;
                         if (settingsResponse.data && settingsResponse.data.length > 0) {
-                            appState.hourlyRate = settingsResponse.data[0].hourly_rate || 0;
-                            appState.materialCategories = settingsResponse.data[0].material_categories || [];
-                            appState.expenseCategories = settingsResponse.data[0].expense_categories || [];
-                            console.log("Settings loaded:", appState.hourlyRate, appState.materialCategories, appState.expenseCategories);
+                            appState.settings = settingsResponse.data[0]; // Store the entire settings object
+                            appState.hourlyRate = appState.settings.hourly_rate || 0;
+                            appState.materialCategories = appState.settings.material_categories || [];
+                            appState.expenseCategories = appState.settings.expense_categories || [];
+                            console.log("Settings loaded:", appState.hourlyRate, appState.materialCategories, appState.expenseCategories, appState.settings.sms_api_key, appState.settings.sms_sender_name);
                         } else {
                             console.log("No settings found, inserting default settings.");
                             return supabase.from('settings').insert([{
                                     hourly_rate: 500,
                                     material_categories: ['Краски', 'Иглы', 'Средства гигиены', 'Другое'],
-                                    expense_categories: ['Аренда', 'Реклама', 'Коммунальные', 'Зарплата']
-                                }])
+                                    expense_categories: ['Аренда', 'Реклама', 'Коммунальные', 'Зарплата'],
+                                    sms_api_key: '', // Default empty SMS API key
+                                    sms_sender_name: '' // Default empty SMS sender name
+                                }]).select() // Select the inserted data to update appState.settings
                                 .then(function(insertResponse) {
                                     console.log("Default settings insert response:", insertResponse);
                                     if (insertResponse.error) throw insertResponse.error;
-                                    appState.hourlyRate = 500;
-                                    appState.materialCategories = ['Краски', 'Иглы', 'Средства гигиены', 'Другое'];
-                                    appState.expenseCategories = ['Аренда', 'Реклама', 'Коммунальные', 'Зарплата'];
+                                    appState.settings = insertResponse.data[0]; // Store the newly inserted settings
+                                    appState.hourlyRate = appState.settings.hourly_rate;
+                                    appState.materialCategories = appState.settings.material_categories;
+                                    appState.expenseCategories = appState.settings.expense_categories;
                                     return {};
                                 });
                         }
@@ -589,6 +664,83 @@
                 handleRouteChange(); // Re-render the current view
             });
         };
+
+        // --- SMS Integration Function ---
+        var sendSms = function(phoneNumber, message) {
+            console.log("sendSms: Attempting to send SMS to", phoneNumber);
+            var smsApiKey = appState.settings.sms_api_key;
+            var smsSenderName = appState.settings.sms_sender_name;
+
+            if (!smsApiKey || !smsSenderName) {
+                showModal('Ошибка SMS', 'API-ключ SMS или имя отправителя не настроены в разделе "Настройки".', 'alert');
+                console.warn("sendSms: SMS API key or sender name missing.");
+                return;
+            }
+            if (!phoneNumber) {
+                showModal('Ошибка SMS', 'Номер телефона для отправки SMS не указан.', 'alert');
+                console.warn("sendSms: Phone number is missing.");
+                return;
+            }
+            if (!message) {
+                showModal('Ошибка SMS', 'Сообщение SMS не может быть пустым.', 'alert');
+                console.warn("sendSms: SMS message is empty.");
+                return;
+            }
+
+            // --- IMPORTANT: Placeholder for real SMS API call ---
+            // In a real application, you would send this request to your own backend server.
+            // The backend server would then securely make the call to the SMS provider (e.g., Turbo SMS).
+            // This prevents exposing your API key in the client-side code and handles CORS issues.
+            // Example of a hypothetical Turbo SMS API endpoint (replace with actual if you have a backend):
+            var turboSmsApiUrl = 'https://api.turbosms.ua/message/send'; // This is a hypothetical URL for demonstration
+
+            // For demonstration, we'll just log and show a success message.
+            // In a real scenario, you'd use fetch() to send data to your backend.
+            console.log(`Simulating SMS send to: ${phoneNumber}, Sender: ${smsSenderName}, Message: "${message}"`);
+            console.log(`Using (placeholder) API Key: ${smsApiKey.substring(0, 5)}...`);
+
+            // Simulate network request delay
+            setTimeout(function() {
+                showModal('SMS отправлено', `Сообщение "${escapeHtml(message)}" отправлено на номер ${escapeHtml(phoneNumber)} от ${escapeHtml(smsSenderName)}. (Имитация)`, 'alert');
+                console.log("sendSms: SMS simulation successful.");
+            }, 1000);
+
+            /*
+            // Example of how a real fetch request might look if you had a backend proxy:
+            fetch('/api/send-sms', { // This would be your backend endpoint
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // Your backend would handle the actual SMS API key, not here
+                },
+                body: JSON.stringify({
+                    to: phoneNumber,
+                    sender: smsSenderName,
+                    text: message,
+                    // Potentially pass your SMS API key here if your backend expects it,
+                    // but ideally the backend retrieves it securely.
+                    // apiKey: smsApiKey // DO NOT DO THIS IN CLIENT-SIDE CODE FOR REAL APPS
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(errorData => {
+                        throw new Error(errorData.message || 'Ошибка отправки SMS');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                showModal('SMS отправлено', `Сообщение успешно отправлено на номер ${escapeHtml(phoneNumber)}.`, 'alert');
+                console.log("sendSms: SMS sent successfully:", data);
+            })
+            .catch(error => {
+                showModal('Ошибка SMS', `Не удалось отправить SMS: ${escapeHtml(error.message)}`, 'alert');
+                console.error("sendSms: Error sending SMS:", error);
+            });
+            */
+        };
+
 
         // --- Module Rendering Functions ---
 
@@ -899,38 +1051,102 @@
                 return;
             }
 
-            // Check if client exists
-            var existingClient = findInArray(appState.clients, function(c) {
-                return c.name.toLowerCase() === clientName.toLowerCase() || c.contact.toLowerCase() === clientContact.toLowerCase();
-            });
+            // Store pending appointment data globally
+            pendingAppointmentData = {
+                clientName: clientName,
+                clientContact: clientContact,
+                date: date,
+                time: time,
+                duration: duration,
+                complexity: complexity,
+                sketchUrl: sketchUrl
+            };
 
-            if (!existingClient) {
-                console.log("handleAddAppointment: Client not found, prompting quick add client modal.");
-                // Client not found, prompt to create new client
-                pendingAppointmentData = {
-                    clientName: clientName,
-                    clientContact: clientContact,
-                    date: date,
-                    time: time,
-                    duration: duration,
-                    complexity: complexity,
-                    sketchUrl: sketchUrl
-                };
+            // First, check for client by contact (unique identifier)
+            supabase.from('clients').select('*').eq('contact', clientContact).limit(1)
+                .then(function(response) {
+                    console.log("Search client by contact response:", response);
+                    if (response.error) throw response.error;
 
-                var quickClientNameInput = document.getElementById('quick-client-name');
-                var quickClientContactInput = document.getElementById('quick-client-contact');
-                var quickAddClientModal = document.getElementById('quick-add-client-modal');
+                    var existingClientByContact = response.data && response.data.length > 0 ? response.data[0] : null;
 
-                if (quickClientNameInput) quickClientNameInput.value = escapeHtml(clientName);
-                if (quickClientContactInput) quickClientContactInput.value = escapeHtml(clientContact);
-                if (quickAddClientModal) quickAddClientModal.classList.remove('hidden');
-                return; // Stop appointment creation for now
-            }
+                    if (existingClientByContact) {
+                        // Client found by contact
+                        if (existingClientByContact.name.toLowerCase() === clientName.toLowerCase()) {
+                            // Contact and name match, proceed with appointment for this client
+                            console.log("handleAddAppointment: Client found by contact and name match. Creating appointment.");
+                            createAppointment(existingClientByContact.id,
+                                              pendingAppointmentData.date,
+                                              pendingAppointmentData.time,
+                                              pendingAppointmentData.duration,
+                                              pendingAppointmentData.complexity,
+                                              pendingAppointmentData.sketchUrl);
+                            pendingAppointmentData = null; // Clear pending data
+                        } else {
+                            // Contact matches, but name is different. Show conflict modal.
+                            console.log("handleAddAppointment: Client found by contact, but name differs. Showing conflict modal.");
+                            showConflictModal(clientName, existingClientByContact);
+                        }
+                    } else {
+                        // No client found by contact. Now check by name (less strict, but still useful for new clients).
+                        // This step is important if the user enters a new contact for an an existing name.
+                        supabase.from('clients').select('*').eq('name', clientName).limit(1)
+                            .then(function(nameResponse) {
+                                console.log("Search client by name response (after no contact match):", nameResponse);
+                                if (nameResponse.error) throw nameResponse.error;
 
-            // If client exists, proceed with appointment creation
-            console.log("handleAddAppointment: Client found, creating appointment.");
-            var clientId = existingClient.id;
-            createAppointment(clientId, date, time, duration, complexity, sketchUrl);
+                                var existingClientByName = nameResponse.data && nameResponse.data.length > 0 ? nameResponse.data[0] : null;
+
+                                if (existingClientByName) {
+                                    // Client found by name, but not by contact. This means the contact is new for this existing client.
+                                    // We should probably update the existing client's contact, or ask the user.
+                                    // For simplicity, let's assume if name exists, we update contact and proceed.
+                                    // A more robust solution might involve another modal.
+                                    showModal('Внимание', 'Клиент с именем "' + escapeHtml(clientName) + '" уже существует, но с другим контактом. Обновить контакт на "' + escapeHtml(clientContact) + '"?', 'confirm', function() {
+                                        supabase.from('clients').update({ contact: clientContact }).eq('id', existingClientByName.id)
+                                            .then(function(updateResponse) {
+                                                if (updateResponse.error) throw updateResponse.error;
+                                                showModal('Успех', 'Контакт клиента обновлен!', 'alert', function() {
+                                                    fetchData().then(function() { // Re-fetch data to update appState.clients
+                                                        createAppointment(existingClientByName.id,
+                                                                          pendingAppointmentData.date,
+                                                                          pendingAppointmentData.time,
+                                                                          pendingAppointmentData.duration,
+                                                                          pendingAppointmentData.complexity,
+                                                                          pendingAppointmentData.sketchUrl);
+                                                        pendingAppointmentData = null;
+                                                    });
+                                                });
+                                            })
+                                            .catch(function(error) {
+                                                console.error('Ошибка обновления контакта клиента:', error.message);
+                                                showModal('Ошибка', 'Не удалось обновить контакт клиента: ' + escapeHtml(error.message), 'alert');
+                                            });
+                                    });
+                                } else {
+                                    // No client found by contact or name. This is a truly new client.
+                                    console.log("handleAddAppointment: No existing client found by contact or name. Prompting quick add client modal.");
+                                    var quickClientNameInput = document.getElementById('quick-client-name');
+                                    var quickClientContactInput = document.getElementById('quick-client-contact');
+                                    var quickAddClientModal = document.getElementById('quick-add-client-modal');
+
+                                    if (quickClientNameInput) quickClientNameInput.value = escapeHtml(clientName);
+                                    if (quickClientContactInput) quickClientContactInput.value = escapeHtml(clientContact);
+                                    if (quickAddClientModal) quickAddClientModal.classList.remove('hidden');
+                                }
+                            })
+                            .catch(function(error) {
+                                console.error('Ошибка поиска клиента по имени:', error.message);
+                                showModal('Ошибка', 'Ошибка при поиске клиента по имени: ' + escapeHtml(error.message), 'alert');
+                                pendingAppointmentData = null; // Clear pending data on error
+                            });
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Ошибка поиска клиента по контакту:', error.message);
+                    showModal('Ошибка', 'Ошибка при поиске клиента по контакту: ' + escapeHtml(error.message), 'alert');
+                    pendingAppointmentData = null; // Clear pending data on error
+                });
         };
 
         // New function to handle quick client creation from modal
@@ -1869,7 +2085,7 @@
             }
 
             var clientAppointments = filterArray(appState.appointments, function(app) { return app.client_id === clientId; })
-                .sort(function(a, b) { return new Date(b.date + 'T' + b.time) - new Date(a.date + 'T' + a.time); }); // Latest first
+                .sort(function(a, b) { return new Date(b.date + 'T' + b.time) - new Date(a.date + 'T' + b.time); }); // Latest first
 
             var historyHtml = '';
             if (clientAppointments.length === 0) {
@@ -1924,6 +2140,13 @@
                 console.log("showClientHistoryModal: Rendered client history table.");
             }
 
+            // Determine if the contact is a phone number or email for SMS button
+            var isPhoneNumber = client.contact && /^\+?\d[\d\s-()]*$/.test(client.contact); // Basic regex for phone number
+            var smsButtonHtml = '';
+            if (isPhoneNumber) {
+                smsButtonHtml = `<button id="send-sms-to-client-btn" class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors">Отправить SMS</button>`;
+            }
+
             showModal(
                 'История визитов для ' + escapeHtml(client.name),
                 `<div class="mb-4">
@@ -1933,10 +2156,27 @@
                     <p class="text-gray-300"><strong>Метки:</strong> ${client.tags && client.tags.length > 0 ? escapeHtml(client.tags.join(', ')) : 'Нет'}</p>
                 </div>
                 <h4 class="text-lg font-semibold mb-2 text-gray-300">История сеансов:</h4>
-                ${historyHtml}`,
+                ${historyHtml}
+                <div class="mt-4 flex justify-end">
+                    ${smsButtonHtml}
+                </div>`,
                 'alert' // Using alert type, but with rich HTML content
             );
             console.log("showClientHistoryModal: Modal displayed.");
+
+            // Attach event listener for SMS button if it exists
+            var sendSmsToClientBtn = document.getElementById('send-sms-to-client-btn');
+            if (sendSmsToClientBtn) {
+                sendSmsToClientBtn.addEventListener('click', function() {
+                    showInputModal('Отправить SMS клиенту', 'Введите сообщение для ' + escapeHtml(client.name) + ':', '', function(message) {
+                        if (message && message.trim() !== '') {
+                            sendSms(client.contact, message.trim());
+                        } else {
+                            showModal('Ошибка', 'Сообщение не может быть пустым.', 'alert');
+                        }
+                    });
+                });
+            }
         };
 
 
@@ -2267,7 +2507,7 @@
                                             <td class="py-3 px-6 text-left">${move.materials ? escapeHtml(move.materials.name) : 'Неизвестно'}</td>
                                             <td class="py-3 px-6 text-left">
                                                 <span class="px-2 py-1 rounded-full text-xs font-semibold ${move.type === 'in' ? 'bg-blue-700 text-blue-100' : 'bg-orange-700 text-orange-100'}">
-                                                    ${move.type === 'in' ? 'Приход' : 'Расход'}
+                                                    ${escapeHtml(move.type === 'in' ? 'Приход' : 'Расход')}
                                                 </span>
                                             </td>
                                             <td class="py-3 px-6 text-left">${escapeHtml(move.quantity)}</td>
@@ -2699,6 +2939,14 @@
                                 <input type="number" id="hourly-rate" step="0.01" min="0" value="${escapeHtml(appState.hourlyRate)}" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
                             </div>
                             <div>
+                                <label for="sms-api-key" class="block text-sm font-medium text-gray-300">SMS API Key (Turbo SMS)</label>
+                                <input type="text" id="sms-api-key" value="${escapeHtml(appState.settings.sms_api_key || '')}" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200" placeholder="Ваш Turbo SMS API ключ">
+                            </div>
+                            <div>
+                                <label for="sms-sender-name" class="block text-sm font-medium text-gray-300">Имя отправителя SMS</label>
+                                <input type="text" id="sms-sender-name" value="${escapeHtml(appState.settings.sms_sender_name || '')}" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200" placeholder="Например, 'TATTOO STUDIO'">
+                            </div>
+                            <div>
                                 <label for="currency" class="block text-sm font-medium text-gray-300">Валюта</label>
                                 <select id="currency" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
                                     <option value="UAH">Гривня (грн)</option>
@@ -2894,7 +3142,13 @@
             if (event) event.preventDefault(); // Prevent default form submission if called from form
 
             var hourlyRateInput = document.getElementById('hourly-rate');
-            var hourlyRate = hourlyRateInput ? parseFloat(hourlyRateInput.value) : appState.hourlyRate; // Use current state if input not found
+            var smsApiKeyInput = document.getElementById('sms-api-key');
+            var smsSenderNameInput = document.getElementById('sms-sender-name');
+
+            var hourlyRate = hourlyRateInput ? parseFloat(hourlyRateInput.value) : appState.hourlyRate;
+            var smsApiKey = smsApiKeyInput ? smsApiKeyInput.value.trim() : (appState.settings.sms_api_key || '');
+            var smsSenderName = smsSenderNameInput ? smsSenderNameInput.value.trim() : (appState.settings.sms_sender_name || '');
+
 
             if (isNaN(hourlyRate) || hourlyRate < 0) {
                 console.warn("handleSaveSettings: Invalid hourly rate.");
@@ -2903,13 +3157,15 @@
             }
 
             // Assuming there's only one settings row, update it
-            var settingsId = appState.settings && appState.settings.length > 0 ? appState.settings[0].id : null;
+            var settingsId = appState.settings && appState.settings.length > 0 ? appState.settings.id : null; // Use appState.settings.id directly
             var promise;
 
             var settingsToSave = {
                 hourly_rate: hourlyRate,
                 material_categories: appState.materialCategories, // Use updated array
-                expense_categories: appState.expenseCategories // Use updated array
+                expense_categories: appState.expenseCategories, // Use updated array
+                sms_api_key: smsApiKey, // Save new SMS API key
+                sms_sender_name: smsSenderName // Save new SMS sender name
             };
 
             if (settingsId) {
