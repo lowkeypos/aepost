@@ -171,6 +171,19 @@
         </div>
     </div>
 
+    <div id="input-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-button" id="input-modal-close-button">&times;</span>
+            <h3 id="input-modal-title" class="text-xl font-semibold mb-4"></h3>
+            <p id="input-modal-message" class="mb-6"></p>
+            <input type="text" id="input-modal-field" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200 mb-4">
+            <div id="input-modal-actions" class="flex justify-end space-x-3">
+                <button type="button" id="input-modal-cancel-btn" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors">Отмена</button>
+                <button type="button" id="input-modal-confirm-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">ОК</button>
+            </div>
+        </div>
+    </div>
+
     <div id="quick-add-client-modal" class="modal hidden">
         <div class="modal-content">
             <span class="close-button" id="quick-add-client-modal-close-button">&times;</span>
@@ -319,7 +332,19 @@
             return false;
         };
 
-        // Utility function to show custom modal
+        // Helper to escape HTML characters for safe display
+        var escapeHtml = function(unsafe) {
+            if (unsafe === null || unsafe === undefined) return '';
+            return String(unsafe)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;")
+                .replace(/`/g, "&#96;"); // Escape backticks too
+        };
+
+        // Utility function to show custom modal (alert/confirm)
         var showModal = function(title, message, type, onConfirm) {
             if (type === undefined) type = 'alert';
 
@@ -328,16 +353,16 @@
             var modalMessage = document.getElementById('modal-message');
             var modalActions = document.getElementById('modal-actions');
 
-            modalTitle.textContent = title;
-            modalMessage.innerHTML = message; // Use innerHTML for rich content
-            modalActions.innerHTML = ''; // Clear previous buttons
+            if (modalTitle) modalTitle.textContent = title;
+            if (modalMessage) modalMessage.innerHTML = message; // Use innerHTML for rich content
+            if (modalActions) modalActions.innerHTML = ''; // Clear previous buttons
 
             if (type === 'alert') {
                 var okButton = document.createElement('button');
                 okButton.textContent = 'ОК';
                 okButton.className = 'px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors';
-                okButton.onclick = function() { modal.classList.add('hidden'); };
-                modalActions.appendChild(okButton);
+                okButton.onclick = function() { if (modal) modal.classList.add('hidden'); };
+                if (modalActions) modalActions.appendChild(okButton);
             } else if (type === 'confirm') {
                 var cancelButton = document.createElement('button');
                 cancelButton.textContent = 'Отмена';
@@ -345,93 +370,164 @@
                 var confirmButton = document.createElement('button');
                 confirmButton.textContent = 'Подтвердить';
                 confirmButton.className = 'px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors';
-                cancelButton.onclick = function() { modal.classList.add('hidden'); };
+                cancelButton.onclick = function() { if (modal) modal.classList.add('hidden'); };
                 confirmButton.onclick = function() {
                     if (onConfirm) onConfirm();
-                    modal.classList.add('hidden');
+                    if (modal) modal.classList.add('hidden');
                 };
-                modalActions.appendChild(cancelButton);
-                modalActions.appendChild(confirmButton);
+                if (modalActions) {
+                    modalActions.appendChild(cancelButton);
+                    modalActions.appendChild(confirmButton);
+                }
             }
-            modal.classList.remove('hidden');
+            if (modal) modal.classList.remove('hidden');
         };
 
-        // Close modal button
-        document.getElementById('modal-close-button').onclick = function() {
-            document.getElementById('custom-modal').classList.add('hidden');
+        // Close custom modal button
+        var modalCloseButton = document.getElementById('modal-close-button');
+        if (modalCloseButton) {
+            modalCloseButton.onclick = function() {
+                var modal = document.getElementById('custom-modal');
+                if (modal) modal.classList.add('hidden');
+            };
+        }
+
+        // Utility function to show custom input modal
+        var showInputModal = function(title, message, defaultValue, onConfirmCallback) {
+            var modal = document.getElementById('input-modal');
+            var modalTitle = document.getElementById('input-modal-title');
+            var modalMessage = document.getElementById('input-modal-message');
+            var inputField = document.getElementById('input-modal-field');
+            var confirmBtn = document.getElementById('input-modal-confirm-btn');
+            var cancelBtn = document.getElementById('input-modal-cancel-btn');
+            var closeBtn = document.getElementById('input-modal-close-button');
+
+            if (modalTitle) modalTitle.textContent = title;
+            if (modalMessage) modalMessage.textContent = message;
+            if (inputField) inputField.value = defaultValue || '';
+
+            var cleanup = function() {
+                if (modal) modal.classList.add('hidden');
+                confirmBtn.onclick = null;
+                cancelBtn.onclick = null;
+                closeBtn.onclick = null;
+            };
+
+            if (confirmBtn) {
+                confirmBtn.onclick = function() {
+                    if (onConfirmCallback) onConfirmCallback(inputField ? inputField.value : '');
+                    cleanup();
+                };
+            }
+            if (cancelBtn) {
+                cancelBtn.onclick = function() {
+                    cleanup();
+                };
+            }
+            if (closeBtn) {
+                closeBtn.onclick = function() {
+                    cleanup();
+                };
+            }
+
+            if (modal) modal.classList.remove('hidden');
+            if (inputField) inputField.focus();
         };
+
 
         // --- Data Fetching and Realtime Subscriptions ---
         var fetchData = function() {
             return new Promise(function(resolve, reject) {
                 var spinner = document.getElementById('initial-loading-spinner');
                 if (spinner) {
-                    spinner.classList.remove('hidden');
+                    spinner.classList.remove('hidden'); // Ensure spinner is visible during fetch
                 }
+                console.log("Starting data fetch...");
+                console.log("Supabase URL:", SUPABASE_URL);
+                console.log("Supabase Anon Key (first 10 chars):", SUPABASE_ANON_KEY.substring(0, 10));
 
                 supabase.from('settings').select('*').limit(1)
                     .then(function(settingsResponse) {
+                        console.log("Settings fetch response:", settingsResponse);
                         if (settingsResponse.error) throw settingsResponse.error;
-                        if (settingsResponse.data.length > 0) {
+                        if (settingsResponse.data && settingsResponse.data.length > 0) {
                             appState.hourlyRate = settingsResponse.data[0].hourly_rate || 0;
                             appState.materialCategories = settingsResponse.data[0].material_categories || [];
-                            appState.expenseCategories = settingsResponse.data[0].expense_categories || []; // Fetch expense categories
+                            appState.expenseCategories = settingsResponse.data[0].expense_categories || [];
+                            console.log("Settings loaded:", appState.hourlyRate, appState.materialCategories, appState.expenseCategories);
                         } else {
-                            // Initialize default settings if none exist
+                            console.log("No settings found, inserting default settings.");
                             return supabase.from('settings').insert([{
                                     hourly_rate: 500,
                                     material_categories: ['Краски', 'Иглы', 'Средства гигиены', 'Другое'],
-                                    expense_categories: ['Аренда', 'Реклама', 'Коммунальные', 'Зарплата'] // Default expense categories
+                                    expense_categories: ['Аренда', 'Реклама', 'Коммунальные', 'Зарплата']
                                 }])
                                 .then(function(insertResponse) {
+                                    console.log("Default settings insert response:", insertResponse);
                                     if (insertResponse.error) throw insertResponse.error;
                                     appState.hourlyRate = 500;
                                     appState.materialCategories = ['Краски', 'Иглы', 'Средства гигиены', 'Другое'];
                                     appState.expenseCategories = ['Аренда', 'Реклама', 'Коммунальные', 'Зарплата'];
-                                    return {}; // Return empty object to continue chain
+                                    return {};
                                 });
                         }
-                        return {}; // Return empty object if settings already exist
+                        return {};
                     })
                     .then(function() {
+                        console.log("Fetching materials...");
                         return supabase.from('materials').select('*');
                     })
                     .then(function(materialsResponse) {
+                        console.log("Materials fetch response:", materialsResponse);
                         if (materialsResponse.error) throw materialsResponse.error;
                         appState.materials = materialsResponse.data;
+                        console.log("Materials loaded:", appState.materials.length);
+                        console.log("Fetching clients...");
                         return supabase.from('clients').select('*');
                     })
                     .then(function(clientsResponse) {
+                        console.log("Clients fetch response:", clientsResponse);
                         if (clientsResponse.error) throw clientsResponse.error;
                         appState.clients = clientsResponse.data;
+                        console.log("Clients loaded:", appState.clients.length);
+                        console.log("Fetching appointments...");
                         return supabase.from('appointments').select('*, clients(*)');
                     })
                     .then(function(appointmentsResponse) {
+                        console.log("Appointments fetch response:", appointmentsResponse);
                         if (appointmentsResponse.error) throw appointmentsResponse.error;
                         appState.appointments = appointmentsResponse.data;
+                        console.log("Appointments loaded:", appState.appointments.length);
+                        console.log("Fetching expenses...");
                         return supabase.from('expenses').select('*');
                     })
                     .then(function(expensesResponse) {
+                        console.log("Expenses fetch response:", expensesResponse);
                         if (expensesResponse.error) throw expensesResponse.error;
                         appState.expenses = expensesResponse.data;
+                        console.log("Expenses loaded:", appState.expenses.length);
+                        console.log("Fetching sessions...");
                         return supabase.from('sessions').select('*');
                     })
                     .then(function(sessionsResponse) {
+                        console.log("Sessions fetch response:", sessionsResponse);
                         if (sessionsResponse.error) throw sessionsResponse.error;
                         appState.sessions = sessionsResponse.data;
+                        console.log("Sessions loaded:", appState.sessions.length);
 
                         appState.isDataLoaded = true;
                         if (spinner) {
-                            spinner.classList.add('hidden');
+                            spinner.classList.add('hidden'); // Hide spinner on success
                         }
+                        console.log("All data loaded successfully. Current appState:", appState);
                         handleRouteChange(); // Render content after data is loaded
                         resolve();
                     })
                     .catch(function(error) {
-                        console.error('Ошибка загрузки данных:', error.message);
-                        showModal('Ошибка', 'Не удалось загрузить данные: ' + error.message + '. Пожалуйста, проверьте подключение к Supabase, ваш Anon Key и настройки RLS (Row Level Security) для всех таблиц.', 'alert');
+                        console.error('Ошибка загрузки данных:', error); // Log full error object
+                        showModal('Ошибка', 'Не удалось загрузить данные: ' + escapeHtml(error.message) + '. Пожалуйста, проверьте подключение к Supabase, ваш Anon Key и настройки RLS (Row Level Security) для всех таблиц.', 'alert');
                         if (spinner) {
-                            spinner.classList.add('hidden');
+                            spinner.classList.add('hidden'); // Hide spinner on error
                         }
                         reject(error);
                     });
@@ -447,36 +543,42 @@
 
             supabase.channel('public:materials')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'materials' }, function(payload) {
+                    console.log("Realtime update for materials:", payload);
                     fetchDataAndRerenderCurrentPage();
                 })
                 .subscribe();
 
             supabase.channel('public:clients')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, function(payload) {
+                    console.log("Realtime update for clients:", payload);
                     fetchDataAndRerenderCurrentPage();
                 })
                 .subscribe();
 
             supabase.channel('public:appointments')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, function(payload) {
+                    console.log("Realtime update for appointments:", payload);
                     fetchDataAndRerenderCurrentPage();
                 })
                 .subscribe();
 
             supabase.channel('public:expenses')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, function(payload) {
+                    console.log("Realtime update for expenses:", payload);
                     fetchDataAndRerenderCurrentPage();
                 })
                 .subscribe();
 
             supabase.channel('public:sessions')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'sessions' }, function(payload) {
+                    console.log("Realtime update for sessions:", payload);
                     fetchDataAndRerenderCurrentPage();
                 })
                 .subscribe();
 
             supabase.channel('public:settings')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, function(payload) {
+                    console.log("Realtime update for settings:", payload);
                     fetchDataAndRerenderCurrentPage();
                 })
                 .subscribe();
@@ -488,69 +590,16 @@
             });
         };
 
-        // --- Routing ---
-        var routes = {
-            'dashboard': renderDashboard,
-            'appointments': renderAppointments,
-            'clients': renderClients,
-            'inventory': renderInventory,
-            'finance': renderFinance,
-            'settings': renderSettings,
-            'session': renderSessionCalculator // This will handle /session/[id]
-        };
-
-        var handleRouteChange = function() {
-            var path = window.location.hash.substring(1);
-            var dynamicContentArea = document.getElementById('dynamic-content-area');
-            var pageTitle = document.getElementById('page-title');
-
-            // Clear only the dynamic content area
-            dynamicContentArea.innerHTML = '';
-
-            // Remove active class from all nav links
-            var navLinks = document.querySelectorAll('.nav-link');
-            for (var i = 0; i < navLinks.length; i++) {
-                navLinks[i].classList.remove('active');
-            }
-
-            var pathParts = path.split('/');
-            var basePath = pathParts[0];
-            var id = pathParts[1];
-
-            if (routes[basePath]) {
-                routes[basePath](id); // Pass ID if available
-                // Add active class to current nav link
-                var activeLink = document.querySelector('.nav-link[href="#' + basePath + '"]');
-                if (activeLink) {
-                    activeLink.classList.add('active');
-                }
-                // Update page title
-                var linkText = activeLink ? activeLink.textContent.trim() : '';
-                // Extract only the Russian word for the title
-                var titleMatch = linkText.match(/(Панель|Записи|Клиенты|Инвентарь|Финансы|Настройки)/);
-                if (pageTitle) {
-                    pageTitle.textContent = titleMatch ? titleMatch[0] : 'Неизвестно';
-                }
-
-            } else {
-                // Default to dashboard if path is not found or empty
-                window.location.hash = '#dashboard';
-                renderDashboard();
-                var defaultLink = document.querySelector('.nav-link[href="#dashboard"]');
-                if (defaultLink) {
-                    defaultLink.classList.add('active');
-                }
-                if (pageTitle) {
-                    pageTitle.textContent = 'Панель';
-                }
-            }
-        };
-
         // --- Module Rendering Functions ---
 
         // 1. Dashboard Module
         var renderDashboard = function() {
+            console.log("renderDashboard: Function started.");
             var dynamicContentArea = document.getElementById('dynamic-content-area');
+            if (!dynamicContentArea) {
+                console.error("renderDashboard: Dynamic content area not found.");
+                return;
+            }
             dynamicContentArea.innerHTML = `
                 <div class="p-4 md:p-8 bg-gray-700 rounded-lg shadow-md">
                     <h2 class="text-3xl font-bold mb-6 text-blue-300">Дашборд</h2>
@@ -567,7 +616,7 @@
                         <div class="bg-gray-800 p-5 rounded-lg shadow-sm flex items-center justify-between">
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-300 mb-1">Клієнти</h3>
-                                <p class="text-3xl font-bold text-blue-400">${appState.clients.length}</p>
+                                <p class="text-3xl font-bold text-blue-400">${escapeHtml(appState.clients.length)}</p>
                                 <p class="text-sm text-gray-400">+0 нових</p>
                             </div>
                             <i class="fas fa-users text-4xl text-blue-600"></i>
@@ -575,16 +624,16 @@
                         <div class="bg-gray-800 p-5 rounded-lg shadow-sm flex items-center justify-between">
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-300 mb-1">Сеанси</h3>
-                                <p class="text-3xl font-bold text-purple-400">${appState.sessions.length}</p>
-                                <p class="text-sm text-gray-400">${filterArray(appState.appointments, function(a) { return a.status === 'pending' || a.status === 'confirmed'; }).length} заплановано</p>
+                                <p class="text-3xl font-bold text-purple-400">${escapeHtml(appState.sessions.length)}</p>
+                                <p class="text-sm text-gray-400">${escapeHtml(filterArray(appState.appointments, function(a) { return a.status === 'pending' || a.status === 'confirmed'; }).length)} заплановано</p>
                             </div>
                             <i class="fas fa-calendar-check text-4xl text-purple-600"></i>
                         </div>
                         <div class="bg-gray-800 p-5 rounded-lg shadow-sm flex items-center justify-between">
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-300 mb-1">Матеріали</h3>
-                                <p class="text-3xl font-bold text-yellow-400">${appState.materials.length}</p>
-                                <p class="text-sm text-gray-400">${filterArray(appState.materials, function(m) { return m.stock <= m.low_stock_threshold; }).length} закінчується</p>
+                                <p class="text-3xl font-bold text-yellow-400">${escapeHtml(filterArray(appState.materials, function(m) { return m.stock > 0; }).length)}</p>
+                                <p class="text-sm text-gray-400">${escapeHtml(filterArray(appState.materials, function(m) { return m.stock <= m.low_stock_threshold; }).length)} закінчується</p>
                             </div>
                             <i class="fas fa-box-open text-4xl text-yellow-600"></i>
                         </div>
@@ -612,6 +661,7 @@
                 </div>
             `;
             renderLatestAppointments();
+            console.log("renderDashboard: Function finished.");
         };
 
         var calculateTotalRevenue = function() {
@@ -632,7 +682,12 @@
         };
 
         var renderLatestAppointments = function() {
+            console.log("renderLatestAppointments: Function started.");
             var listContainer = document.getElementById('latest-appointments-list');
+            if (!listContainer) {
+                console.error("renderLatestAppointments: Latest appointments list container not found.");
+                return;
+            }
             var latestAppointments = filterArray(appState.appointments, function(a) { return a.status === 'pending' || a.status === 'confirmed'; })
                 .sort(function(a, b) { return new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time); })
                 .slice(0, 5); // Show top 5
@@ -644,6 +699,7 @@
                         <p class="text-lg">Немає запланованих сеансів</p>
                     </div>
                 `;
+                console.log("renderLatestAppointments: No upcoming appointments, rendered empty state.");
                 return;
             }
 
@@ -663,7 +719,7 @@
                                 <tr class="border-b border-gray-600 hover:bg-gray-700">
                                     <td class="py-3 px-6 text-left whitespace-nowrap">${formatDate(app.date)}</td>
                                     <td class="py-3 px-6 text-left">${formatTime(app.time)}</td>
-                                    <td class="py-3 px-6 text-left">${app.clients ? app.clients.name : 'Неизвестно'}</td>
+                                    <td class="py-3 px-6 text-left">${app.clients ? escapeHtml(app.clients.name) : 'Неизвестно'}</td>
                                     <td class="py-3 px-6 text-left">
                                         <span class="px-2 py-1 rounded-full text-xs font-semibold ${app.status === 'confirmed' ? 'bg-green-700 text-green-100' : 'bg-yellow-700 text-yellow-100'}">
                                             ${app.status === 'pending' ? 'Ожидает' : 'Подтверждено'}
@@ -675,11 +731,17 @@
                     </tbody>
                 </table>
             `;
+            console.log("renderLatestAppointments: Rendered table with appointments.");
         };
 
         // 2. Appointment System
         var renderAppointments = function() {
+            console.log("renderAppointments: Function started.");
             var dynamicContentArea = document.getElementById('dynamic-content-area');
+            if (!dynamicContentArea) {
+                console.error("renderAppointments: Dynamic content area not found.");
+                return;
+            }
             dynamicContentArea.innerHTML = `
                 <div class="p-4 md:p-8 bg-gray-700 rounded-lg shadow-md">
                     <h2 class="text-3xl font-bold mb-6 text-blue-300">Записи</h2>
@@ -740,20 +802,49 @@
                 </div>
             `;
 
-            document.getElementById('add-appointment-btn').addEventListener('click', function() {
-                document.getElementById('appointment-form-container').classList.toggle('hidden');
-            });
+            var addAppointmentBtn = document.getElementById('add-appointment-btn');
+            if (addAppointmentBtn) {
+                console.log("renderAppointments: Found #add-appointment-btn, attaching listener.");
+                addAppointmentBtn.addEventListener('click', function() {
+                    console.log("Event: #add-appointment-btn clicked.");
+                    var formContainer = document.getElementById('appointment-form-container');
+                    if (formContainer) {
+                        formContainer.classList.toggle('hidden');
+                        console.log("Event: Toggled #appointment-form-container visibility.");
+                    }
+                });
+            } else {
+                console.warn("renderAppointments: #add-appointment-btn not found.");
+            }
 
-            document.getElementById('cancel-appointment-form').addEventListener('click', function() {
-                document.getElementById('appointment-form-container').classList.add('hidden');
-                document.getElementById('appointment-form').reset();
-            });
+            var cancelAppointmentForm = document.getElementById('cancel-appointment-form');
+            if (cancelAppointmentForm) {
+                console.log("renderAppointments: Found #cancel-appointment-form, attaching listener.");
+                cancelAppointmentForm.addEventListener('click', function() {
+                    console.log("Event: #cancel-appointment-form clicked.");
+                    var formContainer = document.getElementById('appointment-form-container');
+                    var appointmentForm = document.getElementById('appointment-form');
+                    if (formContainer) formContainer.classList.add('hidden');
+                    if (appointmentForm) appointmentForm.reset();
+                    console.log("Event: Appointment form cancelled and hidden.");
+                });
+            } else {
+                console.warn("renderAppointments: #cancel-appointment-form not found.");
+            }
 
-            document.getElementById('appointment-form').addEventListener('submit', handleAddAppointment);
+            var appointmentForm = document.getElementById('appointment-form');
+            if (appointmentForm) {
+                console.log("renderAppointments: Found #appointment-form, attaching submit listener.");
+                appointmentForm.addEventListener('submit', handleAddAppointment);
+            } else {
+                console.warn("renderAppointments: #appointment-form not found.");
+            }
             renderUpcomingAppointments();
+            console.log("renderAppointments: Function finished.");
         };
 
         function createAppointment(clientId, date, time, duration, complexity, sketchUrl) {
+            console.log("createAppointment: Attempting to insert appointment.");
             supabase.from('appointments').insert([
                 {
                     client_id: clientId,
@@ -766,30 +857,44 @@
                 }
             ])
             .then(function(response) {
+                console.log("Appointment creation response:", response);
                 if (response.error) throw response.error;
                 showModal('Успех', 'Запись успешно добавлена!', 'alert');
-                document.getElementById('appointment-form').reset(); // Reset original form
-                document.getElementById('appointment-form-container').classList.add('hidden');
+                var appointmentForm = document.getElementById('appointment-form');
+                if (appointmentForm) appointmentForm.reset(); // Reset original form
+                var formContainer = document.getElementById('appointment-form-container');
+                if (formContainer) formContainer.classList.add('hidden');
                 fetchDataAndRerenderCurrentPage(); // Re-fetch and re-render
+                console.log("createAppointment: Appointment added and page re-rendered.");
             })
             .catch(function(error) {
                 console.error('Ошибка добавления записи:', error.message);
-                showModal('Ошибка', 'Не удалось добавить запись: ' + error.message, 'alert');
+                showModal('Ошибка', 'Не удалось добавить запись: ' + escapeHtml(error.message), 'alert');
             });
         }
 
         var handleAddAppointment = function(event) {
+            console.log("handleAddAppointment: Function started.");
             event.preventDefault();
             var form = event.target;
-            var clientName = form['appointment-client-name'].value.trim();
-            var clientContact = form['appointment-client-contact'].value.trim();
-            var date = form['appointment-date'].value;
-            var time = form['appointment-time'].value;
-            var duration = parseFloat(form['appointment-duration'].value);
-            var complexity = parseInt(form['appointment-complexity'].value);
-            var sketchUrl = form['appointment-sketch'].value;
+            var clientNameInput = form['appointment-client-name'];
+            var clientContactInput = form['appointment-client-contact'];
+            var dateInput = form['appointment-date'];
+            var timeInput = form['appointment-time'];
+            var durationInput = form['appointment-duration'];
+            var complexityInput = form['appointment-complexity'];
+            var sketchInput = form['appointment-sketch'];
+
+            var clientName = clientNameInput ? clientNameInput.value.trim() : '';
+            var clientContact = clientContactInput ? clientContactInput.value.trim() : '';
+            var date = dateInput ? dateInput.value : '';
+            var time = timeInput ? timeInput.value : '';
+            var duration = durationInput ? parseFloat(durationInput.value) : NaN;
+            var complexity = complexityInput ? parseInt(complexityInput.value) : NaN;
+            var sketchUrl = sketchInput ? sketchInput.value : '';
 
             if (!clientName || !clientContact || !date || !time || isNaN(duration) || isNaN(complexity)) {
+                console.warn("handleAddAppointment: Missing required fields.");
                 showModal('Ошибка', 'Пожалуйста, заполните все обязательные поля (Имя клиента, Контакты, Дата, Время, Длительность, Сложность).', 'alert');
                 return;
             }
@@ -800,6 +905,7 @@
             });
 
             if (!existingClient) {
+                console.log("handleAddAppointment: Client not found, prompting quick add client modal.");
                 // Client not found, prompt to create new client
                 pendingAppointmentData = {
                     clientName: clientName,
@@ -811,69 +917,116 @@
                     sketchUrl: sketchUrl
                 };
 
-                document.getElementById('quick-client-name').value = clientName;
-                document.getElementById('quick-client-contact').value = clientContact;
-                document.getElementById('quick-add-client-modal').classList.remove('hidden');
+                var quickClientNameInput = document.getElementById('quick-client-name');
+                var quickClientContactInput = document.getElementById('quick-client-contact');
+                var quickAddClientModal = document.getElementById('quick-add-client-modal');
+
+                if (quickClientNameInput) quickClientNameInput.value = escapeHtml(clientName);
+                if (quickClientContactInput) quickClientContactInput.value = escapeHtml(clientContact);
+                if (quickAddClientModal) quickAddClientModal.classList.remove('hidden');
                 return; // Stop appointment creation for now
             }
 
             // If client exists, proceed with appointment creation
+            console.log("handleAddAppointment: Client found, creating appointment.");
             var clientId = existingClient.id;
             createAppointment(clientId, date, time, duration, complexity, sketchUrl);
         };
 
         // New function to handle quick client creation from modal
         var handleQuickAddClient = function(event) {
+            console.log("handleQuickAddClient: Function started.");
             event.preventDefault();
             var form = event.target;
-            var name = form['quick-client-name'].value.trim();
-            var contact = form['quick-client-contact'].value.trim();
+            var nameInput = form['quick-client-name'];
+            var contactInput = form['quick-client-contact'];
+
+            var name = nameInput ? nameInput.value.trim() : '';
+            var contact = contactInput ? contactInput.value.trim() : '';
 
             if (!name || !contact) {
+                console.warn("handleQuickAddClient: Missing client name or contact.");
                 showModal('Ошибка', 'Имя и контакты клиента обязательны.', 'alert');
                 return;
             }
 
-            supabase.from('clients').insert([{ name: name, contact: contact, social_links: null, notes: null, tags: [] }])
+            // Explicitly select the inserted row to ensure data is returned
+            supabase.from('clients').insert([{ name: name, contact: contact, social_links: null, notes: null, tags: [] }]).select()
                 .then(function(response) {
+                    console.log("Quick client add response:", response);
                     if (response.error) throw response.error;
-                    var newClient = response.data[0]; // Assuming Supabase returns the inserted row
-                    showModal('Успех', 'Новый клиент "' + newClient.name + '" успешно добавлен!', 'alert', function() {
-                        document.getElementById('quick-add-client-modal').classList.add('hidden');
-                        // Re-fetch data to update appState.clients
-                        fetchData().then(function() {
-                            // Now try to create the appointment with the new client's ID
-                            if (pendingAppointmentData) {
-                                createAppointment(newClient.id,
-                                                  pendingAppointmentData.date,
-                                                  pendingAppointmentData.time,
-                                                  pendingAppointmentData.duration,
-                                                  pendingAppointmentData.complexity,
-                                                  pendingAppointmentData.sketchUrl);
-                                pendingAppointmentData = null; // Clear pending data
-                            }
+                    var newClient = response.data && response.data.length > 0 ? response.data[0] : null; // Assuming Supabase returns the inserted row
+                    if (newClient) {
+                        showModal('Успех', 'Новый клиент "' + escapeHtml(newClient.name) + '" успешно добавлен!', 'alert', function() {
+                            var quickAddClientModal = document.getElementById('quick-add-client-modal');
+                            if (quickAddClientModal) quickAddClientModal.classList.add('hidden');
+                            // Re-fetch data to update appState.clients
+                            console.log("handleQuickAddClient: New client added, re-fetching data.");
+                            fetchData().then(function() {
+                                // Now try to create the appointment with the new client's ID
+                                if (pendingAppointmentData) {
+                                    console.log("handleQuickAddClient: Creating pending appointment with new client.");
+                                    createAppointment(newClient.id,
+                                                      pendingAppointmentData.date,
+                                                      pendingAppointmentData.time,
+                                                      pendingAppointmentData.duration,
+                                                      pendingAppointmentData.complexity,
+                                                      pendingAppointmentData.sketchUrl);
+                                    pendingAppointmentData = null; // Clear pending data
+                                }
+                            });
                         });
-                    });
+                    } else {
+                        console.error("handleQuickAddClient: No new client data returned after insert.");
+                        showModal('Ошибка', 'Не удалось получить данные нового клиента после добавления.', 'alert');
+                    }
                 })
                 .catch(function(error) {
                     console.error('Ошибка добавления клиента:', error.message);
-                    showModal('Ошибка', 'Не удалось добавить клиента: ' + error.message, 'alert');
+                    showModal('Ошибка', 'Не удалось добавить клиента: ' + escapeHtml(error.message), 'alert');
                 });
         };
 
         // Add event listeners for the new quick client modal
-        document.getElementById('quick-add-client-modal-close-button').onclick = function() {
-            document.getElementById('quick-add-client-modal').classList.add('hidden');
-            pendingAppointmentData = null; // Clear pending data if user cancels
-        };
-        document.getElementById('cancel-quick-client-form').onclick = function() {
-            document.getElementById('quick-add-client-modal').classList.add('hidden');
-            pendingAppointmentData = null; // Clear pending data if user cancels
-        };
-        document.getElementById('quick-client-form').addEventListener('submit', handleQuickAddClient);
+        var quickAddClientModalCloseButton = document.getElementById('quick-add-client-modal-close-button');
+        if (quickAddClientModalCloseButton) {
+            console.log("Attaching listener to #quick-add-client-modal-close-button.");
+            quickAddClientModalCloseButton.onclick = function() {
+                console.log("Event: #quick-add-client-modal-close-button clicked.");
+                var quickAddClientModal = document.getElementById('quick-add-client-modal');
+                if (quickAddClientModal) quickAddClientModal.classList.add('hidden');
+                pendingAppointmentData = null; // Clear pending data if user cancels
+            };
+        } else {
+            console.warn("#quick-add-client-modal-close-button not found.");
+        }
+        var cancelQuickClientForm = document.getElementById('cancel-quick-client-form');
+        if (cancelQuickClientForm) {
+            console.log("Attaching listener to #cancel-quick-client-form.");
+            cancelQuickClientForm.onclick = function() {
+                console.log("Event: #cancel-quick-client-form clicked.");
+                var quickAddClientModal = document.getElementById('quick-add-client-modal');
+                if (quickAddClientModal) quickAddClientModal.classList.add('hidden');
+                pendingAppointmentData = null; // Clear pending data if user cancels
+            };
+        } else {
+            console.warn("#cancel-quick-client-form not found.");
+        }
+        var quickClientForm = document.getElementById('quick-client-form');
+        if (quickClientForm) {
+            console.log("Attaching submit listener to #quick-client-form.");
+            quickClientForm.addEventListener('submit', handleQuickAddClient);
+        } else {
+            console.warn("#quick-client-form not found.");
+        }
 
         var renderUpcomingAppointments = function() {
+            console.log("renderUpcomingAppointments: Function started.");
             var listContainer = document.getElementById('upcoming-appointments-list');
+            if (!listContainer) {
+                console.error("renderUpcomingAppointments: Upcoming appointments list container not found.");
+                return;
+            }
             var upcomingAppointments = filterArray(appState.appointments, function(app) { return app.status === 'pending' || app.status === 'confirmed'; })
                 .sort(function(a, b) { return new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time); });
 
@@ -890,13 +1043,19 @@
                 `;
                 var addAppointmentFromEmptyBtn = document.getElementById('add-appointment-from-empty-btn');
                 if (addAppointmentFromEmptyBtn) {
+                    console.log("renderUpcomingAppointments: Found #add-appointment-from-empty-btn, attaching listener.");
                     addAppointmentFromEmptyBtn.addEventListener('click', function() {
+                        console.log("Event: #add-appointment-from-empty-btn clicked.");
                         var formContainer = document.getElementById('appointment-form-container');
                         if (formContainer) {
                             formContainer.classList.remove('hidden');
+                            console.log("Event: Appointment form container shown.");
                         }
                     });
+                } else {
+                    console.warn("renderUpcomingAppointments: #add-appointment-from-empty-btn not found.");
                 }
+                console.log("renderUpcomingAppointments: No upcoming appointments, rendered empty state.");
                 return;
             }
 
@@ -919,9 +1078,9 @@
                                 <tr class="border-b border-gray-600 hover:bg-gray-700">
                                     <td class="py-3 px-6 text-left whitespace-nowrap">${formatDate(app.date)}</td>
                                     <td class="py-3 px-6 text-left">${formatTime(app.time)}</td>
-                                    <td class="py-3 px-6 text-left">${app.clients ? app.clients.name : 'Неизвестно'}</td>
-                                    <td class="py-3 px-6 text-left">${app.duration} ч</td>
-                                    <td class="py-3 px-6 text-left">${app.complexity}</td>
+                                    <td class="py-3 px-6 text-left">${app.clients ? escapeHtml(app.clients.name) : 'Неизвестно'}</td>
+                                    <td class="py-3 px-6 text-left">${escapeHtml(app.duration)} ч</td>
+                                    <td class="py-3 px-6 text-left">${escapeHtml(app.complexity)}</td>
                                     <td class="py-3 px-6 text-left">
                                         <span class="px-2 py-1 rounded-full text-xs font-semibold ${app.status === 'confirmed' ? 'bg-green-700 text-green-100' : 'bg-yellow-700 text-yellow-100'}">
                                             ${app.status === 'pending' ? 'Ожидает' : 'Подтверждено'}
@@ -929,10 +1088,10 @@
                                     </td>
                                     <td class="py-3 px-6 text-center">
                                         ${app.status === 'pending' ? `
-                                            <button data-id="${app.id}" class="confirm-appointment-btn bg-green-600 text-white px-3 py-1 rounded-md text-xs hover:bg-green-700 transition-colors mr-2">Подтвердить</button>
-                                            <button data-id="${app.id}" class="cancel-appointment-btn bg-red-600 text-white px-3 py-1 rounded-md text-xs hover:bg-red-700 transition-colors">Отменить</button>
+                                            <button data-id="${escapeHtml(app.id)}" class="confirm-appointment-btn bg-green-600 text-white px-3 py-1 rounded-md text-xs hover:bg-green-700 transition-colors mr-2">Подтвердить</button>
+                                            <button data-id="${escapeHtml(app.id)}" class="cancel-appointment-btn bg-red-600 text-white px-3 py-1 rounded-md text-xs hover:bg-red-700 transition-colors">Отменить</button>
                                         ` : `
-                                            <a href="#session/${app.id}" class="bg-purple-600 text-white px-3 py-1 rounded-md text-xs hover:bg-purple-700 transition-colors">Открыть калькулятор</a>
+                                            <a href="#session/${escapeHtml(app.id)}" class="bg-purple-600 text-white px-3 py-1 rounded-md text-xs hover:bg-purple-700 transition-colors">Открыть калькулятор</a>
                                         `}
                                     </td>
                                 </tr>
@@ -943,61 +1102,75 @@
             `;
 
             var confirmButtons = listContainer.querySelectorAll('.confirm-appointment-btn');
+            console.log("renderUpcomingAppointments: Found", confirmButtons.length, "confirm appointment buttons.");
             for (var i = 0; i < confirmButtons.length; i++) {
                 confirmButtons[i].addEventListener('click', function(e) {
+                    console.log("Event: Confirm appointment button clicked.");
                     var appointmentId = e.target.dataset.id;
                     showModal('Подтверждение', 'Вы уверены, что хотите подтвердить этот визит? Он будет перенесен в калькулятор сеанса.', 'confirm', function() {
                         supabase.from('appointments').update({ status: 'confirmed' }).eq('id', appointmentId)
                             .then(function(response) {
+                                console.log("Confirm appointment response:", response);
                                 if (response.error) throw response.error;
                                 showModal('Успех', 'Визит подтвержден!', 'alert');
-                                window.location.hash = '#session/' + appointmentId; // Redirect to session calculator
+                                window.location.hash = '#session/' + escapeHtml(appointmentId); // Redirect to session calculator
                             })
                             .catch(function(error) {
                                 console.error('Ошибка подтверждения визита:', error.message);
-                                showModal('Ошибка', 'Не удалось подтвердить визит: ' + error.message, 'alert');
+                                showModal('Ошибка', 'Не удалось подтвердить визит: ' + escapeHtml(error.message), 'alert');
                             });
                     });
                 });
             }
 
             var cancelButtons = listContainer.querySelectorAll('.cancel-appointment-btn');
+            console.log("renderUpcomingAppointments: Found", cancelButtons.length, "cancel appointment buttons.");
             for (var i = 0; i < cancelButtons.length; i++) {
                 cancelButtons[i].addEventListener('click', function(e) {
+                    console.log("Event: Cancel appointment button clicked.");
                     var appointmentId = e.target.dataset.id;
                     showModal('Отмена визита', 'Вы уверены, что хотите отменить этот визит?', 'confirm', function() {
                         supabase.from('appointments').update({ status: 'cancelled' }).eq('id', appointmentId)
                             .then(function(response) {
+                                console.log("Cancel appointment response:", response);
                                 if (response.error) throw response.error;
                                 showModal('Успех', 'Визит отменен.', 'alert');
                                 fetchDataAndRerenderCurrentPage(); // Re-fetch and re-render
                             })
                             .catch(function(error) {
                                 console.error('Ошибка отмены визита:', error.message);
-                                showModal('Ошибка', 'Не удалось отменить визит: ' + error.message, 'alert');
+                                showModal('Ошибка', 'Не удалось отменить визит: ' + escapeHtml(error.message), 'alert');
                             });
                     });
                 });
             }
+            console.log("renderUpcomingAppointments: Function finished.");
         };
 
         // 3. Tattoo Session Calculator
         var renderSessionCalculator = function(appointmentId) {
+            console.log("renderSessionCalculator: Function started for appointment ID:", appointmentId);
             var dynamicContentArea = document.getElementById('dynamic-content-area');
+            if (!dynamicContentArea) {
+                console.error("renderSessionCalculator: Dynamic content area not found.");
+                return;
+            }
             var appointment = findInArray(appState.appointments, function(app) { return app.id === appointmentId; });
 
             if (!appointment) {
+                console.warn("renderSessionCalculator: Appointment not found or not confirmed for ID:", appointmentId);
                 dynamicContentArea.innerHTML = `<div class="p-4 bg-red-900 text-red-200 rounded-lg">Визит не найден или не подтвержден.</div>`;
                 return;
             }
 
             var client = findInArray(appState.clients, function(c) { return c.id === appointment.client_id; });
-            var hourlyRate = appState.hourlyRate;
+            // hourlyRate is now accessed directly from appState.hourlyRate inside calculateSessionPrice.
+            // var hourlyRate = appState.hourlyRate; // This local variable is no longer needed here for calculateSessionPrice
 
             dynamicContentArea.innerHTML = `
                 <div class="p-4 md:p-8 bg-gray-700 rounded-lg shadow-md">
                     <h2 class="text-3xl font-bold mb-6 text-blue-300">Калькулятор тату-сеанса</h2>
-                    <h3 class="text-xl font-semibold mb-4 text-blue-300">Визит клиента: ${client ? client.name : 'Неизвестно'} (${formatDate(appointment.date)} ${formatTime(appointment.time)})</h3>
+                    <h3 class="text-xl font-semibold mb-4 text-blue-300">Визит клиента: ${client ? escapeHtml(client.name) : 'Неизвестно'} (${formatDate(appointment.date)} ${formatTime(appointment.time)})</h3>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                         <div class="space-y-4">
@@ -1011,7 +1184,7 @@
                             </div>
                             <div>
                                 <label for="session-complexity" class="block text-sm font-medium text-gray-300">Сложность (1-10)</label>
-                                <input type="number" id="session-complexity" min="1" max="10" value="${appointment.complexity}" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
+                                <input type="number" id="session-complexity" min="1" max="10" value="${escapeHtml(appointment.complexity)}" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
                             </div>
                             <div>
                                 <label for="session-discount" class="block text-sm font-medium text-gray-300">Скидка (%)</label>
@@ -1024,7 +1197,7 @@
                             ${appointment.sketch_url ? `
                                 <div class="mt-4">
                                     <h4 class="text-lg font-semibold mb-2 text-gray-300">Эскиз:</h4>
-                                    <img src="${appointment.sketch_url}" alt="Эскиз тату" class="w-full h-48 object-contain rounded-lg shadow-md border border-gray-600" onerror="this.onerror=null;this.src='https://placehold.co/300x200/4a5568/a0aec0?text=Нет+эскиза';">
+                                    <img src="${escapeHtml(appointment.sketch_url)}" alt="Эскиз тату" class="w-full h-48 object-contain rounded-lg shadow-md border border-gray-600" onerror="this.onerror=null;this.src='https://placehold.co/300x200/4a5568/a0aec0?text=Нет+эскиза';">
                                 </div>
                             ` : `<p class="text-gray-400 mt-4">Эскиз не прикреплен.</p>`}
                         </div>
@@ -1068,11 +1241,21 @@
             `;
 
             // Pre-fill start time with appointment date and time
-            var appointmentDateTime = new Date(appointment.date + 'T' + appointment.time);
-            document.getElementById('session-start-time').value = appointmentDateTime.toISOString().slice(0, 16);
+            var sessionStartTimeEl = document.getElementById('session-start-time');
+            if (sessionStartTimeEl) {
+                var appointmentDateTime = new Date(appointment.date + 'T' + appointment.time);
+                sessionStartTimeEl.value = appointmentDateTime.toISOString().slice(0, 16);
+                console.log("renderSessionCalculator: Pre-filled session start time.");
+            } else {
+                console.warn("renderSessionCalculator: #session-start-time not found.");
+            }
+
 
             var materialsUsedList = document.getElementById('materials-used-list');
-            var usedMaterials = []; // Array to store {material_id, quantity}
+            if (!materialsUsedList) {
+                console.error("renderSessionCalculator: Materials used list container not found.");
+                return;
+            }
 
             function addMaterialInput(material) {
                 if (material === void 0) { material = null; }
@@ -1081,9 +1264,9 @@
                 materialDiv.innerHTML = `
                     <select class="material-select block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
                         <option value="">Выберите материал</option>
-                        ${mapArray(appState.materials, function(m) { return `<option value="${m.id}" data-price="${m.unit_price}" ${material && material.material_id === m.id ? 'selected' : ''}>${m.name} (${formatCurrency(m.unit_price)}/ед.)</option>`; }).join('')}
+                        ${mapArray(appState.materials, function(m) { return `<option value="${escapeHtml(m.id)}" data-price="${escapeHtml(m.unit_price)}" ${material && material.material_id === m.id ? 'selected' : ''}>${escapeHtml(m.name)} (${formatCurrency(m.unit_price)}/ед.)</option>`; }).join('')}
                     </select>
-                    <input type="number" min="0.01" step="0.01" placeholder="Кол-во" value="${material ? material.quantity : ''}" class="material-quantity w-24 p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
+                    <input type="number" min="0.01" step="0.01" placeholder="Кол-во" value="${escapeHtml(material ? material.quantity : '')}" class="material-quantity w-24 p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
                     <button class="remove-material-btn text-red-500 hover:text-red-400 p-2 rounded-full">
                         <i class="fas fa-trash-alt"></i>
                     </button>
@@ -1092,66 +1275,116 @@
 
                 var selectElement = materialDiv.querySelector('.material-select');
                 var quantityElement = materialDiv.querySelector('.material-quantity');
+                var removeButton = materialDiv.querySelector('.remove-material-btn');
 
-                selectElement.addEventListener('change', calculateSessionPrice);
-                quantityElement.addEventListener('input', calculateSessionPrice);
-                materialDiv.querySelector('.remove-material-btn').addEventListener('click', function() {
-                    materialsUsedList.removeChild(materialDiv);
-                    calculateSessionPrice();
-                });
+                if (selectElement) {
+                    selectElement.addEventListener('change', calculateSessionPrice);
+                    console.log("renderSessionCalculator: Attached change listener to new material select.");
+                }
+                if (quantityElement) {
+                    quantityElement.addEventListener('input', calculateSessionPrice);
+                    console.log("renderSessionCalculator: Attached input listener to new material quantity.");
+                }
+                if (removeButton) {
+                    removeButton.addEventListener('click', function() {
+                        console.log("Event: Remove material button clicked.");
+                        materialsUsedList.removeChild(materialDiv);
+                        calculateSessionPrice();
+                    });
+                    console.log("renderSessionCalculator: Attached click listener to new remove material button.");
+                }
             }
 
             var addMaterialBtn = document.getElementById('add-material-btn');
             if (addMaterialBtn) {
-                addMaterialBtn.addEventListener('click', function() { addMaterialInput(); });
+                console.log("renderSessionCalculator: Found #add-material-btn, attaching listener.");
+                addMaterialBtn.addEventListener('click', function() {
+                    console.log("Event: #add-material-btn clicked.");
+                    addMaterialInput();
+                });
+            } else {
+                console.warn("renderSessionCalculator: #add-material-btn not found.");
             }
 
 
             // Load existing materials if session was already calculated (e.g., editing a completed session)
             var existingSession = findInArray(appState.sessions, function(s) { return s.appointment_id === appointmentId; });
             if (existingSession && existingSession.materials_used) {
+                console.log("renderSessionCalculator: Found existing session materials, parsing and adding inputs.");
                 try {
                     var parsedMaterials = JSON.parse(existingSession.materials_used);
                     mapArray(parsedMaterials, function(mat) { addMaterialInput(mat); });
-                    document.getElementById('session-start-time').value = new Date(existingSession.start_time).toISOString().slice(0, 16);
-                    document.getElementById('session-end-time').value = new Date(existingSession.end_time).toISOString().slice(0, 16);
-                    document.getElementById('session-complexity').value = existingSession.complexity_score;
-                    document.getElementById('session-discount').value = existingSession.discount;
-                    document.getElementById('payment-method').value = existingSession.payment_method;
-                    document.getElementById('session-notes').value = existingSession.notes || '';
+                    var sessionStartTimeEl = document.getElementById('session-start-time');
+                    var sessionEndTimeEl = document.getElementById('session-end-time');
+                    var sessionComplexityEl = document.getElementById('session-complexity');
+                    var sessionDiscountEl = document.getElementById('session-discount');
+                    var paymentMethodEl = document.getElementById('payment-method');
+                    var sessionNotesEl = document.getElementById('session-notes');
+
+                    if (sessionStartTimeEl) sessionStartTimeEl.value = new Date(existingSession.start_time).toISOString().slice(0, 16);
+                    if (sessionEndTimeEl) sessionEndTimeEl.value = new Date(existingSession.end_time).toISOString().slice(0, 16);
+                    if (sessionComplexityEl) sessionComplexityEl.value = escapeHtml(existingSession.complexity_score);
+                    if (sessionDiscountEl) sessionDiscountEl.value = escapeHtml(existingSession.discount);
+                    if (paymentMethodEl) paymentMethodEl.value = escapeHtml(existingSession.payment_method);
+                    if (sessionNotesEl) sessionNotesEl.value = escapeHtml(existingSession.notes || '');
+                    console.log("renderSessionCalculator: Pre-filled session details from existing session.");
                 } catch (e) {
-                    console.error("Error parsing materials_used:", e);
+                    console.error("renderSessionCalculator: Error parsing materials_used:", e);
                 }
             } else {
                 // Add one empty material input by default for new sessions
+                console.log("renderSessionCalculator: No existing session materials, adding one empty input.");
                 addMaterialInput();
             }
 
 
             // Event listeners for calculations
             var sessionStartTime = document.getElementById('session-start-time');
-            if (sessionStartTime) sessionStartTime.addEventListener('input', calculateSessionPrice);
+            if (sessionStartTime) {
+                sessionStartTime.addEventListener('input', calculateSessionPrice);
+                console.log("renderSessionCalculator: Attached input listener to #session-start-time.");
+            }
             var sessionEndTime = document.getElementById('session-end-time');
-            if (sessionEndTime) sessionEndTime.addEventListener('input', calculateSessionPrice);
+            if (sessionEndTime) {
+                sessionEndTime.addEventListener('input', calculateSessionPrice);
+                console.log("renderSessionCalculator: Attached input listener to #session-end-time.");
+            }
             var sessionComplexity = document.getElementById('session-complexity');
-            if (sessionComplexity) sessionComplexity.addEventListener('input', calculateSessionPrice);
+            if (sessionComplexity) {
+                sessionComplexity.addEventListener('input', calculateSessionPrice);
+                console.log("renderSessionCalculator: Attached input listener to #session-complexity.");
+            }
             var sessionDiscount = document.getElementById('session-discount');
-            if (sessionDiscount) sessionDiscount.addEventListener('input', calculateSessionPrice);
+            if (sessionDiscount) {
+                sessionDiscount.addEventListener('input', calculateSessionPrice);
+                console.log("renderSessionCalculator: Attached input listener to #session-discount.");
+            }
 
             // Initial calculation
             calculateSessionPrice();
+            console.log("renderSessionCalculator: Performed initial price calculation.");
 
             var saveSessionBtn = document.getElementById('save-session-btn');
             if (saveSessionBtn) {
+                console.log("renderSessionCalculator: Found #save-session-btn, attaching listener.");
                 saveSessionBtn.addEventListener('click', function() {
-                    var startTime = document.getElementById('session-start-time').value;
-                    var endTime = document.getElementById('session-end-time').value;
-                    var complexity = parseInt(document.getElementById('session-complexity').value);
-                    var discount = parseFloat(document.getElementById('session-discount').value);
-                    var paymentMethod = document.getElementById('payment-method').value;
-                    var notes = document.getElementById('session-notes').value;
+                    console.log("Event: #save-session-btn clicked.");
+                    var startTimeInput = document.getElementById('session-start-time');
+                    var endTimeInput = document.getElementById('session-end-time');
+                    var complexityInput = document.getElementById('session-complexity');
+                    var discountInput = document.getElementById('session-discount');
+                    var paymentMethodInput = document.getElementById('payment-method');
+                    var notesInput = document.getElementById('session-notes');
+
+                    var startTime = startTimeInput ? startTimeInput.value : '';
+                    var endTime = endTimeInput ? endTimeInput.value : '';
+                    var complexity = complexityInput ? parseInt(complexityInput.value) : NaN;
+                    var discount = discountInput ? parseFloat(discountInput.value) : NaN;
+                    var paymentMethod = paymentMethodInput ? paymentMethodInput.value : '';
+                    var notes = notesInput ? notesInput.value : '';
 
                     if (!startTime || !endTime || isNaN(complexity) || isNaN(discount)) {
+                        console.warn("saveSessionBtn: Missing required session fields.");
                         showModal('Ошибка', 'Пожалуйста, заполните все поля времени, сложности и скидки.', 'alert');
                         return;
                     }
@@ -1160,6 +1393,7 @@
                     var end = new Date(endTime);
 
                     if (end <= start) {
+                        console.warn("saveSessionBtn: End time is not after start time.");
                         showModal('Ошибка', 'Время окончания должно быть позже времени начала.', 'alert');
                         return;
                     }
@@ -1188,6 +1422,7 @@
                         if (mat.material_id) { // Only count if material_id is present
                             materialCounts[mat.material_id] = (materialCounts[mat.material_id] || 0) + 1;
                             if (materialCounts[mat.material_id] > 1) {
+                                console.warn("saveSessionBtn: Duplicate materials found.");
                                 showModal('Ошибка', 'Обнаружены дубликаты материалов. Пожалуйста, объедините их или удалите лишние.', 'alert');
                                 return;
                             }
@@ -1195,12 +1430,13 @@
                     }
 
                     showModal('Подтверждение оплаты', 'Итого к оплате: ' + formatCurrency(finalPrice) + '. Подтвердить?', 'confirm', function() {
+                        console.log("saveSessionBtn: User confirmed payment.");
                         var sessionId = existingSession ? existingSession.id : null;
                         var sessionData = {
                             appointment_id: appointmentId,
                             start_time: startTime,
                             end_time: endTime,
-                            hourly_rate_used: hourlyRate,
+                            hourly_rate_used: appState.hourlyRate, // Use appState.hourlyRate
                             complexity_score: complexity,
                             materials_used: JSON.stringify(materialsUsed), // Store as JSON string
                             total_price: finalPrice,
@@ -1213,34 +1449,42 @@
                         var promise;
                         if (sessionId) {
                             // Update existing session
+                            console.log("saveSessionBtn: Updating existing session.");
                             promise = supabase.from('sessions').update(sessionData).eq('id', sessionId);
                         } else {
                             // Insert new session
+                            console.log("saveSessionBtn: Inserting new session.");
                             promise = supabase.from('sessions').insert([sessionData]).select()
                                 .then(function(newSessionResponse) {
+                                    console.log("New session insert response:", newSessionResponse);
                                     if (newSessionResponse.error) throw newSessionResponse.error;
-                                    sessionId = newSessionResponse.data[0].id;
+                                    sessionId = newSessionResponse.data && newSessionResponse.data.length > 0 ? newSessionResponse.data[0].id : null;
+                                    if (!sessionId) throw new Error("Could not retrieve new session ID.");
                                     // Link session to appointment
+                                    console.log("saveSessionBtn: Linking new session to appointment.");
                                     return supabase.from('appointments').update({ status: 'completed', session_id: sessionId }).eq('id', appointmentId);
                                 });
                         }
 
                         promise
                             .then(function(response) {
+                                console.log("Session/Appointment update response:", response);
                                 if (response.error) throw response.error;
                                 // Deduct materials from inventory and record movements
+                                console.log("saveSessionBtn: Deducting materials from inventory.");
                                 var materialDeductionPromises = mapArray(materialsUsed, function(item) {
                                     var material = findInArray(appState.materials, function(m) { return m.id === item.material_id; });
                                     if (material) {
                                         var newStock = material.stock - item.quantity;
                                         return supabase.from('materials').update({ stock: newStock }).eq('id', item.material_id)
                                             .then(function() {
+                                                console.log("Material stock updated for:", material.name, "New stock:", newStock);
                                                 return supabase.from('material_movements').insert([
                                                     {
                                                         material_id: item.material_id,
                                                         type: 'out',
                                                         quantity: item.quantity,
-                                                        source_target: 'session_' + sessionId
+                                                        source_target: 'session_' + escapeHtml(sessionId) // Escape sessionId here
                                                     }
                                                 ]);
                                             });
@@ -1253,18 +1497,25 @@
                                 showModal('Успех', 'Сеанс успешно сохранен и оплачен!', 'alert');
                                 fetchDataAndRerenderCurrentPage(); // Re-fetch and re-render
                                 window.location.hash = '#appointments'; // Go back to appointments
+                                console.log("saveSessionBtn: Session saved, materials deducted, redirected to appointments.");
                             })
                             .catch(function(error) {
                                 console.error('Ошибка сохранения сеанса:', error.message);
-                                showModal('Ошибка', 'Не удалось сохранить сеанс: ' + error.message, 'alert');
+                                showModal('Ошибка', 'Не удалось сохранить сеанс: ' + escapeHtml(error.message), 'alert');
                             });
                     });
                 });
+            } else {
+                console.warn("renderSessionCalculator: #save-session-btn not found.");
             }
+            console.log("renderSessionCalculator: Function finished.");
+        };
 
 
             function calculateSessionPrice(returnValues) {
-                if (returnValues === void 0) { returnValues = false; }
+                // Ensure returnValues is a boolean, default to false
+                returnValues = typeof returnValues === 'boolean' ? returnValues : false;
+                console.log("calculateSessionPrice: Function called with returnValues:", returnValues);
                 var startTimeEl = document.getElementById('session-start-time');
                 var endTimeEl = document.getElementById('session-end-time');
                 var complexityEl = document.getElementById('session-complexity');
@@ -1285,8 +1536,9 @@
                 }
 
                 var costPriceMaterials = 0;
-                var materialInputs = materialsUsedList.querySelectorAll('.material-select');
-                var quantityInputs = materialsUsedList.querySelectorAll('.material-quantity');
+                var materialsUsedList = document.getElementById('materials-used-list'); // Ensure this is accessible
+                var materialInputs = materialsUsedList ? materialsUsedList.querySelectorAll('.material-select') : [];
+                var quantityInputs = materialsUsedList ? materialsUsedList.querySelectorAll('.material-quantity') : [];
 
                 for (var i = 0; i < materialInputs.length; i++) {
                     var materialId = materialInputs[i].value;
@@ -1299,7 +1551,7 @@
                     }
                 }
 
-                var workCost = totalWorkTime * hourlyRate;
+                var workCost = totalWorkTime * appState.hourlyRate; // Corrected to use appState.hourlyRate
                 var complexityMarkup = workCost * (complexity / 100); // Simple markup based on complexity (e.g., 10% for complexity 10)
                 var subtotal = workCost + complexityMarkup + costPriceMaterials;
                 var finalPrice = subtotal * (1 - (discount / 100));
@@ -1319,12 +1571,16 @@
                     return { totalWorkTime: totalWorkTime, costPriceMaterials: costPriceMaterials, complexityMarkup: complexityMarkup, workCost: workCost, finalPrice: finalPrice };
                 }
             }
-        };
 
 
         // 4. Clients Module
         var renderClients = function() {
+            console.log("renderClients: Function started.");
             var dynamicContentArea = document.getElementById('dynamic-content-area');
+            if (!dynamicContentArea) {
+                console.error("renderClients: Dynamic content area not found.");
+                return;
+            }
             dynamicContentArea.innerHTML = `
                 <div class="p-4 md:p-8 bg-gray-700 rounded-lg shadow-md">
                     <h2 class="text-3xl font-bold mb-6 text-blue-300">Клиенты</h2>
@@ -1374,74 +1630,106 @@
 
             var addClientBtn = document.getElementById('add-client-btn');
             if (addClientBtn) {
+                console.log("renderClients: Found #add-client-btn, attaching listener.");
                 addClientBtn.addEventListener('click', function() {
+                    console.log("Event: #add-client-btn clicked.");
                     var formContainer = document.getElementById('client-form-container');
                     var clientForm = document.getElementById('client-form');
                     var clientIdInput = document.getElementById('client-id');
                     if (formContainer) formContainer.classList.toggle('hidden');
                     if (clientForm) clientForm.reset();
                     if (clientIdInput) clientIdInput.value = ''; // Clear ID for new client
+                    console.log("Event: Toggled client form visibility and reset.");
                 });
+            } else {
+                console.warn("renderClients: #add-client-btn not found.");
             }
 
             var cancelClientFormBtn = document.getElementById('cancel-client-form');
             if (cancelClientFormBtn) {
+                console.log("renderClients: Found #cancel-client-form, attaching listener.");
                 cancelClientFormBtn.addEventListener('click', function() {
+                    console.log("Event: #cancel-client-form clicked.");
                     var formContainer = document.getElementById('client-form-container');
                     var clientForm = document.getElementById('client-form');
                     if (formContainer) formContainer.classList.add('hidden');
                     if (clientForm) clientForm.reset();
+                    console.log("Event: Client form cancelled and hidden.");
                 });
+            } else {
+                console.warn("renderClients: #cancel-client-form not found.");
             }
 
             var clientForm = document.getElementById('client-form');
             if (clientForm) {
+                console.log("renderClients: Found #client-form, attaching submit listener.");
                 clientForm.addEventListener('submit', handleAddEditClient);
+            } else {
+                console.warn("renderClients: #client-form not found.");
             }
             renderClientList();
+            console.log("renderClients: Function finished.");
         };
 
         var handleAddEditClient = function(event) {
+            console.log("handleAddEditClient: Function started.");
             event.preventDefault();
             var form = event.target;
-            var clientId = form['client-id'].value;
-            var name = form['client-name'].value;
-            var contact = form['client-contact'].value;
-            var socialLinks = form['client-social'].value;
-            var notes = form['client-notes'].value;
-            var tags = filterArray(mapArray(form['client-tags'].value.split(','), function(tag) { return tag.trim(); }), function(tag) { return tag !== ''; });
+            var clientIdInput = form['client-id'];
+            var nameInput = form['client-name'];
+            var contactInput = form['client-contact'];
+            var socialLinksInput = form['client-social'];
+            var notesInput = form['client-notes'];
+            var tagsInput = form['client-tags'];
+
+            var clientId = clientIdInput ? clientIdInput.value : '';
+            var name = nameInput ? nameInput.value : '';
+            var contact = contactInput ? contactInput.value : '';
+            var socialLinks = socialLinksInput ? socialLinksInput.value : '';
+            var notes = notesInput ? notesInput.value : '';
+            var tags = tagsInput ? filterArray(mapArray(tagsInput.value.split(','), function(tag) { return tag.trim(); }), function(tag) { return tag !== ''; }) : [];
 
             if (!name || !contact) {
+                console.warn("handleAddEditClient: Missing client name or contact.");
                 showModal('Ошибка', 'Имя и контакты клиента обязательны.', 'alert');
                 return;
             }
 
             var promise;
             if (clientId) {
+                console.log("handleAddEditClient: Updating existing client.");
                 // Update existing client
                 promise = supabase.from('clients').update({ name: name, contact: contact, social_links: socialLinks, notes: notes, tags: tags }).eq('id', clientId);
             } else {
+                console.log("handleAddEditClient: Adding new client.");
                 // Add new client
                 promise = supabase.from('clients').insert([{ name: name, contact: contact, social_links: socialLinks, notes: notes, tags: tags }]);
             }
 
             promise
                 .then(function(response) {
+                    console.log("Client save response:", response);
                     if (response.error) throw response.error;
                     showModal('Успех', 'Данные клиента успешно ' + (clientId ? 'обновлены' : 'добавлены') + '!', 'alert');
                     form.reset();
                     var formContainer = document.getElementById('client-form-container');
                     if (formContainer) formContainer.classList.add('hidden');
                     fetchDataAndRerenderCurrentPage();
+                    console.log("handleAddEditClient: Client saved and page re-rendered.");
                 })
                 .catch(function(error) {
                     console.error('Ошибка сохранения клиента:', error.message);
-                    showModal('Ошибка', 'Не удалось сохранить клиента: ' + error.message, 'alert');
+                    showModal('Ошибка', 'Не удалось сохранить клиента: ' + escapeHtml(error.message), 'alert');
                 });
         };
 
         var renderClientList = function() {
+            console.log("renderClientList: Function started.");
             var listContainer = document.getElementById('clients-list');
+            if (!listContainer) {
+                console.error("renderClientList: Clients list container not found.");
+                return;
+            }
             if (appState.clients.length === 0) {
                 listContainer.innerHTML = `
                     <div class="flex flex-col items-center justify-center py-10 text-gray-400">
@@ -1454,13 +1742,19 @@
                 `;
                 var addClientFromEmptyBtn = document.getElementById('add-client-from-empty-btn');
                 if (addClientFromEmptyBtn) {
+                    console.log("renderClientList: Found #add-client-from-empty-btn, attaching listener.");
                     addClientFromEmptyBtn.addEventListener('click', function() {
+                        console.log("Event: #add-client-from-empty-btn clicked.");
                         var formContainer = document.getElementById('client-form-container');
                         if (formContainer) {
                             formContainer.classList.remove('hidden');
+                            console.log("Event: Client form container shown.");
                         }
                     });
+                } else {
+                    console.warn("renderClientList: #add-client-from-empty-btn not found.");
                 }
+                console.log("renderClientList: No clients, rendered empty state.");
                 return;
             }
 
@@ -1486,14 +1780,14 @@
                                 : 'N/A';
                             return `
                                 <tr class="border-b border-gray-600 hover:bg-gray-700">
-                                    <td class="py-3 px-6 text-left font-medium">${client.name}</td>
-                                    <td class="py-3 px-6 text-left">${client.contact}</td>
-                                    <td class="py-3 px-6 text-left">${clientSessions.length}</td>
-                                    <td class="py-3 px-6 text-left">${lastVisit}</td>
+                                    <td class="py-3 px-6 text-left font-medium">${escapeHtml(client.name)}</td>
+                                    <td class="py-3 px-6 text-left">${escapeHtml(client.contact)}</td>
+                                    <td class="py-3 px-6 text-left">${escapeHtml(clientSessions.length)}</td>
+                                    <td class="py-3 px-6 text-left">${escapeHtml(lastVisit)}</td>
                                     <td class="py-3 px-6 text-center">
-                                        <button data-id="${client.id}" class="edit-client-btn bg-yellow-600 text-white px-3 py-1 rounded-md text-xs hover:bg-yellow-700 transition-colors mr-2">Редагувати</button>
-                                        <button data-id="${client.id}" class="view-client-history-btn bg-purple-600 text-white px-3 py-1 rounded-md text-xs hover:bg-purple-700 transition-colors mr-2">Історія</button>
-                                        <button data-id="${client.id}" class="delete-client-btn bg-red-600 text-white px-3 py-1 rounded-md text-xs hover:bg-red-700 transition-colors">Видалити</button>
+                                        <button data-id="${escapeHtml(client.id)}" class="edit-client-btn bg-yellow-600 text-white px-3 py-1 rounded-md text-xs hover:bg-yellow-700 transition-colors mr-2">Редагувати</button>
+                                        <button data-id="${escapeHtml(client.id)}" class="view-client-history-btn bg-purple-600 text-white px-3 py-1 rounded-md text-xs hover:bg-purple-700 transition-colors mr-2">Історія</button>
+                                        <button data-id="${escapeHtml(client.id)}" class="delete-client-btn bg-red-600 text-white px-3 py-1 rounded-md text-xs hover:bg-red-700 transition-colors">Видалити</button>
                                     </td>
                                 </tr>
                             `;
@@ -1503,8 +1797,10 @@
             `;
 
             var editClientButtons = listContainer.querySelectorAll('.edit-client-btn');
+            console.log("renderClientList: Found", editClientButtons.length, "edit client buttons, attaching listeners.");
             for (var i = 0; i < editClientButtons.length; i++) {
                 editClientButtons[i].addEventListener('click', function(e) {
+                    console.log("Event: Edit client button clicked.");
                     var clientId = e.target.dataset.id;
                     var client = findInArray(appState.clients, function(c) { return c.id === clientId; });
                     if (client) {
@@ -1516,48 +1812,58 @@
                         var clientTagsInput = document.getElementById('client-tags');
                         var formContainer = document.getElementById('client-form-container');
 
-                        if (clientIdInput) clientIdInput.value = client.id;
-                        if (clientNameInput) clientNameInput.value = client.name;
-                        if (clientContactInput) clientContactInput.value = client.contact;
-                        if (clientSocialInput) clientSocialInput.value = client.social_links || '';
-                        if (clientNotesInput) clientNotesInput.value = client.notes || '';
-                        if (clientTagsInput) clientTagsInput.value = client.tags ? client.tags.join(', ') : '';
+                        if (clientIdInput) clientIdInput.value = escapeHtml(client.id);
+                        if (clientNameInput) clientNameInput.value = escapeHtml(client.name);
+                        if (clientContactInput) clientContactInput.value = escapeHtml(client.contact);
+                        if (clientSocialInput) clientSocialInput.value = escapeHtml(client.social_links || '');
+                        if (clientNotesInput) clientNotesInput.value = escapeHtml(client.notes || '');
+                        if (clientTagsInput) clientTagsInput.value = escapeHtml(client.tags ? client.tags.join(', ') : '');
                         if (formContainer) formContainer.classList.remove('hidden');
+                        console.log("Event: Pre-filled client form for editing.");
                     }
                 });
             }
 
             var deleteClientButtons = listContainer.querySelectorAll('.delete-client-btn');
+            console.log("renderClientList: Found", deleteClientButtons.length, "delete client buttons, attaching listeners.");
             for (var i = 0; i < deleteClientButtons.length; i++) {
                 deleteClientButtons[i].addEventListener('click', function(e) {
+                    console.log("Event: Delete client button clicked.");
                     var clientId = e.target.dataset.id;
                     showModal('Удалить клиента', 'Вы уверены, что хотите удалить этого клиента? Все связанные записи и сеансы останутся, но клиент будет удален из базы.', 'confirm', function() {
                         supabase.from('clients').delete().eq('id', clientId)
                             .then(function(response) {
+                                console.log("Delete client response:", response);
                                 if (response.error) throw response.error;
                                 showModal('Успех', 'Клиент успешно удален!', 'alert');
                                 fetchDataAndRerenderCurrentPage();
+                                console.log("Event: Client deleted and page re-rendered.");
                             })
                             .catch(function(error) {
                                 console.error('Ошибка удаления клиента:', error.message);
-                                showModal('Ошибка', 'Не удалось удалить клиента: ' + error.message, 'alert');
+                                showModal('Ошибка', 'Не удалось удалить клиента: ' + escapeHtml(error.message), 'alert');
                             });
                     });
                 });
             }
 
             var viewClientHistoryButtons = listContainer.querySelectorAll('.view-client-history-btn');
+            console.log("renderClientList: Found", viewClientHistoryButtons.length, "view client history buttons, attaching listeners.");
             for (var i = 0; i < viewClientHistoryButtons.length; i++) {
                 viewClientHistoryButtons[i].addEventListener('click', function(e) {
+                    console.log("Event: View client history button clicked.");
                     var clientId = e.target.dataset.id;
                     showClientHistoryModal(clientId);
                 });
             }
+            console.log("renderClientList: Function finished.");
         };
 
         var showClientHistoryModal = function(clientId) {
+            console.log("showClientHistoryModal: Function started for client ID:", clientId);
             var client = findInArray(appState.clients, function(c) { return c.id === clientId; });
             if (!client) {
+                console.error("showClientHistoryModal: Client not found for ID:", clientId);
                 showModal('Ошибка', 'Клиент не найден.', 'alert');
                 return;
             }
@@ -1568,6 +1874,7 @@
             var historyHtml = '';
             if (clientAppointments.length === 0) {
                 historyHtml = '<p class="text-gray-400">У этого клиента нет истории визитов.</p>';
+                console.log("showClientHistoryModal: No history found for client.");
             } else {
                 historyHtml = `
                     <div class="overflow-x-auto max-h-96">
@@ -1604,9 +1911,9 @@
                                             </td>
                                             <td class="py-2 px-4 font-semibold">${session ? formatCurrency(session.total_price) : 'N/A'}</td>
                                             <td class="py-2 px-4">
-                                                ${app.sketch_url ? `<a href="${app.sketch_url}" target="_blank" class="text-blue-400 hover:underline">Показать</a>` : 'Нет'}
+                                                ${app.sketch_url ? `<a href="${escapeHtml(app.sketch_url)}" target="_blank" class="text-blue-400 hover:underline">${escapeHtml(app.sketch_url.substring(0, 30))}...</a>` : 'Нет'}
                                             </td>
-                                            <td class="py-2 px-4">${session ? (session.notes || 'Нет') : 'Нет'}</td>
+                                            <td class="py-2 px-4">${session ? escapeHtml(session.notes || 'Нет') : 'Нет'}</td>
                                         </tr>
                                     `;
                                 }).join('')}
@@ -1614,26 +1921,33 @@
                         </table>
                     </div>
                 `;
+                console.log("showClientHistoryModal: Rendered client history table.");
             }
 
             showModal(
-                'История визитов для ' + client.name,
+                'История визитов для ' + escapeHtml(client.name),
                 `<div class="mb-4">
-                    <p class="text-gray-300"><strong>Контакты:</strong> ${client.contact}</p>
-                    <p class="text-gray-300"><strong>Соцсети:</strong> ${client.social_links ? `<a href="${client.social_links}" target="_blank" class="text-blue-400 hover:underline">${client.social_links}</a>` : 'N/A'}</p>
-                    <p class="text-gray-300"><strong>Заметки:</strong> ${client.notes || 'Нет'}</p>
-                    <p class="text-gray-300"><strong>Метки:</strong> ${client.tags && client.tags.length > 0 ? client.tags.join(', ') : 'Нет'}</p>
+                    <p class="text-gray-300"><strong>Контакты:</strong> ${escapeHtml(client.contact)}</p>
+                    <p class="text-gray-300"><strong>Соцсети:</strong> ${client.social_links ? `<a href="${escapeHtml(client.social_links)}" target="_blank" class="text-blue-400 hover:underline">${escapeHtml(client.social_links)}</a>` : 'N/A'}</p>
+                    <p class="text-gray-300"><strong>Заметки:</strong> ${escapeHtml(client.notes || 'Нет')}</p>
+                    <p class="text-gray-300"><strong>Метки:</strong> ${client.tags && client.tags.length > 0 ? escapeHtml(client.tags.join(', ')) : 'Нет'}</p>
                 </div>
                 <h4 class="text-lg font-semibold mb-2 text-gray-300">История сеансов:</h4>
                 ${historyHtml}`,
                 'alert' // Using alert type, but with rich HTML content
             );
+            console.log("showClientHistoryModal: Modal displayed.");
         };
 
 
         // 5. Inventory Module
         var renderInventory = function() {
+            console.log("renderInventory: Function started.");
             var dynamicContentArea = document.getElementById('dynamic-content-area');
+            if (!dynamicContentArea) {
+                console.error("renderInventory: Dynamic content area not found.");
+                return;
+            }
             dynamicContentArea.innerHTML = `
                 <div class="p-4 md:p-8 bg-gray-700 rounded-lg shadow-md">
                     <h2 class="text-3xl font-bold mb-6 text-blue-300">Матеріали</h2>
@@ -1642,7 +1956,7 @@
                         <div class="flex items-center space-x-4">
                             <select class="bg-gray-800 text-gray-200 border border-gray-600 rounded-md py-2 px-4 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                                 <option>Усі категорії</option>
-                                ${mapArray(appState.materialCategories, function(cat) { return `<option value="${cat}">${cat}</option>`; }).join('')}
+                                ${mapArray(appState.materialCategories, function(cat) { return `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`; }).join('')}
                             </select>
                             <div class="relative">
                                 <input type="text" placeholder="Пошук матеріалів ..." class="bg-gray-800 text-gray-200 border border-gray-600 rounded-md py-2 px-4 pl-10 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
@@ -1654,7 +1968,7 @@
                         </button>
                     </div>
 
-                    <p class="text-gray-400 mb-4">Показано ${appState.materials.length} матеріалів</p>
+                    <p class="text-gray-400 mb-4">Показано ${escapeHtml(appState.materials.length)} матеріалів</p>
 
                     <div id="material-form-container" class="hidden bg-gray-800 p-6 rounded-lg shadow-inner mb-8">
                         <h3 class="text-xl font-semibold mb-4 text-blue-300">Додати/Редагувати матеріал</h3>
@@ -1675,7 +1989,7 @@
                             <div>
                                 <label for="material-type" class="block text-sm font-medium text-gray-300">Категория</label>
                                 <select id="material-type" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
-                                    ${mapArray(appState.materialCategories, function(cat) { return `<option value="${cat}">${cat}</option>`; }).join('')}
+                                    ${mapArray(appState.materialCategories, function(cat) { return `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`; }).join('')}
                                 </select>
                             </div>
                             <div>
@@ -1702,76 +2016,108 @@
 
             var addMaterialBtn = document.getElementById('add-material-btn');
             if (addMaterialBtn) {
+                console.log("renderInventory: Found #add-material-btn, attaching listener.");
                 addMaterialBtn.addEventListener('click', function() {
+                    console.log("Event: #add-material-btn clicked.");
                     var formContainer = document.getElementById('material-form-container');
                     var materialForm = document.getElementById('material-form');
                     var materialIdInput = document.getElementById('material-id');
                     if (formContainer) formContainer.classList.toggle('hidden');
                     if (materialForm) materialForm.reset();
                     if (materialIdInput) materialIdInput.value = ''; // Clear ID for new material
+                    console.log("Event: Toggled material form visibility and reset.");
                 });
+            } else {
+                console.warn("renderInventory: #add-material-btn not found.");
             }
 
             var cancelMaterialFormBtn = document.getElementById('cancel-material-form');
             if (cancelMaterialFormBtn) {
+                console.log("renderInventory: Found #cancel-material-form, attaching listener.");
                 cancelMaterialFormBtn.addEventListener('click', function() {
+                    console.log("Event: #cancel-material-form clicked.");
                     var formContainer = document.getElementById('material-form-container');
                     var materialForm = document.getElementById('material-form');
                     if (formContainer) formContainer.classList.add('hidden');
                     if (materialForm) materialForm.reset();
+                    console.log("Event: Material form cancelled and hidden.");
                 });
+            } else {
+                console.warn("renderInventory: #cancel-material-form not found.");
             }
 
             var materialForm = document.getElementById('material-form');
             if (materialForm) {
+                console.log("renderInventory: Found #material-form, attaching submit listener.");
                 materialForm.addEventListener('submit', handleAddEditMaterial);
+            } else {
+                console.warn("renderInventory: #material-form not found.");
             }
             renderMaterialsList();
             renderMaterialMovements();
             checkLowStock();
+            console.log("renderInventory: Function finished.");
         };
 
         var handleAddEditMaterial = function(event) {
+            console.log("handleAddEditMaterial: Function started.");
             event.preventDefault();
             var form = event.target;
-            var materialId = form['material-id'].value;
-            var name = form['material-name'].value;
-            var unitPrice = parseFloat(form['material-price'].value);
-            var stock = parseFloat(form['material-stock'].value);
-            var type = form['material-type'].value;
-            var lowStockThreshold = parseFloat(form['material-low-threshold'].value);
+            var materialIdInput = form['material-id'];
+            var nameInput = form['material-name'];
+            var unitPriceInput = form['material-price'];
+            var stockInput = form['material-stock'];
+            var typeInput = form['material-type'];
+            var lowStockThresholdInput = form['material-low-threshold'];
+
+            var materialId = materialIdInput ? materialIdInput.value : '';
+            var name = nameInput ? nameInput.value : '';
+            var unitPrice = unitPriceInput ? parseFloat(unitPriceInput.value) : NaN;
+            var stock = stockInput ? parseFloat(stockInput.value) : NaN;
+            var type = typeInput ? typeInput.value : '';
+            var lowStockThreshold = lowStockThresholdInput ? parseFloat(lowStockThresholdInput.value) : NaN;
 
             if (!name || isNaN(unitPrice) || isNaN(stock) || !type || isNaN(lowStockThreshold)) {
+                console.warn("handleAddEditMaterial: Missing required fields.");
                 showModal('Ошибка', 'Пожалуйста, заполните все обязательные поля.', 'alert');
                 return;
             }
 
             var promise;
             if (materialId) {
+                console.log("handleAddEditMaterial: Updating existing material.");
                 // Update existing material
                 promise = supabase.from('materials').update({ name: name, unit_price: unitPrice, stock: stock, type: type, low_stock_threshold: lowStockThreshold }).eq('id', materialId);
             } else {
+                console.log("handleAddEditMaterial: Adding new material.");
                 // Add new material
                 promise = supabase.from('materials').insert([{ name: name, unit_price: unitPrice, stock: stock, type: type, low_stock_threshold: lowStockThreshold }]);
             }
 
             promise
                 .then(function(response) {
+                    console.log("Material save response:", response);
                     if (response.error) throw response.error;
                     showModal('Успех', 'Материал успешно ' + (materialId ? 'обновлен' : 'добавлен') + '!', 'alert');
                     form.reset();
                     var formContainer = document.getElementById('material-form-container');
                     if (formContainer) formContainer.classList.add('hidden');
                     fetchDataAndRerenderCurrentPage();
+                    console.log("handleAddEditMaterial: Material saved and page re-rendered.");
                 })
                 .catch(function(error) {
                     console.error('Ошибка сохранения материала:', error.message);
-                    showModal('Ошибка', 'Не удалось сохранить материал: ' + error.message, 'alert');
+                    showModal('Ошибка', 'Не удалось сохранить материал: ' + escapeHtml(error.message), 'alert');
                 });
         };
 
         var renderMaterialsList = function() {
+            console.log("renderMaterialsList: Function started.");
             var listContainer = document.getElementById('materials-list');
+            if (!listContainer) {
+                console.error("renderMaterialsList: Materials list container not found.");
+                return;
+            }
             if (appState.materials.length === 0) {
                 listContainer.innerHTML = `
                     <div class="flex flex-col items-center justify-center py-10 text-gray-400">
@@ -1784,13 +2130,19 @@
                 `;
                 var addMaterialFromEmptyBtn = document.getElementById('add-material-from-empty-btn');
                 if (addMaterialFromEmptyBtn) {
+                    console.log("renderMaterialsList: Found #add-material-from-empty-btn, attaching listener.");
                     addMaterialFromEmptyBtn.addEventListener('click', function() {
+                        console.log("Event: #add-material-from-empty-btn clicked.");
                         var formContainer = document.getElementById('material-form-container');
                         if (formContainer) {
                             formContainer.classList.remove('hidden');
+                            console.log("Event: Material form container shown.");
                         }
                     });
+                } else {
+                    console.warn("renderMaterialsList: #add-material-from-empty-btn not found.");
                 }
+                console.log("renderMaterialsList: No materials, rendered empty state.");
                 return;
             }
 
@@ -1809,13 +2161,13 @@
                         ${mapArray(appState.materials, function(material) {
                             return `
                                 <tr class="border-b border-gray-600 hover:bg-gray-700 ${material.stock <= material.low_stock_threshold ? 'bg-red-900/30' : ''}">
-                                    <td class="py-3 px-6 text-left font-medium">${material.name}</td>
-                                    <td class="py-3 px-6 text-left">${material.type}</td>
-                                    <td class="py-3 px-6 text-left">${material.stock}</td>
+                                    <td class="py-3 px-6 text-left font-medium">${escapeHtml(material.name)}</td>
+                                    <td class="py-3 px-6 text-left">${escapeHtml(material.type)}</td>
+                                    <td class="py-3 px-6 text-left">${escapeHtml(material.stock)}</td>
                                     <td class="py-3 px-6 text-left">${formatCurrency(material.unit_price)}</td>
                                     <td class="py-3 px-6 text-center">
-                                        <button data-id="${material.id}" class="edit-material-btn bg-yellow-600 text-white px-3 py-1 rounded-md text-xs hover:bg-yellow-700 transition-colors mr-2">Редагувати</button>
-                                        <button data-id="${material.id}" class="delete-material-btn bg-red-600 text-white px-3 py-1 rounded-md text-xs hover:bg-red-700 transition-colors">Видалити</button>
+                                        <button data-id="${escapeHtml(material.id)}" class="edit-material-btn bg-yellow-600 text-white px-3 py-1 rounded-md text-xs hover:bg-yellow-700 transition-colors mr-2">Редагувати</button>
+                                        <button data-id="${escapeHtml(material.id)}" class="delete-material-btn bg-red-600 text-white px-3 py-1 rounded-md text-xs hover:bg-red-700 transition-colors">Видалити</button>
                                     </td>
                                 </tr>
                             `;
@@ -1825,8 +2177,10 @@
             `;
 
             var editMaterialButtons = listContainer.querySelectorAll('.edit-material-btn');
+            console.log("renderMaterialsList: Found", editMaterialButtons.length, "edit material buttons, attaching listeners.");
             for (var i = 0; i < editMaterialButtons.length; i++) {
                 editMaterialButtons[i].addEventListener('click', function(e) {
+                    console.log("Event: Edit material button clicked.");
                     var materialId = e.target.dataset.id;
                     var material = findInArray(appState.materials, function(m) { return m.id === materialId; });
                     if (material) {
@@ -1838,46 +2192,59 @@
                         var materialLowThresholdInput = document.getElementById('material-low-threshold');
                         var formContainer = document.getElementById('material-form-container');
 
-                        if (materialIdInput) materialIdInput.value = material.id;
-                        if (materialNameInput) materialNameInput.value = material.name;
-                        if (materialPriceInput) materialPriceInput.value = material.unit_price;
-                        if (materialStockInput) materialStockInput.value = material.stock;
-                        if (materialTypeSelect) materialTypeSelect.value = material.type;
-                        if (materialLowThresholdInput) materialLowThresholdInput.value = material.low_stock_threshold;
+                        if (materialIdInput) materialIdInput.value = escapeHtml(material.id);
+                        if (materialNameInput) materialNameInput.value = escapeHtml(material.name);
+                        if (materialPriceInput) materialPriceInput.value = escapeHtml(material.unit_price);
+                        if (materialStockInput) materialStockInput.value = escapeHtml(material.stock);
+                        if (materialTypeSelect) materialTypeSelect.value = escapeHtml(material.type);
+                        if (materialLowThresholdInput) materialLowThresholdInput.value = escapeHtml(material.low_stock_threshold);
                         if (formContainer) formContainer.classList.remove('hidden');
+                        console.log("Event: Pre-filled material form for editing.");
                     }
                 });
             }
 
             var deleteMaterialButtons = listContainer.querySelectorAll('.delete-material-btn');
+            console.log("renderMaterialsList: Found", deleteMaterialButtons.length, "delete material buttons, attaching listeners.");
             for (var i = 0; i < deleteMaterialButtons.length; i++) {
                 deleteMaterialButtons[i].addEventListener('click', function(e) {
+                    console.log("Event: Delete material button clicked.");
                     var materialId = e.target.dataset.id;
                     showModal('Удалить материал', 'Вы уверены, что хотите удалить этот материал? Это действие необратимо.', 'confirm', function() {
                         supabase.from('materials').delete().eq('id', materialId)
                             .then(function(response) {
+                                console.log("Delete material response:", response);
                                 if (response.error) throw response.error;
                                 showModal('Успех', 'Материал успешно удален!', 'alert');
                                 fetchDataAndRerenderCurrentPage();
+                                console.log("Event: Material deleted and page re-rendered.");
                             })
                             .catch(function(error) {
                                 console.error('Ошибка удаления материала:', error.message);
-                                showModal('Ошибка', 'Не удалось удалить материал: ' + error.message, 'alert');
+                                showModal('Ошибка', 'Не удалось удалить материал: ' + escapeHtml(error.message), 'alert');
                             });
                     });
                 });
             }
+            console.log("renderMaterialsList: Function finished.");
         };
 
         var renderMaterialMovements = function() {
+            console.log("renderMaterialMovements: Function started.");
             var listContainer = document.getElementById('material-movements-list');
+            if (!listContainer) {
+                console.error("renderMaterialMovements: Material movements list container not found.");
+                return;
+            }
             supabase.from('material_movements').select('*, materials(name)').order('date', { ascending: false })
                 .then(function(response) {
+                    console.log("Material movements fetch response:", response);
                     if (response.error) throw response.error;
                     var movements = response.data;
 
                     if (movements.length === 0) {
                         listContainer.innerHTML = '<p class="text-gray-400">Нет истории движений материалов.</p>';
+                        console.log("renderMaterialMovements: No movements, rendered empty state.");
                         return;
                     }
 
@@ -1897,41 +2264,53 @@
                                     return `
                                         <tr class="border-b border-gray-600 hover:bg-gray-700">
                                             <td class="py-3 px-6 text-left whitespace-nowrap">${new Date(move.date).toLocaleString('uk-UA')}</td>
-                                            <td class="py-3 px-6 text-left">${move.materials ? move.materials.name : 'Неизвестно'}</td>
+                                            <td class="py-3 px-6 text-left">${move.materials ? escapeHtml(move.materials.name) : 'Неизвестно'}</td>
                                             <td class="py-3 px-6 text-left">
                                                 <span class="px-2 py-1 rounded-full text-xs font-semibold ${move.type === 'in' ? 'bg-blue-700 text-blue-100' : 'bg-orange-700 text-orange-100'}">
                                                     ${move.type === 'in' ? 'Приход' : 'Расход'}
                                                 </span>
                                             </td>
-                                            <td class="py-3 px-6 text-left">${move.quantity}</td>
-                                            <td class="py-3 px-6 text-left">${move.source_target || 'N/A'}</td>
+                                            <td class="py-3 px-6 text-left">${escapeHtml(move.quantity)}</td>
+                                            <td class="py-3 px-6 text-left">${escapeHtml(move.source_target || 'N/A')}</td>
                                         </tr>
                                     `;
                                 }).join('')}
                             </tbody>
                         </table>
                     `;
+                    console.log("renderMaterialMovements: Rendered movements table.");
                 })
                 .catch(function(error) {
                     console.error('Ошибка загрузки истории движений материалов:', error.message);
                     if (listContainer) {
-                        listContainer.innerHTML = `<p class="text-red-400">Ошибка загрузки истории: ${error.message}</p>`;
+                        listContainer.innerHTML = `<p class="text-red-400">Ошибка загрузки истории: ${escapeHtml(error.message)}</p>`;
                     }
                 });
+            console.log("renderMaterialMovements: Function finished.");
         };
 
         var checkLowStock = function() {
+            console.log("checkLowStock: Function started.");
             var lowStockMaterials = filterArray(appState.materials, function(m) { return m.stock <= m.low_stock_threshold; });
             if (lowStockMaterials.length > 0) {
-                var materialNames = mapArray(lowStockMaterials, function(m) { return m.name; }).join(', ');
+                var materialNames = mapArray(lowStockMaterials, function(m) { return escapeHtml(m.name); }).join(', ');
                 showModal('Низкий остаток материалов', 'Следующие материалы имеют низкий остаток: ' + materialNames + '. Пожалуйста, пополните запасы.', 'alert');
+                console.log("checkLowStock: Low stock materials found, showing alert.");
+            } else {
+                console.log("checkLowStock: No low stock materials.");
             }
+            console.log("checkLowStock: Function finished.");
         };
 
 
         // 6. Finance Module
         var renderFinance = function() {
+            console.log("renderFinance: Function started.");
             var dynamicContentArea = document.getElementById('dynamic-content-area');
+            if (!dynamicContentArea) {
+                console.error("renderFinance: Dynamic content area not found.");
+                return;
+            }
             dynamicContentArea.innerHTML = `
                 <div class="p-4 md:p-8 bg-gray-700 rounded-lg shadow-md">
                     <h2 class="text-3xl font-bold mb-6 text-blue-300">Фінанси</h2>
@@ -1955,7 +2334,7 @@
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-300 mb-1">Прибуток</h3>
                                 <p class="text-3xl font-bold text-blue-400" id="net-profit">${formatCurrency(calculateNetProfit())}</p>
-                                <p class="text-sm text-gray-400">Рентабельність: ${((calculateNetProfit() / calculateTotalRevenue()) * 100 || 0).toFixed(1)}%</p>
+                                <p class="text-sm text-gray-400">Рентабельність: ${escapeHtml(((calculateNetProfit() / calculateTotalRevenue()) * 100 || 0).toFixed(1))}%</p>
                             </div>
                         </div>
                     </div>
@@ -1984,7 +2363,7 @@
                             <div>
                                 <label for="expense-category" class="block text-sm font-medium text-gray-300">Категория</label>
                                 <select id="expense-category" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
-                                    ${mapArray(appState.expenseCategories, function(cat) { return `<option value="${cat}">${cat}</option>`; }).join('')}
+                                    ${mapArray(appState.expenseCategories, function(cat) { return `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`; }).join('')}
                                 </select>
                             </div>
                             <div class="md:col-span-2 flex justify-end space-x-3">
@@ -2028,31 +2407,45 @@
 
             var addExpenseBtn = document.getElementById('add-expense-btn');
             if (addExpenseBtn) {
+                console.log("renderFinance: Found #add-expense-btn, attaching listener.");
                 addExpenseBtn.addEventListener('click', function() {
+                    console.log("Event: #add-expense-btn clicked.");
                     var formContainer = document.getElementById('expense-form-container');
                     var expenseForm = document.getElementById('expense-form');
                     if (formContainer) formContainer.classList.toggle('hidden');
                     if (expenseForm) expenseForm.reset();
+                    console.log("Event: Toggled expense form visibility and reset.");
                 });
+            } else {
+                console.warn("renderFinance: #add-expense-btn not found.");
             }
 
             var cancelExpenseFormBtn = document.getElementById('cancel-expense-form');
             if (cancelExpenseFormBtn) {
+                console.log("renderFinance: Found #cancel-expense-form, attaching listener.");
                 cancelExpenseFormBtn.addEventListener('click', function() {
+                    console.log("Event: #cancel-expense-form clicked.");
                     var formContainer = document.getElementById('expense-form-container');
                     var expenseForm = document.getElementById('expense-form');
                     if (formContainer) formContainer.classList.add('hidden');
                     if (expenseForm) expenseForm.reset();
+                    console.log("Event: Expense form cancelled and hidden.");
                 });
+            } else {
+                console.warn("renderFinance: #cancel-expense-form not found.");
             }
 
             var expenseForm = document.getElementById('expense-form');
             if (expenseForm) {
+                console.log("renderFinance: Found #expense-form, attaching submit listener.");
                 expenseForm.addEventListener('submit', handleAddExpense);
+            } else {
+                console.warn("renderFinance: #expense-form not found.");
             }
             renderFinanceTable();
             renderMonthlyRevenueReport();
             renderPaymentMethodReport();
+            console.log("renderFinance: Function finished.");
         };
 
         var calculateMonthlyExpenses = function() {
@@ -2077,49 +2470,70 @@
         };
 
         var handleAddExpense = function(event) {
+            console.log("handleAddExpense: Function started.");
             event.preventDefault();
             var form = event.target;
-            var date = form['expense-date'].value;
-            var amount = parseFloat(form['expense-amount'].value);
-            var description = form['expense-description'].value;
-            var category = form['expense-category'].value;
+            var dateInput = form['expense-date'];
+            var amountInput = form['expense-amount'];
+            var descriptionInput = form['expense-description'];
+            var categoryInput = form['expense-category'];
+
+            var date = dateInput ? dateInput.value : '';
+            var amount = amountInput ? parseFloat(amountInput.value) : NaN;
+            var description = descriptionInput ? descriptionInput.value : '';
+            var category = categoryInput ? categoryInput.value : '';
 
             if (!date || isNaN(amount) || !description || !category) {
+                console.warn("handleAddExpense: Missing required fields.");
                 showModal('Ошибка', 'Пожалуйста, заполните все поля расхода.', 'alert');
                 return;
             }
 
             supabase.from('expenses').insert([{ date: date, amount: amount, description: description, category: category }])
                 .then(function(response) {
+                    console.log("Expense add response:", response);
                     if (response.error) throw response.error;
                     showModal('Успех', 'Расход успешно добавлен!', 'alert');
                     form.reset();
                     var formContainer = document.getElementById('expense-form-container');
                     if (formContainer) formContainer.classList.add('hidden');
                     fetchDataAndRerenderCurrentPage();
+                    console.log("handleAddExpense: Expense added and page re-rendered.");
                 })
                 .catch(function(error) {
                     console.error('Ошибка добавления расхода:', error.message);
-                    showModal('Ошибка', 'Не удалось добавить расход: ' + error.message, 'alert');
+                    showModal('Ошибка', 'Не удалось добавить расход: ' + escapeHtml(error.message), 'alert');
                 });
         };
 
         var renderFinanceTable = function() {
+            console.log("renderFinanceTable: Function started.");
             var tableContainer = document.getElementById('finance-table');
+            if (!tableContainer) {
+                console.error("renderFinanceTable: Finance table container not found.");
+                return;
+            }
             var combinedData = [];
 
             mapArray(appState.sessions, function(session) {
                 var sessionDate = new Date(session.start_time);
+                var relatedAppointment = findInArray(appState.appointments, function(app) {
+                    return app.id === session.appointment_id;
+                });
+                var clientName = 'Неизвестно';
+                if (relatedAppointment && relatedAppointment.client_id) {
+                    var client = findInArray(appState.clients, function(c) {
+                        return c.id === relatedAppointment.client_id;
+                    });
+                    if (client) {
+                        clientName = client.name;
+                    }
+                }
+
                 combinedData.push({
                     type: 'Доход',
                     date: sessionDate.toISOString().split('T')[0],
-                    description: 'Сеанс (' + (findInArray(appState.clients, function(c) {
-                        var app = findInArray(appState.appointments, function(a) { return a.id === session.appointment_id; });
-                        return app ? c.id === app.client_id : false;
-                    }) ? findInArray(appState.clients, function(c) {
-                        var app = findInArray(appState.appointments, function(a) { return a.id === session.appointment_id; });
-                        return app ? c.id === app.client_id : false;
-                    }).name : 'Неизвестно') + ')',
+                    description: `Сеанс (${escapeHtml(clientName)})`, // Changed to template literal with escapeHtml
                     amount: session.total_price,
                     category: 'Тату-сеанс',
                     paymentMethod: session.payment_method
@@ -2130,9 +2544,9 @@
                 combinedData.push({
                     type: 'Расход',
                     date: expense.date,
-                    description: expense.description,
+                    description: escapeHtml(expense.description), // Escape expense description
                     amount: expense.amount,
-                    category: expense.category,
+                    category: escapeHtml(expense.category), // Escape expense category
                     paymentMethod: 'N/A'
                 });
             });
@@ -2143,6 +2557,7 @@
                 if (tableContainer) {
                     tableContainer.innerHTML = '<p class="text-gray-400">Нет финансовых операций.</p>';
                 }
+                console.log("renderFinanceTable: No financial operations, rendered empty state.");
                 return;
             }
 
@@ -2165,12 +2580,12 @@
                                     <td class="py-3 px-6 text-left whitespace-nowrap">${formatDate(item.date)}</td>
                                     <td class="py-3 px-6 text-left">
                                         <span class="px-2 py-1 rounded-full text-xs font-semibold ${item.type === 'Доход' ? 'bg-green-700 text-green-100' : 'bg-red-700 text-red-100'}">
-                                            ${item.type}
+                                            ${escapeHtml(item.type)}
                                         </span>
                                     </td>
                                     <td class="py-3 px-6 text-left">${item.description}</td>
                                     <td class="py-3 px-6 text-left">${item.category}</td>
-                                    <td class="py-3 px-6 text-left">${item.paymentMethod === 'cash' ? 'Наличные' : item.paymentMethod === 'card' ? 'Карта' : item.paymentMethod === 'transfer' ? 'Перевод' : item.paymentMethod}</td>
+                                    <td class="py-3 px-6 text-left">${escapeHtml(item.paymentMethod === 'cash' ? 'Наличные' : item.paymentMethod === 'card' ? 'Карта' : item.paymentMethod)}</td>
                                     <td class="py-3 px-6 text-left font-semibold ${item.type === 'Доход' ? 'text-green-400' : 'text-red-400'}">${formatCurrency(item.amount)}</td>
                                 </tr>
                             `;
@@ -2178,10 +2593,17 @@
                     </tbody>
                 </table>
             `;
+            console.log("renderFinanceTable: Rendered finance table.");
+            console.log("renderFinanceTable: Function finished.");
         };
 
         var renderMonthlyRevenueReport = function() {
+            console.log("renderMonthlyRevenueReport: Function started.");
             var reportContainer = document.getElementById('monthly-revenue-report');
+            if (!reportContainer) {
+                console.error("renderMonthlyRevenueReport: Monthly revenue report container not found.");
+                return;
+            }
             var monthlyData = {};
 
             mapArray(appState.sessions, function(session) {
@@ -2199,6 +2621,7 @@
                 if (reportContainer) {
                     reportContainer.innerHTML = '<p class="text-gray-400">Нет данных о выручке по месяцам.</p>';
                 }
+                console.log("renderMonthlyRevenueReport: No monthly revenue data, rendered empty state.");
                 return;
             }
 
@@ -2206,15 +2629,22 @@
                 <ul class="list-disc list-inside space-y-1 text-gray-200">
                     ${mapArray(sortedMonths, function(month) {
                         return `
-                        <li>${month}: <span class="font-semibold">${formatCurrency(monthlyData[month])}</span></li>
+                        <li>${escapeHtml(month)}: <span class="font-semibold">${formatCurrency(monthlyData[month])}</span></li>
                     `;
                     }).join('')}
                 </ul>
             `;
+            console.log("renderMonthlyRevenueReport: Rendered monthly revenue report.");
+            console.log("renderMonthlyRevenueReport: Function finished.");
         };
 
         var renderPaymentMethodReport = function() {
+            console.log("renderPaymentMethodReport: Function started.");
             var reportContainer = document.getElementById('payment-method-report');
+            if (!reportContainer) {
+                console.error("renderPaymentMethodReport: Payment method report container not found.");
+                return;
+            }
             var paymentMethodData = {
                 cash: 0,
                 card: 0,
@@ -2233,22 +2663,30 @@
                 if (reportContainer) {
                     reportContainer.innerHTML = '<p class="text-gray-400">Нет данных о выручке по методам оплаты.</p>';
                 }
+                console.log("renderPaymentMethodReport: No payment method data, rendered empty state.");
                 return;
             }
 
             reportContainer.innerHTML = `
                 <ul class="list-disc list-inside space-y-1 text-gray-200">
-                    <li>Наличные: <span class="font-semibold">${formatCurrency(paymentMethodData.cash)} (${((paymentMethodData.cash / totalRevenue) * 100 || 0).toFixed(1)}%)</span></li>
-                    <li>Карта: <span class="font-semibold">${formatCurrency(paymentMethodData.card)} (${((paymentMethodData.card / totalRevenue) * 100 || 0).toFixed(1)}%)</span></li>
-                    <li>Перевод: <span class="font-semibold">${formatCurrency(paymentMethodData.transfer)} (${((paymentMethodData.transfer / totalRevenue) * 100 || 0).toFixed(1)}%)</span></li>
+                    <li>Наличные: <span class="font-semibold">${formatCurrency(paymentMethodData.cash)} (${escapeHtml(((paymentMethodData.cash / totalRevenue) * 100 || 0).toFixed(1))}%)</span></li>
+                    <li>Карта: <span class="font-semibold">${formatCurrency(paymentMethodData.card)} (${escapeHtml(((paymentMethodData.card / totalRevenue) * 100 || 0).toFixed(1))}%)</span></li>
+                    <li>Перевод: <span class="font-semibold">${formatCurrency(paymentMethodData.transfer)} (${escapeHtml(((paymentMethodData.transfer / totalRevenue) * 100 || 0).toFixed(1))}%)</span></li>
                 </ul>
             `;
+            console.log("renderPaymentMethodReport: Rendered payment method report.");
+            console.log("renderPaymentMethodReport: Function finished.");
         };
 
 
         // 7. Settings Module
         var renderSettings = function() {
+            console.log("renderSettings: Function started.");
             var dynamicContentArea = document.getElementById('dynamic-content-area');
+            if (!dynamicContentArea) {
+                console.error("renderSettings: Dynamic content area not found.");
+                return;
+            }
             dynamicContentArea.innerHTML = `
                 <div class="p-4 md:p-8 bg-gray-700 rounded-lg shadow-md">
                     <h2 class="text-3xl font-bold mb-6 text-blue-300">Налаштування</h2>
@@ -2258,7 +2696,7 @@
                         <form id="settings-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label for="hourly-rate" class="block text-sm font-medium text-gray-300">Почасова ставка (грн)</label>
-                                <input type="number" id="hourly-rate" step="0.01" min="0" value="${appState.hourlyRate}" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
+                                <input type="number" id="hourly-rate" step="0.01" min="0" value="${escapeHtml(appState.hourlyRate)}" class="mt-1 block w-full p-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-gray-200">
                             </div>
                             <div>
                                 <label for="currency" class="block text-sm font-medium text-gray-300">Валюта</label>
@@ -2296,10 +2734,10 @@
                             ${mapArray(appState.expenseCategories, function(cat) {
                                 return `
                                 <div class="flex items-center justify-between bg-gray-700 p-3 rounded-md mb-2">
-                                    <span class="text-gray-200">${cat}</span>
+                                    <span class="text-gray-200">${escapeHtml(cat)}</span>
                                     <div class="flex space-x-2">
-                                        <button class="edit-expense-category-btn text-blue-400 hover:text-blue-300" data-category="${cat}"><i class="fas fa-pencil-alt"></i></button>
-                                        <button class="delete-expense-category-btn text-red-400 hover:text-red-300" data-category="${cat}"><i class="fas fa-trash-alt"></i></button>
+                                        <button class="edit-expense-category-btn text-blue-400 hover:text-blue-300" data-category="${escapeHtml(cat)}"><i class="fas fa-pencil-alt"></i></button>
+                                        <button class="delete-expense-category-btn text-red-400 hover:text-red-300" data-category="${escapeHtml(cat)}"><i class="fas fa-trash-alt"></i></button>
                                     </div>
                                 </div>
                             `;
@@ -2319,10 +2757,10 @@
                             ${mapArray(appState.materialCategories, function(cat) {
                                 return `
                                 <div class="flex items-center justify-between bg-gray-700 p-3 rounded-md mb-2">
-                                    <span class="text-gray-200">${cat}</span>
+                                    <span class="text-gray-200">${escapeHtml(cat)}</span>
                                     <div class="flex space-x-2">
-                                        <button class="edit-material-category-btn text-blue-400 hover:text-blue-300" data-category="${cat}"><i class="fas fa-pencil-alt"></i></button>
-                                        <button class="delete-material-category-btn text-red-400 hover:text-red-300" data-category="${cat}"><i class="fas fa-trash-alt"></i></button>
+                                        <button class="edit-material-category-btn text-blue-400 hover:text-blue-300" data-category="${escapeHtml(cat)}"><i class="fas fa-pencil-alt"></i></button>
+                                        <button class="delete-material-category-btn text-red-400 hover:text-red-300" data-category="${escapeHtml(cat)}"><i class="fas fa-trash-alt"></i></button>
                                     </div>
                                 </div>
                             `;
@@ -2340,90 +2778,126 @@
 
             var settingsForm = document.getElementById('settings-form');
             if (settingsForm) {
+                console.log("renderSettings: Found #settings-form, attaching submit listener.");
                 settingsForm.addEventListener('submit', handleSaveSettings);
+            } else {
+                console.warn("renderSettings: #settings-form not found.");
             }
 
             // Add/Edit category logic for Expense Categories
             var addExpenseCategoryBtn = document.getElementById('add-expense-category-btn');
             if (addExpenseCategoryBtn) {
+                console.log("renderSettings: Found #add-expense-category-btn, attaching listener.");
                 addExpenseCategoryBtn.addEventListener('click', function() {
+                    console.log("Event: #add-expense-category-btn clicked.");
                     var newCatInput = document.getElementById('new-expense-category');
                     if (newCatInput && newCatInput.value.trim() !== '') {
                         appState.expenseCategories.push(newCatInput.value.trim());
                         newCatInput.value = '';
                         handleSaveSettings(null, true); // Save settings and re-render
+                        console.log("Event: Added new expense category.");
+                    } else {
+                        console.warn("Event: New expense category input is empty.");
                     }
                 });
+            } else {
+                console.warn("renderSettings: #add-expense-category-btn not found.");
             }
 
             var expenseCategoriesList = document.getElementById('expense-categories-list');
             if (expenseCategoriesList) {
+                console.log("renderSettings: Found #expense-categories-list, attaching click listener for edit/delete.");
                 expenseCategoriesList.addEventListener('click', function(e) {
                     if (e.target.closest('.edit-expense-category-btn')) {
+                        console.log("Event: Edit expense category button clicked.");
                         var oldCategory = e.target.closest('.edit-expense-category-btn').dataset.category;
-                        var newCategory = prompt('Редагувати категорію витрат:', oldCategory);
-                        if (newCategory !== null && newCategory.trim() !== '' && newCategory.trim() !== oldCategory) {
-                            var index = appState.expenseCategories.indexOf(oldCategory);
-                            if (index > -1) {
-                                appState.expenseCategories[index] = newCategory.trim();
-                                handleSaveSettings(null, true);
+                        showInputModal('Редагувати категорію витрат', 'Введіть нову назву категорії:', oldCategory, function(newCategory) {
+                            if (newCategory !== null && newCategory.trim() !== '' && newCategory.trim() !== oldCategory) {
+                                var index = appState.expenseCategories.indexOf(oldCategory);
+                                if (index > -1) {
+                                    appState.expenseCategories[index] = newCategory.trim();
+                                    handleSaveSettings(null, true);
+                                    console.log("Event: Edited expense category.");
+                                }
                             }
-                        }
+                        });
                     } else if (e.target.closest('.delete-expense-category-btn')) {
+                        console.log("Event: Delete expense category button clicked.");
                         var categoryToDelete = e.target.closest('.delete-expense-category-btn').dataset.category;
-                        showModal('Удалить категорию', 'Вы уверены, что хотите удалить категорию "' + categoryToDelete + '"?', 'confirm', function() {
+                        showModal('Удалить категорию', 'Вы уверены, что хотите удалить категорию "' + escapeHtml(categoryToDelete) + '"?', 'confirm', function() {
                             appState.expenseCategories = filterArray(appState.expenseCategories, function(cat) { return cat !== categoryToDelete; });
                             handleSaveSettings(null, true);
+                            console.log("Event: Deleted expense category.");
                         });
                     }
                 });
+            } else {
+                console.warn("renderSettings: #expense-categories-list not found.");
             }
 
 
             // Add/Edit category logic for Material Categories
             var addMaterialCategoryBtn = document.getElementById('add-material-category-btn');
             if (addMaterialCategoryBtn) {
+                console.log("renderSettings: Found #add-material-category-btn, attaching listener.");
                 addMaterialCategoryBtn.addEventListener('click', function() {
+                    console.log("Event: #add-material-category-btn clicked.");
                     var newCatInput = document.getElementById('new-material-category');
                     if (newCatInput && newCatInput.value.trim() !== '') {
                         appState.materialCategories.push(newCatInput.value.trim());
                         newCatInput.value = '';
                         handleSaveSettings(null, true); // Save settings and re-render
+                        console.log("Event: Added new material category.");
+                    } else {
+                        console.warn("Event: New material category input is empty.");
                     }
                 });
+            } else {
+                console.warn("renderSettings: #add-material-category-btn not found.");
             }
 
             var materialCategoriesList = document.getElementById('material-categories-list');
             if (materialCategoriesList) {
+                console.log("renderSettings: Found #material-categories-list, attaching click listener for edit/delete.");
                 materialCategoriesList.addEventListener('click', function(e) {
                     if (e.target.closest('.edit-material-category-btn')) {
+                        console.log("Event: Edit material category button clicked.");
                         var oldCategory = e.target.closest('.edit-material-category-btn').dataset.category;
-                        var newCategory = prompt('Редагувати категорію матеріалів:', oldCategory);
-                        if (newCategory !== null && newCategory.trim() !== '' && newCategory.trim() !== oldCategory) {
-                            var index = appState.materialCategories.indexOf(oldCategory);
-                            if (index > -1) {
-                                appState.materialCategories[index] = newCategory.trim();
-                                handleSaveSettings(null, true);
+                        showInputModal('Редагувати категорію матеріалів', 'Введіть нову назву категорії:', oldCategory, function(newCategory) {
+                            if (newCategory !== null && newCategory.trim() !== '' && newCategory.trim() !== oldCategory) {
+                                var index = appState.materialCategories.indexOf(oldCategory);
+                                if (index > -1) {
+                                    appState.materialCategories[index] = newCategory.trim();
+                                    handleSaveSettings(null, true);
+                                    console.log("Event: Edited material category.");
+                                }
                             }
-                        }
+                        });
                     } else if (e.target.closest('.delete-material-category-btn')) {
+                        console.log("Event: Delete material category button clicked.");
                         var categoryToDelete = e.target.closest('.delete-material-category-btn').dataset.category;
-                        showModal('Удалить категорию', 'Вы уверены, что хотите удалить категорию "' + categoryToDelete + '"?', 'confirm', function() {
+                        showModal('Удалить категорию', 'Вы уверены, что хотите удалить категорию "' + escapeHtml(categoryToDelete) + '"?', 'confirm', function() {
                             appState.materialCategories = filterArray(appState.materialCategories, function(cat) { return cat !== categoryToDelete; });
                             handleSaveSettings(null, true);
+                            console.log("Event: Deleted material category.");
                         });
                     }
                 });
+            } else {
+                console.warn("renderSettings: #material-categories-list not found.");
             }
+            console.log("renderSettings: Function finished.");
         };
 
         var handleSaveSettings = function(event, isCategoryUpdate) {
+            console.log("handleSaveSettings: Function started.");
             if (event) event.preventDefault(); // Prevent default form submission if called from form
 
             var hourlyRateInput = document.getElementById('hourly-rate');
             var hourlyRate = hourlyRateInput ? parseFloat(hourlyRateInput.value) : appState.hourlyRate; // Use current state if input not found
 
             if (isNaN(hourlyRate) || hourlyRate < 0) {
+                console.warn("handleSaveSettings: Invalid hourly rate.");
                 showModal('Ошибка', 'Ставка за час должна быть положительным числом.', 'alert');
                 return;
             }
@@ -2439,16 +2913,20 @@
             };
 
             if (settingsId) {
+                console.log("handleSaveSettings: Updating existing settings.");
                 promise = supabase.from('settings').update(settingsToSave).eq('id', settingsId);
             } else {
+                console.log("handleSaveSettings: Inserting new settings.");
                 promise = supabase.from('settings').insert([settingsToSave]);
             }
 
             promise
                 .then(function(response) {
+                    console.log("Settings save response:", response);
                     if (response.error) {
                         // If no settings row exists, insert one (PGRST116 is a common code for no rows found on update)
                         if (response.error.code === 'PGRST116' || (response.error.message && response.error.message.includes('no rows found'))) {
+                            console.log("handleSaveSettings: No settings row found, attempting to insert default settings.");
                             return supabase.from('settings').insert([settingsToSave]);
                         } else {
                             throw response.error;
@@ -2459,22 +2937,91 @@
                 .then(function() {
                     showModal('Успех', 'Настройки успешно сохранены!', 'alert');
                     fetchDataAndRerenderCurrentPage();
+                    console.log("handleSaveSettings: Settings saved and page re-rendered.");
                 })
                 .catch(function(error) {
                     console.error('Ошибка сохранения настроек:', error.message);
-                    showModal('Ошибка', 'Не удалось сохранить настройки: ' + error.message, 'alert');
+                    showModal('Ошибка', 'Не удалось сохранить настройки: ' + escapeHtml(error.message), 'alert');
                 });
+            console.log("handleSaveSettings: Function finished.");
         };
 
 
         // Initial load and event listeners
-        window.addEventListener('hashchange', handleRouteChange);
+        window.addEventListener('hashchange', function() {
+            console.log("Window hashchange event detected.");
+            handleRouteChange();
+        });
         window.addEventListener('load', function() {
+            console.log("Window load event detected.");
             fetchData().then(function() {
                 setupRealtimeSubscriptions();
                 handleRouteChange(); // Initial route handling after data is loaded
             });
         });
+
+        // --- Routing --- (Moved after all render functions)
+        var routes = {
+            'dashboard': renderDashboard,
+            'appointments': renderAppointments,
+            'clients': renderClients,
+            'inventory': renderInventory,
+            'finance': renderFinance,
+            'settings': renderSettings,
+            'session': renderSessionCalculator // This will handle /session/[id]
+        };
+
+        var handleRouteChange = function() {
+            var path = window.location.hash.substring(1);
+            var dynamicContentArea = document.getElementById('dynamic-content-area');
+            var pageTitle = document.getElementById('page-title');
+
+            // Clear only the dynamic content area
+            if (dynamicContentArea) dynamicContentArea.innerHTML = '';
+
+            // Remove active class from all nav links
+            var navLinks = document.querySelectorAll('.nav-link');
+            for (var i = 0; i < navLinks.length; i++) {
+                navLinks[i].classList.remove('active');
+            }
+
+            var pathParts = path.split('/');
+            var basePath = pathParts[0];
+            var id = pathParts[1];
+
+            console.log("handleRouteChange: Current path is", path, "Base path:", basePath, "ID:", id);
+
+            if (routes[basePath]) {
+                routes[basePath](id); // Pass ID if available
+                // Add active class to current nav link
+                var activeLink = document.querySelector('.nav-link[href="#' + basePath + '"]'); // Corrected closing quote
+                if (activeLink) {
+                    activeLink.classList.add('active');
+                    console.log("handleRouteChange: Active link set for", basePath);
+                }
+                // Update page title
+                var linkText = activeLink ? activeLink.textContent.trim() : '';
+                // Extract only the Russian word for the title
+                var titleMatch = linkText.match(/(Панель|Записи|Клиенты|Инвентарь|Финансы|Настройки)/);
+                if (pageTitle) {
+                    pageTitle.textContent = titleMatch ? titleMatch[0] : 'Неизвестно';
+                    console.log("handleRouteChange: Page title set to", pageTitle.textContent);
+                }
+
+            } else {
+                // Default to dashboard if path is not found or empty
+                console.log("handleRouteChange: Path not found or empty, defaulting to dashboard.");
+                window.location.hash = '#dashboard';
+                renderDashboard();
+                var defaultLink = document.querySelector('.nav-link[href="#dashboard"]');
+                if (defaultLink) {
+                    defaultLink.classList.add('active');
+                }
+                if (pageTitle) {
+                    pageTitle.textContent = 'Панель';
+                }
+            }
+        };
     </script>
 </body>
 </html>
