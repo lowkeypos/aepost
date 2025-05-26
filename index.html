@@ -73,7 +73,7 @@
 <body class="h-screen w-screen overflow-hidden flex flex-col md:flex-row bg-gray-100">
 
     <nav class="w-full md:w-64 bg-gray-800 text-white p-4 flex flex-row md:flex-col justify-around md:justify-start items-center md:items-stretch shadow-lg">
-        <div class="text-2xl font-bold mb-4 hidden md:block text-center">Tattoo CRM</div>
+        <div class="text-2xl font-bold mb-4 hidden md:block text-center">rdnk.tattoo</div>
         <ul class="flex flex-row md:flex-col space-x-2 md:space-y-2 md:space-x-0 w-full">
             <li>
                 <a href="#dashboard" class="nav-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition duration-200 ease-in-out">
@@ -154,8 +154,8 @@
                         <input type="email" id="new-client-email" class="input-field w-full">
                     </div>
                     <div>
-                        <label for="new-client-instagram" class="block text-sm font-medium text-gray-700 mb-1">Instagram нового клиента (ссылка, необязательно)</label>
-                        <input type="url" id="new-client-instagram" class="input-field w-full" placeholder="https://instagram.com/username">
+                        <label for="new-client-instagram" class="block text-sm font-medium text-gray-700 mb-1">Instagram/Telegram</label>
+                        <input type="text" id="new-client-instagram" class="input-field w-full" placeholder="https://instagram.com/username">
                     </div>
                 </div>
                 <div>
@@ -186,7 +186,7 @@
         </div>
     </div>
 
-    <div id="session-calculator-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+    <div id="session-calculator-modal" class="hidden scrollable inset-0 z-50 flex items-center justify-center modal-backdrop">
         <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-2xl mx-4 transform transition-all duration-300 scale-95 opacity-0" id="session-calculator-modal-content">
             <h2 class="text-2xl font-bold mb-6 text-gray-800">Калькулятор Сеанса</h2>
             <div id="session-client-info" class="mb-4 text-lg font-medium text-gray-700"></div>
