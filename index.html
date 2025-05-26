@@ -111,6 +111,12 @@
                     <span class="hidden md:block">Настройки</span>
                 </a>
             </li>
+            <li>
+                <button id="logout-btn" class="flex items-center p-3 rounded-lg hover:bg-gray-700 transition duration-200 ease-in-out w-full text-left">
+                    <i class="fas fa-sign-out-alt mr-3"></i>
+                    <span class="hidden md:block">Выйти</span>
+                </button>
+            </li>
         </ul>
         <div class="mt-auto p-2 text-sm text-gray-400 hidden md:block">
             <p>User ID: <span id="current-user-id">Loading...</span></p>
@@ -243,6 +249,7 @@
                 <div class="md:col-span-2 flex justify-end space-x-3 mt-6">
                     <button type="button" id="cancel-session-modal" class="btn-secondary">Отмена</button>
                     <button type="button" id="pay-session-btn" class="btn-primary"><i class="fas fa-money-bill-wave mr-2"></i>Оплата</button>
+                    <button type="button" id="print-receipt-btn" class="btn-secondary"><i class="fas fa-print mr-2"></i>Печать чека</button>
                 </div>
             </form>
         </div>
@@ -348,27 +355,102 @@
         </div>
     </div>
 
+    <canvas id="receipt-canvas" class="hidden"></canvas>
+
+    <div id="login-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md mx-4 transform transition-all duration-300 scale-95 opacity-0" id="login-modal-content">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800 text-center">Вход</h2>
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label for="login-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="login-email" class="input-field w-full" placeholder="email@example.com" required>
+                </div>
+                <div>
+                    <label for="login-password" class="block text-sm font-medium text-gray-700 mb-1">Пароль</label>
+                    <input type="password" id="login-password" class="input-field w-full" placeholder="********" required>
+                </div>
+                <p id="login-error-message" class="text-red-500 text-sm hidden">Неверный Email или пароль.</p>
+                <div class="flex justify-center">
+                    <button type="submit" class="btn-primary w-full">Войти</button>
+                </div>
+            </form>
+            <p class="text-center text-sm text-gray-600 mt-4">
+                Нет аккаунта? <a href="#" id="show-signup" class="text-blue-600 hover:underline">Зарегистрироваться</a>
+            </p>
+        </div>
+    </div>
+
+    <div id="signup-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md mx-4 transform transition-all duration-300 scale-95 opacity-0" id="signup-modal-content">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800 text-center">Регистрация</h2>
+            <form id="signup-form" class="space-y-4">
+                <div>
+                    <label for="signup-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="signup-email" class="input-field w-full" placeholder="email@example.com" required>
+                </div>
+                <div>
+                    <label for="signup-password" class="block text-sm font-medium text-gray-700 mb-1">Пароль</label>
+                    <input type="password" id="signup-password" class="input-field w-full" placeholder="********" required>
+                </div>
+                <div>
+                    <label for="signup-password-confirm" class="block text-sm font-medium text-gray-700 mb-1">Подтвердите пароль</label>
+                    <input type="password" id="signup-password-confirm" class="input-field w-full" placeholder="********" required>
+                </div>
+                <p id="signup-error-message" class="text-red-500 text-sm hidden">Пароли не совпадают или произошла ошибка.</p>
+                <div class="flex justify-center">
+                    <button type="submit" class="btn-primary w-full">Зарегистрироваться</button>
+                </div>
+            </form>
+            <p class="text-center text-sm text-gray-600 mt-4">
+                Уже есть аккаунт? <a href="#" id="show-login" class="text-blue-600 hover:underline">Войти</a>
+            </p>
+        </div>
+    </div>
+
 
     <script type="module">
-        // Импорт необходимых модулей Supabase
+        // Import Supabase client
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Supabase Configuration - REPLACE WITH YOUR ACTUAL SUPABASE PROJECT DETAILS
+        const supabaseUrl = 'https://wdfpusnhkpkwupuuanar.supabase.co'; // e.g., 'https://abcde12345.supabase.co'
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkZnB1c25oa3Brd3VwdXVhbmFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyNzY2MTIsImV4cCI6MjA2Mzg1MjYxMn0.w83zm_VOHLjvdLsvGKLp11gBBNLev9ICnm7XHzrQdmE'; // This is your project's public "anon" key
 
-        // Глобальные переменные для Supabase и Firebase
-        const supabaseUrl = 'https://wdfpusnhkpkwupuuanar.supabase.co'; // Замените на ваш URL Supabase
-        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkZnB1c25oa3Brd3VwdXVhbmFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyNzY2MTIsImV4cCI6MjA2Mzg1MjYxMn0.w83zm_VOHLjvdLsvGKLp11gBBNLev9ICnm7XHznQdmL'; // Замените на ваш публичный ключ Supabase
+        // Basic check for unconfigured Supabase details
+        if (!supabaseUrl || !supabaseAnonKey || supabaseUrl === 'YOUR_SUPABASE_URL' || supabaseAnonKey === 'YOUR_SUPABASE_ANON_KEY') {
+            console.error("Supabase URL or Anon Key is not configured. Please replace 'YOUR_SUPABASE_URL' and 'YOUR_SUPABASE_ANON_KEY' with your actual Supabase project details.");
+            // Display a message to the user if Supabase is not configured
+            document.addEventListener('DOMContentLoaded', () => {
+                document.getElementById('app-content').innerHTML = `
+                    <div class="flex items-center justify-center h-full text-red-500 text-xl text-center p-4">
+                        Ошибка конфигурации Supabase.<br>Пожалуйста, обновите 'YOUR_SUPABASE_URL' и 'YOUR_SUPABASE_ANON_KEY' в коде.
+                    </div>
+                `;
+            });
+            throw new Error("Supabase configuration missing."); // Stop script execution
+        }
+
         const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-        // Firebase Initialization
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        let app, db, auth, userId;
-        let isAuthReady = false;
+        let userId = null; // To store the current authenticated user's ID
+        let isAuthReady = false; // Flag to indicate if authentication state has been checked
 
-        // --- Вспомогательные функции для UI ---
+        // Global data storage (cache)
+        let clients = [];
+        let appointments = [];
+        let materials = [];
+        let expenses = [];
+        let sales = [];
+        let settings = {
+            hourlyRate: 500, // грн
+            materialCategories: ['Иглы', 'Краска', 'Средства', 'Прочее'],
+            lowStockThreshold: 5, // По умолчанию для уведомлений
+            studioName: 'Моя Тату Студия' // Default studio name
+        };
+
+        let currentAppointmentForSession = null; // For session calculator
+
+        // --- Utility Functions for UI ---
 
         /**
          * Показывает модальное окно.
@@ -466,81 +548,164 @@
             }
         }
 
-        // --- Глобальные данные приложения (кеш) ---
-        let clients = [];
-        let appointments = [];
-        let materials = [];
-        let expenses = [];
-        let sales = []; // Для хранения завершенных сеансов/продаж
-        let settings = {
-            hourlyRate: 500, // грн
-            materialCategories: ['Иглы', 'Краска', 'Средства', 'Прочее'],
-            lowStockThreshold: 5 // По умолчанию для уведомлений
-        };
+        // --- Helper to convert camelCase to snake_case for Supabase ---
+        function toSnakeCase(obj) {
+            const newObj = {};
+            for (const key in obj) {
+                if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                    const snakeKey = key.replace(/([A-Z])/g, "_$1").toLowerCase();
+                    newObj[snakeKey] = obj[key];
+                }
+            }
+            return newObj;
+        }
 
-        let currentAppointmentForSession = null; // Для калькулятора сеанса
+        // --- Helper to convert snake_case to camelCase for JS ---
+        function toCamelCase(obj) {
+            const newObj = {};
+            for (const key in obj) {
+                if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                    const camelKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
+                    newObj[camelKey] = obj[key];
+                }
+            }
+            return newObj;
+        }
 
-        // --- Supabase/Firestore Data Operations ---
+        // --- Supabase Data Operations ---
+        const activeSupabaseSubscriptions = {}; // To manage active subscriptions
 
         /**
-         * Получает данные из Firestore.
-         * @param {string} collectionName - Название коллекции.
-         * @param {function} callback - Callback-функция для обработки данных.
-         * @returns {function} Функция для отписки от слушателя.
+         * Sets up a real-time listener for a Supabase table.
+         * @param {string} tableName - The name of the table to listen to.
+         * @param {function} callback - The callback function to process the data.
          */
-        async function setupFirestoreListener(collectionName, callback) {
-            if (!db || !userId) {
-                console.error('Firestore not initialized or user not authenticated.');
-                return () => {}; // Return a no-op function
+        async function setupSupabaseListener(tableName, callback) {
+            if (!userId) {
+                console.error('User not authenticated, cannot set up Supabase listener for', tableName);
+                return;
             }
-            const q = collection(db, `artifacts/${appId}/users/${userId}/${collectionName}`);
-            const unsubscribe = onSnapshot(q, (snapshot) => {
-                const data = [];
-                snapshot.forEach(doc => {
-                    data.push({ id: doc.id, ...doc.data() });
+
+            // Remove existing subscription for this table if it exists
+            if (activeSupabaseSubscriptions[tableName]) {
+                supabase.removeChannel(activeSupabaseSubscriptions[tableName]);
+                delete activeSupabaseSubscriptions[tableName];
+            }
+
+            const channel = supabase.channel(`${tableName}_channel_${userId}`); // Unique channel per user and table
+            const subscription = channel
+                .on(
+                    'postgres_changes',
+                    { event: '*', schema: 'public', table: tableName, filter: `user_id=eq.${userId}` }, // Filter by user_id directly in listener
+                    payload => {
+                        console.log(`Realtime change in ${tableName}:`, payload);
+                        fetchAndSetData(tableName, callback); // Re-fetch all data on change
+                    }
+                )
+                .subscribe((status) => {
+                    if (status === 'SUBSCRIBED') {
+                        console.log(`Subscribed to ${tableName} for user ${userId}`);
+                        fetchAndSetData(tableName, callback); // Initial fetch on subscribe
+                    } else if (status === 'CLOSED') {
+                        console.log(`Subscription to ${tableName} closed`);
+                    } else if (status === 'CHANNEL_ERROR') {
+                        console.error(`Error in subscription to ${tableName}`);
+                    }
                 });
-                callback(data);
-            }, (error) => {
-                console.error(`Error fetching ${collectionName}:`, error);
-                showMessageBox('Ошибка', `Не удалось загрузить данные: ${error.message}`);
-            });
-            return unsubscribe;
+            activeSupabaseSubscriptions[tableName] = channel; // Store the channel object
+            return subscription;
         }
 
         /**
-         * Добавляет документ в Firestore.
-         * @param {string} collectionName - Название коллекции.
-         * @param {object} data - Данные для добавления.
-         * @returns {Promise<string>} ID нового документа.
+         * Fetches and sets data for a given table.
+         * @param {string} tableName - The name of the table.
+         * @param {function} callback - The callback function to update the global data array.
          */
-        async function addDocument(collectionName, data) {
-            if (!db || !userId) {
-                showMessageBox('Ошибка', 'Система не готова. Пожалуйста, попробуйте позже.');
+        async function fetchAndSetData(tableName, callback) {
+            if (!userId) {
+                console.error('User ID not available for data fetch for', tableName);
                 return;
             }
             try {
-                const docRef = await addDoc(collection(db, `artifacts/${appId}/users/${userId}/${collectionName}`), data);
+                const { data, error } = await supabase
+                    .from(tableName)
+                    .select('*')
+                    .eq('user_id', userId); // Filter by user_id for RLS
+
+                if (error) throw error;
+
+                const camelCaseData = data.map(toCamelCase);
+                callback(camelCaseData);
+            } catch (e) {
+                console.error(`Error fetching ${tableName}:`, e.message);
+                showMessageBox('Ошибка', `Не удалось загрузить данные: ${e.message}`);
+            }
+        }
+
+        /**
+         * Adds a document to a Supabase table.
+         * @param {string} tableName - The name of the table.
+         * @param {object} record - The data to add.
+         * @returns {Promise<string|null>} The ID of the new record, or null if an error occurred.
+         */
+        async function addDocument(tableName, record) {
+            if (!userId) {
+                showMessageBox('Ошибка', 'Система не готова. Пожалуйста, войдите в систему.');
+                return null;
+            }
+            try {
+                // For sales, generate an order number
+                if (tableName === 'sales') {
+                    const { data: latestSale, error: latestSaleError } = await supabase
+                        .from('sales')
+                        .select('order_number')
+                        .eq('user_id', userId)
+                        .order('order_number', { ascending: false })
+                        .limit(1);
+
+                    if (latestSaleError) throw latestSaleError;
+
+                    const lastOrderNumber = latestSale.length > 0 ? latestSale[0].order_number : 0;
+                    record.orderNumber = lastOrderNumber + 1;
+                }
+
+                const recordWithUserId = { ...record, user_id: userId };
+                const snakeCaseRecord = toSnakeCase(recordWithUserId);
+                const { data: insertedData, error } = await supabase
+                    .from(tableName)
+                    .insert([snakeCaseRecord])
+                    .select();
+
+                if (error) throw error;
                 showMessageBox('Успех', 'Данные успешно добавлены!');
-                return docRef.id;
+                return insertedData[0].id;
             } catch (e) {
                 console.error("Error adding document: ", e);
                 showMessageBox('Ошибка', `Не удалось добавить данные: ${e.message}`);
+                return null;
             }
         }
 
         /**
-         * Обновляет документ в Firestore.
-         * @param {string} collectionName - Название коллекции.
-         * @param {string} docId - ID документа.
-         * @param {object} data - Данные для обновления.
+         * Updates a document in a Supabase table.
+         * @param {string} tableName - The name of the table.
+         * @param {string} id - The ID of the record to update.
+         * @param {object} record - The data to update.
          */
-        async function updateDocument(collectionName, docId, data) {
-            if (!db || !userId) {
-                showMessageBox('Ошибка', 'Система не готова. Пожалуйста, попробуйте позже.');
+        async function updateDocument(tableName, id, record) {
+            if (!userId) {
+                showMessageBox('Ошибка', 'Система не готова. Пожалуйста, войдите в систему.');
                 return;
             }
             try {
-                await setDoc(doc(db, `artifacts/${appId}/users/${userId}/${collectionName}`, docId), data, { merge: true });
+                const snakeCaseRecord = toSnakeCase(record);
+                const { error } = await supabase
+                    .from(tableName)
+                    .update(snakeCaseRecord)
+                    .eq('id', id)
+                    .eq('user_id', userId); // Ensure user owns the record
+
+                if (error) throw error;
                 showMessageBox('Успех', 'Данные успешно обновлены!');
             } catch (e) {
                 console.error("Error updating document: ", e);
@@ -549,17 +714,23 @@
         }
 
         /**
-         * Удаляет документ из Firestore.
-         * @param {string} collectionName - Название коллекции.
-         * @param {string} docId - ID документа.
+         * Deletes a document from a Supabase table.
+         * @param {string} tableName - The name of the table.
+         * @param {string} id - The ID of the record to delete.
          */
-        async function deleteDocument(collectionName, docId) {
-            if (!db || !userId) {
-                showMessageBox('Ошибка', 'Система не готова. Пожалуйста, попробуйте позже.');
+        async function deleteDocument(tableName, id) {
+            if (!userId) {
+                showMessageBox('Ошибка', 'Система не готова. Пожалуйста, войдите в систему.');
                 return;
             }
             try {
-                await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/${collectionName}`, docId));
+                const { error } = await supabase
+                    .from(tableName)
+                    .delete()
+                    .eq('id', id)
+                    .eq('user_id', userId); // Ensure user owns the record
+
+                if (error) throw error;
                 showMessageBox('Успех', 'Данные успешно удалены!');
             } catch (e) {
                 console.error("Error deleting document: ", e);
@@ -570,7 +741,7 @@
         // --- Page Rendering Functions ---
 
         /**
-         * Рендерит страницу "Главная".
+         * Renders the Dashboard page.
          */
         async function renderDashboard() {
             const today = new Date();
@@ -699,7 +870,7 @@
         }
 
         /**
-         * Рендерит страницу "Записи".
+         * Renders the Appointments page.
          */
         async function renderAppointments() {
             loadContent(`
@@ -798,7 +969,7 @@
         }
 
         /**
-         * Рендерит страницу "Клиенты".
+         * Renders the Clients page.
          */
         async function renderClients() {
             loadContent(`
@@ -921,7 +1092,7 @@
         }
 
         /**
-         * Рендерит страницу "Инвентарь".
+         * Renders the Inventory page.
          */
         async function renderInventory() {
             loadContent(`
@@ -997,7 +1168,7 @@
         }
 
         /**
-         * Рендерит страницу "Финансы".
+         * Renders the Finance page.
          */
         async function renderFinance() {
             // Calculate daily/monthly revenue
@@ -1142,6 +1313,40 @@
                     </div>
 
                     <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Список Продаж</h2>
+                        ${sales.length > 0 ? `
+                            <div class="overflow-x-auto rounded-lg border border-gray-200">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="table-header">
+                                        <tr>
+                                            <th class="table-cell">№ Заказа</th>
+                                            <th class="table-cell">Дата</th>
+                                            <th class="table-cell">Клиент</th>
+                                            <th class="table-cell">Сумма</th>
+                                            <th class="table-cell">Действия</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        ${sales.sort((a, b) => b.orderNumber - a.orderNumber).map(sale => `
+                                            <tr class="table-row">
+                                                <td class="table-cell">${sale.orderNumber || '-'}</td>
+                                                <td class="table-cell">${formatDate(sale.date)} ${formatTime(sale.time)}</td>
+                                                <td class="table-cell">${clients.find(c => c.id === sale.clientId)?.name || 'Неизвестно'}</td>
+                                                <td class="table-cell">${formatCurrency(sale.totalPrice)}</td>
+                                                <td class="table-cell">
+                                                    <button data-id="${sale.id}" class="btn-secondary text-sm px-3 py-1 print-existing-receipt-btn">
+                                                        <i class="fas fa-print mr-1"></i> Печать
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ` : '<p class="text-gray-600">Нет зафиксированных продаж.</p>'}
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-md">
                         <h2 class="text-xl font-semibold text-gray-800 mb-4">ТОП-клиенты</h2>
                         ${topClients.length > 0 ? `
                             <div class="overflow-x-auto rounded-lg border border-gray-200">
@@ -1179,10 +1384,20 @@
                     }
                 });
             });
+
+            document.querySelectorAll('.print-existing-receipt-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const saleId = e.currentTarget.dataset.id;
+                    const sale = sales.find(s => s.id === saleId);
+                    if (sale) {
+                        generateReceiptImage(sale);
+                    }
+                });
+            });
         }
 
         /**
-         * Рендерит страницу "Настройки".
+         * Renders the Settings page.
          */
         async function renderSettings() {
             loadContent(`
@@ -1192,6 +1407,10 @@
                     <div class="bg-white p-6 rounded-xl shadow-md">
                         <h2 class="text-xl font-semibold text-gray-800 mb-4">Общие настройки</h2>
                         <form id="general-settings-form" class="space-y-4">
+                            <div>
+                                <label for="studio-name-setting" class="block text-sm font-medium text-gray-700 mb-1">Название студии</label>
+                                <input type="text" id="studio-name-setting" class="input-field w-full" value="${settings.studioName || ''}">
+                            </div>
                             <div>
                                 <label for="hourly-rate-setting" class="block text-sm font-medium text-gray-700 mb-1">Ставка за час (грн)</label>
                                 <input type="number" id="hourly-rate-setting" class="input-field w-full" min="0" step="0.01" value="${settings.hourlyRate}">
@@ -1228,12 +1447,22 @@
             // General Settings Form
             document.getElementById('general-settings-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
+                const newStudioName = document.getElementById('studio-name-setting').value.trim();
                 const newHourlyRate = parseFloat(document.getElementById('hourly-rate-setting').value);
                 const newLowStockThreshold = parseFloat(document.getElementById('low-stock-threshold-setting').value);
                 if (!isNaN(newHourlyRate) && !isNaN(newLowStockThreshold)) {
+                    settings.studioName = newStudioName;
                     settings.hourlyRate = newHourlyRate;
                     settings.lowStockThreshold = newLowStockThreshold;
-                    await updateDocument('settings', 'app-settings', settings); // Assuming a single settings document
+                    // Assuming a single settings document, its ID could be 'app-settings' or derived from userId
+                    // For simplicity, let's assume 'user-settings' as a fixed ID for the current user's settings.
+                    // In a real app, you might fetch the existing settings document ID.
+                    const existingSettings = (await supabase.from('settings').select('id').eq('user_id', userId).single()).data;
+                    if (existingSettings) {
+                        await updateDocument('settings', existingSettings.id, settings);
+                    } else {
+                        await addDocument('settings', settings);
+                    }
                 } else {
                     showMessageBox('Ошибка', 'Пожалуйста, введите корректные числовые значения.');
                 }
@@ -1264,7 +1493,12 @@
                 // Update categories from input fields before saving
                 const updatedCategories = Array.from(document.querySelectorAll('.material-category-input')).map(input => input.value.trim()).filter(Boolean);
                 settings.materialCategories = [...new Set(updatedCategories)]; // Remove duplicates
-                await updateDocument('settings', 'app-settings', settings);
+                const existingSettings = (await supabase.from('settings').select('id').eq('user_id', userId).single()).data;
+                if (existingSettings) {
+                    await updateDocument('settings', existingSettings.id, settings);
+                } else {
+                    await addDocument('settings', settings);
+                }
             });
         }
 
@@ -1668,14 +1902,39 @@
                     }
                 }
 
-                await addDocument('sales', saleData);
-                await updateDocument('appointments', currentAppointmentForSession.id, { status: 'completed' });
+                const newSaleId = await addDocument('sales', saleData);
+                if (newSaleId) {
+                    await updateDocument('appointments', currentAppointmentForSession.id, { status: 'completed' });
+                }
+
 
                 hideModal(modal, content);
                 renderDashboard();
                 renderAppointments();
                 renderFinance();
                 showMessageBox('Успех', `Сеанс успешно оплачен: ${formatCurrency(saleData.totalPrice)}`);
+            });
+
+            document.getElementById('print-receipt-btn').addEventListener('click', () => {
+                if (currentAppointmentForSession && currentAppointmentForSession.calculatedPrice) {
+                    const client = clients.find(c => c.id === currentAppointmentForSession.clientId);
+                    // Create a dummy sale object for printing if it's not yet saved
+                    const dummySale = {
+                        orderNumber: 'Предв. №', // Placeholder for unsaved sales
+                        date: new Date().toISOString().split('T')[0],
+                        time: new Date().toTimeString().split(' ')[0].substring(0, 5),
+                        clientName: client ? client.name : 'Неизвестно',
+                        totalPrice: currentAppointmentForSession.calculatedPrice,
+                        consumables: currentAppointmentForSession.consumablesUsed,
+                        workTime: currentAppointmentForSession.duration,
+                        hourlyRate: settings.hourlyRate,
+                        complexityMarkup: (currentAppointmentForSession.complexity - 1) * 10,
+                        discount: parseFloat(document.getElementById('session-discount').value) || 0
+                    };
+                    generateReceiptImage(dummySale);
+                } else {
+                    showMessageBox('Информация', 'Сначала рассчитайте стоимость сеанса.');
+                }
             });
         }
 
@@ -1851,16 +2110,119 @@
             });
         }
 
+        /**
+         * Генерирует изображение чека на Canvas и предлагает его для скачивания.
+         * @param {object} sale - Объект продажи или временный объект для предпросмотра.
+         */
+        function generateReceiptImage(sale) {
+            const canvas = document.getElementById('receipt-canvas');
+            const ctx = canvas.getContext('2d');
+
+            const receiptWidth = 580; // Standard receipt width (e.g., 58mm * 10px/mm)
+            let currentY = 30;
+            const lineHeight = 25;
+            const marginX = 20;
+
+            // Calculate dynamic height
+            let contentHeight = 0;
+            contentHeight += 2 * lineHeight; // Studio Name
+            contentHeight += 2 * lineHeight; // Order Number, Date, Time
+            contentHeight += lineHeight; // Client Name
+            contentHeight += 20; // Spacer
+            contentHeight += lineHeight; // Service header
+            contentHeight += lineHeight; // Work time line
+            if (sale.consumables && sale.consumables.length > 0) {
+                contentHeight += lineHeight * (sale.consumables.length + 1); // Consumables lines + header
+            }
+            contentHeight += 20; // Spacer
+            contentHeight += 2 * lineHeight; // Total Price
+            contentHeight += 2 * lineHeight; // Thank you message
+
+            canvas.width = receiptWidth;
+            canvas.height = contentHeight + 60; // Add some padding
+
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#000000'; // Black text
+
+            ctx.font = 'bold 24px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText(settings.studioName, receiptWidth / 2, currentY);
+            currentY += lineHeight * 1.5;
+
+            ctx.font = '16px Inter';
+            ctx.textAlign = 'left';
+            ctx.fillText(`Чек №: ${sale.orderNumber || 'Н/Д'}`, marginX, currentY);
+            currentY += lineHeight;
+            ctx.fillText(`Дата: ${formatDate(sale.date)} ${formatTime(sale.time)}`, marginX, currentY);
+            currentY += lineHeight;
+            ctx.fillText(`Клиент: ${sale.clientName || clients.find(c => c.id === sale.clientId)?.name || 'Неизвестно'}`, marginX, currentY);
+            currentY += lineHeight * 1.5;
+
+            // Line items
+            ctx.font = 'bold 16px Inter';
+            ctx.fillText('Услуги и материалы:', marginX, currentY);
+            currentY += lineHeight;
+
+            ctx.font = '14px Inter';
+            const workTimeCost = sale.workTime * sale.hourlyRate;
+            ctx.fillText(`Работа (${sale.workTime} ч @ ${formatCurrency(sale.hourlyRate)}/ч): ${formatCurrency(workTimeCost)}`, marginX, currentY);
+            currentY += lineHeight;
+
+            if (sale.consumables && sale.consumables.length > 0) {
+                sale.consumables.forEach(item => {
+                    ctx.fillText(`- ${item.name} (${item.quantity} ед.): ${formatCurrency(item.pricePerUnit * item.quantity)}`, marginX + 10, currentY);
+                    currentY += lineHeight;
+                });
+            }
+
+            // Complexity and Discount (if applicable)
+            if (sale.complexityMarkup > 0) {
+                const markupAmount = (workTimeCost + (sale.consumables ? sale.consumables.reduce((sum, c) => sum + (c.pricePerUnit * c.quantity), 0) : 0)) * (sale.complexityMarkup / 100);
+                 ctx.fillText(`Наценка за сложность (${sale.complexityMarkup}%): ${formatCurrency(markupAmount)}`, marginX, currentY);
+                 currentY += lineHeight;
+            }
+            if (sale.discount > 0) {
+                const preDiscountTotal = (workTimeCost + (sale.consumables ? sale.consumables.reduce((sum, c) => sum + (c.pricePerUnit * c.quantity), 0) : 0));
+                const discountAmount = preDiscountTotal * (sale.discount / 100);
+                ctx.fillText(`Скидка (${sale.discount}%): -${formatCurrency(discountAmount)}`, marginX, currentY);
+                currentY += lineHeight;
+            }
+
+
+            currentY += 20; // Spacer
+
+            ctx.font = 'bold 20px Inter';
+            ctx.textAlign = 'right';
+            ctx.fillText(`Итого: ${formatCurrency(sale.totalPrice)}`, receiptWidth - marginX, currentY);
+            currentY += lineHeight * 1.5;
+
+            ctx.font = '14px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText('Спасибо за визит!', receiptWidth / 2, currentY);
+            currentY += lineHeight;
+            ctx.fillText('Ждем вас снова!', receiptWidth / 2, currentY);
+
+            // Convert to JPG and download
+            const dataURL = canvas.toDataURL('image/jpeg', 0.9);
+            const link = document.createElement('a');
+            link.href = dataURL;
+            link.download = `receipt_order_${sale.orderNumber || 'preview'}.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+
         // --- Routing Logic ---
 
         /**
-         * Обрабатывает изменение хэша URL для навигации по страницам.
+         * Handles URL hash changes to navigate between pages.
          */
         function handleRouteChange() {
             const hash = window.location.hash || '#dashboard';
             updateNavLinkActiveState(hash);
 
-            // Ensure Firebase/Firestore is ready before rendering content
             if (!isAuthReady) {
                 console.warn('Authentication not ready, delaying content rendering.');
                 return;
@@ -1891,75 +2253,82 @@
             }
         }
 
-        // --- Initialization ---
+        // --- Supabase Authentication ---
+        async function handleSupabaseAuthChange(event, session) {
+            if (session) {
+                userId = session.user.id;
+                console.log("Supabase User signed in:", userId);
+                document.getElementById('current-user-id').textContent = userId;
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            // Initialize Firebase
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-
-            // Authenticate user
-            if (typeof __initial_auth_token !== 'undefined') {
-                try {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } catch (error) {
-                    console.error("Error signing in with custom token:", error);
-                    await signInAnonymously(auth); // Fallback to anonymous
-                }
-            } else {
-                await signInAnonymously(auth);
-            }
-
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    userId = user.uid;
-                    document.getElementById('current-user-id').textContent = userId;
+                // Only set up listeners ONCE after initial authentication
+                if (!isAuthReady) { // Check if listeners have already been set up
                     isAuthReady = true;
 
-                    // Setup Firestore listeners for real-time updates
-                    setupFirestoreListener('clients', (data) => {
+                    await setupSupabaseListener('clients', (data) => {
                         clients = data;
                         handleRouteChange(); // Re-render current page to reflect changes
                     });
-                    setupFirestoreListener('appointments', (data) => {
+                    await setupSupabaseListener('appointments', (data) => {
                         appointments = data;
                         handleRouteChange();
                     });
-                    setupFirestoreListener('materials', (data) => {
+                    await setupSupabaseListener('materials', (data) => {
                         materials = data;
                         handleRouteChange();
                     });
-                    setupFirestoreListener('expenses', (data) => {
+                    await setupSupabaseListener('expenses', (data) => {
                         expenses = data;
                         handleRouteChange();
                     });
-                    setupFirestoreListener('sales', (data) => {
+                    await setupSupabaseListener('sales', (data) => {
                         sales = data;
                         handleRouteChange();
                     });
-                    setupFirestoreListener('settings', (data) => {
+                    await setupSupabaseListener('settings', (data) => {
                         if (data.length > 0) {
-                            settings = { ...settings, ...data[0] }; // Merge with default settings
+                            settings = { ...settings, ...data[0] };
                         } else {
-                            // If no settings exist, create a default one
-                            addDocument('settings', settings);
+                            // If no settings exist, create a default one for this user
+                            addDocument('settings', {
+                                hourlyRate: 500,
+                                materialCategories: ['Иглы', 'Краска', 'Средства', 'Прочее'],
+                                lowStockThreshold: 5,
+                                studioName: 'Моя Тату Студия'
+                            });
                         }
                         handleRouteChange();
                     });
 
-                    // Initial route handling after data is loaded
+                    // Initial route handling after data is loaded and listeners are set
                     handleRouteChange();
-
                 } else {
-                    console.log("No user signed in.");
-                    document.getElementById('current-user-id').textContent = 'Not authenticated';
-                    isAuthReady = false;
-                    loadContent('<div class="flex items-center justify-center h-full text-gray-500 text-xl">Пожалуйста, войдите в систему.</div>');
+                    // If already authenticated and listeners are set, just re-render the current route
+                    handleRouteChange();
                 }
-            });
 
-            // Setup modal event listeners
+                hideModal(loginModal, loginModalContent);
+                hideModal(signupModal, signupModalContent);
+
+            } else {
+                console.log("No user signed in with Supabase.");
+                document.getElementById('current-user-id').textContent = 'Not authenticated';
+                userId = null; // Clear userId
+                isAuthReady = false;
+                loadContent('<div class="flex items-center justify-center h-full text-gray-500 text-xl">Пожалуйста, войдите в систему.</div>');
+                showModal(loginModal, loginModalContent); // Show login modal if no user
+
+                // Clear all subscriptions if user logs out
+                for (const channelName in activeSupabaseSubscriptions) {
+                    supabase.removeChannel(activeSupabaseSubscriptions[channelName]);
+                    delete activeSupabaseSubscriptions[channelName];
+                }
+            }
+        }
+
+        // --- Initialization ---
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Setup modal event listeners (these are static and don't depend on auth state or data)
             setupAppointmentModal();
             setupSessionCalculatorModal();
             setupExpenseModal();
@@ -1967,8 +2336,73 @@
             setupClientModal();
             setupMessageBox();
 
-            // Listen for hash changes
+            // Listen for hash changes (this will trigger handleRouteChange, which now relies on already-set listeners)
             window.addEventListener('hashchange', handleRouteChange);
+
+            // Set up the Supabase auth listener. This will handle initial auth state and subsequent changes.
+            supabase.auth.onAuthStateChange(handleSupabaseAuthChange);
+
+            // --- Authentication Forms Event Listeners ---
+            document.getElementById('login-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                document.getElementById('login-error-message').classList.add('hidden');
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                const { error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) {
+                    document.getElementById('login-error-message').textContent = error.message;
+                    document.getElementById('login-error-message').classList.remove('hidden');
+                    console.error("Login error:", error.message);
+                }
+            });
+
+            document.getElementById('signup-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                document.getElementById('signup-error-message').classList.add('hidden');
+                const email = document.getElementById('signup-email').value;
+                const password = document.getElementById('signup-password').value;
+                const passwordConfirm = document.getElementById('signup-password-confirm').value;
+
+                if (password !== passwordConfirm) {
+                    document.getElementById('signup-error-message').textContent = 'Пароли не совпадают.';
+                    document.getElementById('signup-error-message').classList.remove('hidden');
+                    return;
+                }
+
+                const { data, error } = await supabase.auth.signUp({ email, password });
+                if (error) {
+                    document.getElementById('signup-error-message').textContent = error.message;
+                    document.getElementById('signup-error-message').classList.remove('hidden');
+                    console.error("Signup error:", error.message);
+                } else {
+                    showMessageBox('Успех', 'Регистрация прошла успешно! Пожалуйста, проверьте свою почту для подтверждения.');
+                    hideModal(signupModal, signupModalContent);
+                    showModal(loginModal, loginModalContent);
+                }
+            });
+
+            document.getElementById('logout-btn').addEventListener('click', async () => {
+                const { error } = await supabase.auth.signOut();
+                if (error) {
+                    console.error("Logout error:", error.message);
+                    showMessageBox('Ошибка', `Не удалось выйти: ${error.message}`);
+                } else {
+                    showMessageBox('Успех', 'Вы успешно вышли из системы.');
+                }
+            });
+
+            // Show/hide login/signup modals
+            document.getElementById('show-signup').addEventListener('click', (e) => {
+                e.preventDefault();
+                hideModal(loginModal, loginModalContent);
+                showModal(signupModal, signupModalContent);
+            });
+
+            document.getElementById('show-login').addEventListener('click', (e) => {
+                e.preventDefault();
+                hideModal(signupModal, signupModalContent);
+                showModal(loginModal, loginModalContent);
+            });
         });
     </script>
 </body>
