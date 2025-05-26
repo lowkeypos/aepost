@@ -10,172 +10,217 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* Светло-серый фон */
+            background-color: #1a1a1a; /* Темный фон */
+            color: #e0e0e0; /* Светлый текст */
         }
         /* Пользовательский скроллбар для лучшей эстетики */
         ::-webkit-scrollbar {
             width: 8px;
         }
         ::-webkit-scrollbar-track {
-            background: #e0e0e0;
+            background: #2a2a2a;
             border-radius: 10px;
         }
         ::-webkit-scrollbar-thumb {
-            background: #888;
+            background: #555;
             border-radius: 10px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #555;
+            background: #777;
         }
         /* Скрыть скроллбар для определенных элементов при необходимости */
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
         .no-scrollbar {
-            -ms-overflow-style: none;  /* IE и Edge */
-            scrollbar-width: none;  /* Firefox */
+            -ms-overflow-style: none; /* IE и Edge */
+            scrollbar-width: none; /* Firefox */
         }
-        /* Стиль активной вкладки */
+
+        /* Стиль активной вкладки навигации */
         .nav-link.active {
-            background-color: #1a202c; /* Более темный фон для активной вкладки */
-            color: white;
+            background-color: #2a2a2a; /* Более темный фон для активной вкладки */
+            color: #6366f1; /* Фиолетовый акцент */
+            border-left: 4px solid #6366f1; /* Акцентная полоса */
+            padding-left: 1rem; /* Отступ для полосы */
         }
+
         /* Фон модального окна */
         .modal-backdrop {
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.7); /* Более темный фон для модальных окон */
+            overflow-y: auto; /* Позволяет прокручивать сам оверлей */
+            padding: 1rem; /* Отступ для модальных окон на мобильных */
         }
+
         /* Общий стиль кнопок */
         .btn-primary {
             @apply bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out;
         }
         .btn-secondary {
-            @apply bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out;
+            @apply bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out;
         }
         .btn-danger {
             @apply bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out;
         }
         /* Стиль полей ввода */
         .input-field {
-            @apply p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 ease-in-out;
+            /* Добавлено !important для принудительного применения стилей */
+            background-color: #4a4a4a !important; /* Чуть светлее, чем фон карточек */
+            border: 1px solid #5a5a5a !important; /* Темнее, чем фон, но светлее, чем основной фон */
+            color: #e0e0e0 !important; /* Светлый текст */
+            padding: 0.75rem !important; /* p-3 */
+            border-radius: 0.5rem !important; /* rounded-lg */
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important; /* shadow-sm */
+            transition: all 0.2s ease-in-out !important; /* transition duration-200 ease-in-out */
+            outline: none !important; /* focus:outline-none */
         }
+        .input-field:focus {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5) !important; /* focus:ring-2 focus:ring-blue-500 */
+            border-color: #3b82f6 !important; /* focus:border-blue-500 */
+        }
+
         /* Стиль таблицы */
         .table-header {
-            @apply bg-gray-200 text-gray-700 uppercase text-sm leading-normal;
+            @apply bg-gray-700 text-gray-300 uppercase text-sm leading-normal;
         }
         .table-row {
-            @apply border-b border-gray-200 hover:bg-gray-100;
+            @apply border-b border-gray-700 hover:bg-gray-800;
         }
         .table-cell {
-            @apply py-3 px-6 text-left;
+            @apply py-3 px-6 text-left text-gray-200;
+        }
+        /* Карточки */
+        .card {
+            @apply bg-gray-800 p-6 rounded-xl shadow-lg;
+        }
+        .card-header {
+            @apply text-xl font-semibold text-gray-100 mb-4;
+        }
+        .card-body {
+            @apply text-gray-300;
+        }
+        /* Для мобильной навигации */
+        #mobile-nav-toggle {
+            @apply md:hidden block text-white text-2xl cursor-pointer;
+        }
+        #mobile-nav-menu {
+            @apply fixed top-0 left-0 w-64 h-full bg-gray-900 z-50 transform -translate-x-full transition-transform duration-300 ease-in-out md:static md:translate-x-0;
+        }
+        #mobile-nav-menu.open {
+            transform: translateX(0);
         }
     </style>
 </head>
-<body class="h-screen w-screen overflow-hidden flex flex-col md:flex-row bg-gray-100">
+<body class="min-h-screen flex flex-col md:flex-row bg-gray-900">
 
-    <nav class="w-full md:w-64 bg-gray-800 text-white p-4 flex flex-row md:flex-col justify-around md:justify-start items-center md:items-stretch shadow-lg">
-        <div class="text-2xl font-bold mb-4 hidden md:block text-center">rdnk.tattoo</div>
-        <ul class="flex flex-row md:flex-col space-x-2 md:space-y-2 md:space-x-0 w-full">
-            <li>
-                <a href="#dashboard" class="nav-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition duration-200 ease-in-out">
-                    <i class="fas fa-home mr-3"></i>
-                    <span class="hidden md:block">Главная</span>
-                </a>
-            </li>
-            <li>
-                <a href="#appointments" class="nav-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition duration-200 ease-in-out">
-                    <i class="fas fa-calendar-alt mr-3"></i>
-                    <span class="hidden md:block">Записи</span>
-                </a>
-            </li>
-            <li>
-                <a href="#clients" class="nav-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition duration-200 ease-in-out">
-                    <i class="fas fa-users mr-3"></i>
-                    <span class="hidden md:block">Клиенты</span>
-                </a>
-            </li>
-            <li>
-                <a href="#inventory" class="nav-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition duration-200 ease-in-out">
-                    <i class="fas fa-boxes mr-3"></i>
-                    <span class="hidden md:block">Инвентарь</span>
-                </a>
-            </li>
-            <li>
-                <a href="#finance" class="nav-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition duration-200 ease-in-out">
-                    <i class="fas fa-wallet mr-3"></i>
-                    <span class="hidden md:block">Финансы</span>
-                </a>
-            </li>
-            <li>
-                <a href="#settings" class="nav-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition duration-200 ease-in-out">
-                    <i class="fas fa-cog mr-3"></i>
-                    <span class="hidden md:block">Настройки</span>
-                </a>
-            </li>
-            <li>
-                <button id="logout-btn" class="flex items-center p-3 rounded-lg hover:bg-gray-700 transition duration-200 ease-in-out w-full text-left">
-                    <i class="fas fa-sign-out-alt mr-3"></i>
-                    <span class="hidden md:block">Выйти</span>
-                </button>
-            </li>
-        </ul>
-        <div class="mt-auto p-2 text-sm text-gray-400 hidden md:block">
-            <p>User ID: <span id="current-user-id">Загрузка...</span></p>
+    <div id="mobile-nav-toggle" class="fixed top-4 left-4 z-50 md:hidden">
+        <i class="fas fa-bars"></i>
+    </div>
+
+    <nav id="mobile-nav-menu" class="w-full md:w-64 bg-gray-800 text-white p-4 flex flex-col justify-between shadow-lg">
+        <div>
+            <div class="text-2xl font-bold mb-4 text-center border-b border-gray-700 pb-4">InkTracker</div>
+            <ul class="space-y-2">
+                <li>
+                    <a href="#dashboard" class="nav-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition duration-200 ease-in-out active">
+                        <i class="fas fa-home mr-3"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#appointments" class="nav-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition duration-200 ease-in-out">
+                        <i class="fas fa-calendar-alt mr-3"></i>
+                        <span>Appointments</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#clients" class="nav-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition duration-200 ease-in-out">
+                        <i class="fas fa-users mr-3"></i>
+                        <span>Clients</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#inventory" class="nav-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition duration-200 ease-in-out">
+                        <i class="fas fa-boxes mr-3"></i>
+                        <span>Inventory</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#finance" class="nav-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition duration-200 ease-in-out">
+                        <i class="fas fa-wallet mr-3"></i>
+                        <span>Finances</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#settings" class="nav-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition duration-200 ease-in-out">
+                        <i class="fas fa-cog mr-3"></i>
+                        <span>Settings</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div class="mt-auto p-2 text-sm text-gray-400 border-t border-gray-700 pt-4">
+            <p class="mb-2">User ID: <span id="current-user-id">Загрузка...</span></p>
+            <button id="logout-btn" class="flex items-center p-3 rounded-lg bg-red-700 hover:bg-red-800 transition duration-200 ease-in-out w-full text-left">
+                <i class="fas fa-sign-out-alt mr-3"></i>
+                <span>Выйти</span>
+            </button>
         </div>
     </nav>
 
-    <main id="app-content" class="flex-1 overflow-y-auto p-6 bg-gray-50 rounded-lg shadow-inner m-4">
+    <main id="app-content" class="flex-1 overflow-y-auto p-6 md:p-8 bg-gray-900 ml-0 md:ml-64 transition-all duration-300">
         <div class="flex items-center justify-center h-full text-gray-500 text-xl">
             Загрузка...
         </div>
     </main>
 
-    <div id="appointment-modal" class="hidden scrollable inset-0 z-50 flex items-center justify-center modal-backdrop max-h-[90vh] overflow-y-auto">
-        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg mx-4 transform transition-all duration-300 scale-95 opacity-0" id="appointment-modal-content">
-            <h2 class="text-2xl font-bold mb-6 text-gray-800" id="appointment-modal-title">Создать Запись</h2>
+    <div id="appointment-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+        <div class="bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-lg mx-4 transform transition-all duration-300 scale-95 opacity-0 max-h-[90vh] overflow-y-auto" id="appointment-modal-content">
+            <h2 class="text-2xl font-bold mb-6 text-gray-100" id="appointment-modal-title">Создать Запись</h2>
             <form id="appointment-form" class="space-y-4">
                 <div>
-                    <label for="appointment-client-phone" class="block text-sm font-medium text-gray-700 mb-1">Телефон клиента</label>
+                    <label for="appointment-client-phone" class="block text-sm font-medium text-gray-300 mb-1">Телефон клиента</label>
                     <input type="tel" id="appointment-client-phone" class="input-field w-full" placeholder="+380XXXXXXXXX" required>
                 </div>
                 <div id="client-selection-area">
-                    <label for="appointment-client" class="block text-sm font-medium text-gray-700 mb-1">Выбрать существующего клиента</label>
-                    <select id="appointment-client" class="input-field w-full">
+                    <label for="appointment-client" class="block text-sm font-medium text-gray-300 mb-1">Выбрать существующего клиента</label>
+                    <select id="appointment-client" class="input-field w-full appearance-none">
                         </select>
-                    <p id="client-status-message" class="text-sm mt-2 text-gray-600"></p>
+                    <p id="client-status-message" class="text-sm mt-2 text-gray-400"></p>
                 </div>
-                <div id="new-client-details" class="hidden space-y-4 border-t pt-4 mt-4">
-                    <h3 class="text-lg font-semibold text-gray-800">Новый клиент</h3>
+                <div id="new-client-details" class="hidden space-y-4 border-t border-gray-700 pt-4 mt-4">
+                    <h3 class="text-lg font-semibold text-gray-100">Новый клиент</h3>
                     <div>
-                        <label for="new-client-name" class="block text-sm font-medium text-gray-700 mb-1">Имя нового клиента</label>
+                        <label for="new-client-name" class="block text-sm font-medium text-gray-300 mb-1">Имя нового клиента</label>
                         <input type="text" id="new-client-name" class="input-field w-full">
                     </div>
                     <div>
-                        <label for="new-client-email" class="block text-sm font-medium text-gray-700 mb-1">Email нового клиента (необязательно)</label>
+                        <label for="new-client-email" class="block text-sm font-medium text-gray-300 mb-1">Email нового клиента (необязательно)</label>
                         <input type="email" id="new-client-email" class="input-field w-full">
                     </div>
                     <div>
-                        <label for="new-client-instagram" class="block text-sm font-medium text-gray-700 mb-1">Instagram/Telegram</label>
+                        <label for="new-client-instagram" class="block text-sm font-medium text-gray-300 mb-1">Instagram/Telegram</label>
                         <input type="text" id="new-client-instagram" class="input-field w-full" placeholder="@username">
                     </div>
                 </div>
                 <div>
-                    <label for="appointment-date" class="block text-sm font-medium text-gray-700 mb-1">Дата</label>
+                    <label for="appointment-date" class="block text-sm font-medium text-gray-300 mb-1">Дата</label>
                     <input type="date" id="appointment-date" class="input-field w-full" required>
                 </div>
                 <div>
-                    <label for="appointment-time" class="block text-sm font-medium text-gray-700 mb-1">Время</label>
+                    <label for="appointment-time" class="block text-sm font-medium text-gray-300 mb-1">Время</label>
                     <input type="time" id="appointment-time" class="input-field w-full" required>
                 </div>
                 <div>
-                    <label for="appointment-duration" class="block text-sm font-medium text-gray-700 mb-1">Предполагаемая длительность (часы)</label>
+                    <label for="appointment-duration" class="block text-sm font-medium text-gray-300 mb-1">Предполагаемая длительность (часы)</label>
                     <input type="number" id="appointment-duration" class="input-field w-full" min="0.5" step="0.5" required>
                 </div>
                 <div>
-                    <label for="appointment-complexity" class="block text-sm font-medium text-gray-700 mb-1">Сложность (1-10)</label>
+                    <label for="appointment-complexity" class="block text-sm font-medium text-gray-300 mb-1">Сложность (1-10)</label>
                     <input type="number" id="appointment-complexity" class="input-field w-full" min="1" max="10" required>
                 </div>
                 <div>
-                    <label for="appointment-sketch" class="block text-sm font-medium text-gray-700 mb-1">Эскиз (URL)</label>
+                    <label for="appointment-sketch" class="block text-sm font-medium text-gray-300 mb-1">Эскиз (URL)</label>
                     <input type="url" id="appointment-sketch" class="input-field w-full" placeholder="http://example.com/sketch.jpg">
                 </div>
                 <div class="flex justify-end space-x-3 mt-6">
@@ -186,49 +231,49 @@
         </div>
     </div>
 
-    <div id="session-calculator-modal" class="hidden scrollable inset-0 z-50 flex items-center justify-center modal-backdrop max-h-[90vh] overflow-y-auto">
-        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-2xl mx-4 transform transition-all duration-300 scale-95 opacity-0" id="session-calculator-modal-content">
-            <h2 class="text-2xl font-bold mb-6 text-gray-800">Калькулятор Сеанса</h2>
-            <div id="session-client-info" class="mb-4 text-lg font-medium text-gray-700"></div>
-            <div id="session-appointment-info" class="mb-6 text-gray-600"></div>
+    <div id="session-calculator-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+        <div class="bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-2xl mx-4 transform transition-all duration-300 scale-95 opacity-0 max-h-[90vh] overflow-y-auto" id="session-calculator-modal-content">
+            <h2 class="text-2xl font-bold mb-6 text-gray-100">Калькулятор Сеанса</h2>
+            <div id="session-client-info" class="mb-4 text-lg font-medium text-gray-300"></div>
+            <div id="session-appointment-info" class="mb-6 text-gray-400"></div>
 
             <div class="flex items-center justify-center mb-6">
-                <img id="session-sketch-preview" src="https://placehold.co/150x150/e0e0e0/ffffff?text=Эскиз" alt="Эскиз тату" class="rounded-lg shadow-md max-w-[150px] max-h-[150px] object-cover border border-gray-200">
+                <img id="session-sketch-preview" src="https://placehold.co/150x150/2a2a2a/e0e0e0?text=Эскиз" alt="Эскиз тату" class="rounded-lg shadow-md max-w-[150px] max-h-[150px] object-cover border border-gray-700">
             </div>
 
             <form id="session-calculator-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label for="session-work-time" class="block text-sm font-medium text-gray-700 mb-1">Время работы (часы)</label>
+                    <label for="session-work-time" class="block text-sm font-medium text-gray-300 mb-1">Время работы (часы)</label>
                     <input type="number" id="session-work-time" class="input-field w-full" min="0.5" step="0.5" required>
                 </div>
                 <div>
-                    <label for="session-hourly-rate" class="block text-sm font-medium text-gray-700 mb-1">Ставка за час (грн)</label>
+                    <label for="session-hourly-rate" class="block text-sm font-medium text-gray-300 mb-1">Ставка за час (грн)</label>
                     <input type="number" id="session-hourly-rate" class="input-field w-full" min="0" step="0.01" readonly>
                 </div>
                 <div>
-                    <label for="session-complexity-markup" class="block text-sm font-medium text-gray-700 mb-1">Наценка за сложность (%)</label>
+                    <label for="session-complexity-markup" class="block text-sm font-medium text-gray-300 mb-1">Наценка за сложность (%)</label>
                     <input type="number" id="session-complexity-markup" class="input-field w-full" min="0" step="1" readonly>
                 </div>
                 <div>
-                    <label for="session-discount" class="block text-sm font-medium text-gray-700 mb-1">Скидка (%)</label>
+                    <label for="session-discount" class="block text-sm font-medium text-gray-300 mb-1">Скидка (%)</label>
                     <input type="number" id="session-discount" class="input-field w-full" min="0" max="100" step="1" value="0">
                 </div>
 
                 <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Использованные расходники</label>
-                    <div id="session-consumables-list" class="space-y-2 max-h-48 overflow-y-auto pr-2 no-scrollbar border rounded-lg p-2 bg-gray-50">
-                        <div class="flex items-center justify-between p-2 bg-white rounded-lg shadow-sm hidden">
-                            <span class="text-gray-700">Название материала</span>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Использованные расходники</label>
+                    <div id="session-consumables-list" class="space-y-2 max-h-48 overflow-y-auto pr-2 no-scrollbar border border-gray-700 rounded-lg p-2 bg-gray-900">
+                        <div class="flex items-center justify-between p-2 bg-gray-800 rounded-lg shadow-sm hidden">
+                            <span class="text-gray-300">Название материала</span>
                             <div class="flex items-center space-x-2">
                                 <input type="number" value="1" min="0.1" step="0.1" class="w-20 input-field text-center consumable-qty">
-                                <span class="text-gray-600">ед.</span>
-                                <span class="font-semibold text-gray-800 consumable-price">0.00 грн</span>
+                                <span class="text-gray-400">ед.</span>
+                                <span class="font-semibold text-gray-100 consumable-price">0.00 грн</span>
                                 <button type="button" class="text-red-500 hover:text-red-700 remove-consumable-btn"><i class="fas fa-times"></i></button>
                             </div>
                         </div>
                     </div>
                     <button type="button" id="add-consumable-btn" class="btn-secondary mt-3 text-sm"><i class="fas fa-plus mr-2"></i>Добавить расходник</button>
-                    <div id="add-consumable-dropdown" class="hidden mt-2 p-2 bg-white border rounded-lg shadow-md max-h-48 overflow-y-auto no-scrollbar">
+                    <div id="add-consumable-dropdown" class="hidden mt-2 p-2 bg-gray-800 border border-gray-700 rounded-lg shadow-md max-h-48 overflow-y-auto no-scrollbar">
                         <input type="text" id="consumable-search" class="input-field w-full mb-2" placeholder="Поиск материала...">
                         <div id="consumable-search-results" class="space-y-1">
                             </div>
@@ -237,12 +282,12 @@
 
                 <div class="md:col-span-2 mt-6">
                     <div class="flex justify-between items-center mb-2">
-                        <span class="text-lg font-medium text-gray-700">Себестоимость (материалы):</span>
-                        <span id="session-cost-price" class="text-xl font-bold text-red-600">0.00 грн</span>
+                        <span class="text-lg font-medium text-gray-300">Себестоимость (материалы):</span>
+                        <span id="session-cost-price" class="text-xl font-bold text-red-500">0.00 грн</span>
                     </div>
                     <div class="flex justify-between items-center mb-4">
-                        <span class="text-lg font-medium text-gray-700">Итоговая цена:</span>
-                        <span id="session-total-price" class="text-2xl font-bold text-green-600">0.00 грн</span>
+                        <span class="text-lg font-medium text-gray-300">Итоговая цена:</span>
+                        <span id="session-total-price" class="text-2xl font-bold text-green-500">0.00 грн</span>
                     </div>
                 </div>
 
@@ -256,19 +301,19 @@
     </div>
 
     <div id="expense-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
-        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg mx-4 transform transition-all duration-300 scale-95 opacity-0" id="expense-modal-content">
-            <h2 class="text-2xl font-bold mb-6 text-gray-800">Добавить Расход</h2>
+        <div class="bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-lg mx-4 transform transition-all duration-300 scale-95 opacity-0 max-h-[90vh] overflow-y-auto" id="expense-modal-content">
+            <h2 class="text-2xl font-bold mb-6 text-gray-100">Добавить Расход</h2>
             <form id="expense-form" class="space-y-4">
                 <div>
-                    <label for="expense-description" class="block text-sm font-medium text-gray-700 mb-1">Описание</label>
+                    <label for="expense-description" class="block text-sm font-medium text-gray-300 mb-1">Описание</label>
                     <input type="text" id="expense-description" class="input-field w-full" required>
                 </div>
                 <div>
-                    <label for="expense-amount" class="block text-sm font-medium text-gray-700 mb-1">Сумма (грн)</label>
+                    <label for="expense-amount" class="block text-sm font-medium text-gray-300 mb-1">Сумма (грн)</label>
                     <input type="number" id="expense-amount" class="input-field w-full" min="0.01" step="0.01" required>
                 </div>
                 <div>
-                    <label for="expense-date" class="block text-sm font-medium text-gray-700 mb-1">Дата</label>
+                    <label for="expense-date" class="block text-sm font-medium text-gray-300 mb-1">Дата</label>
                     <input type="date" id="expense-date" class="input-field w-full" required>
                 </div>
                 <div class="flex justify-end space-x-3 mt-6">
@@ -280,28 +325,28 @@
     </div>
 
     <div id="material-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
-        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg mx-4 transform transition-all duration-300 scale-95 opacity-0" id="material-modal-content">
-            <h2 class="text-2xl font-bold mb-6 text-gray-800" id="material-modal-title">Добавить Материал</h2>
+        <div class="bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-lg mx-4 transform transition-all duration-300 scale-95 opacity-0 max-h-[90vh] overflow-y-auto" id="material-modal-content">
+            <h2 class="text-2xl font-bold mb-6 text-gray-100" id="material-modal-title">Добавить Материал</h2>
             <form id="material-form" class="space-y-4">
                 <input type="hidden" id="material-id">
                 <div>
-                    <label for="material-name" class="block text-sm font-medium text-gray-700 mb-1">Название</label>
+                    <label for="material-name" class="block text-sm font-medium text-gray-300 mb-1">Название</label>
                     <input type="text" id="material-name" class="input-field w-full" required>
                 </div>
                 <div>
-                    <label for="material-price-unit" class="block text-sm font-medium text-gray-700 mb-1">Цена за единицу (грн)</label>
+                    <label for="material-price-unit" class="block text-sm font-medium text-gray-300 mb-1">Цена за единицу (грн)</label>
                     <input type="number" id="material-price-unit" class="input-field w-full" min="0.01" step="0.01" required>
                 </div>
                 <div>
-                    <label for="material-quantity" class="block text-sm font-medium text-gray-700 mb-1">Остаток</label>
+                    <label for="material-quantity" class="block text-sm font-medium text-gray-300 mb-1">Остаток</label>
                     <input type="number" id="material-quantity" class="input-field w-full" min="0" step="0.01" required>
                 </div>
                 <div>
-                    <label for="material-type" class="block text-sm font-medium text-gray-700 mb-1">Вид</label>
+                    <label for="material-type" class="block text-sm font-medium text-gray-300 mb-1">Вид</label>
                     <input type="text" id="material-type" class="input-field w-full" placeholder="Например: Иглы, Краска, Средство">
                 </div>
                 <div>
-                    <label for="material-min-stock" class="block text-sm font-medium text-gray-700 mb-1">Минимальный остаток для уведомления</label>
+                    <label for="material-min-stock" class="block text-sm font-medium text-gray-300 mb-1">Минимальный остаток для уведомления</label>
                     <input type="number" id="material-min-stock" class="input-field w-full" min="0" step="0.01" value="1">
                 </div>
                 <div class="flex justify-end space-x-3 mt-6">
@@ -313,28 +358,28 @@
     </div>
 
     <div id="client-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
-        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg mx-4 transform transition-all duration-300 scale-95 opacity-0" id="client-modal-content">
-            <h2 class="text-2xl font-bold mb-6 text-gray-800" id="client-modal-title">Добавить Клиента</h2>
+        <div class="bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-lg mx-4 transform transition-all duration-300 scale-95 opacity-0 max-h-[90vh] overflow-y-auto" id="client-modal-content">
+            <h2 class="text-2xl font-bold mb-6 text-gray-100" id="client-modal-title">Добавить Клиента</h2>
             <form id="client-form" class="space-y-4">
                 <input type="hidden" id="client-id">
                 <div>
-                    <label for="client-name" class="block text-sm font-medium text-gray-700 mb-1">Имя</label>
+                    <label for="client-name" class="block text-sm font-medium text-gray-300 mb-1">Имя</label>
                     <input type="text" id="client-name" class="input-field w-full" required>
                 </div>
                 <div>
-                    <label for="client-phone" class="block text-sm font-medium text-gray-700 mb-1">Телефон</label>
+                    <label for="client-phone" class="block text-sm font-medium text-gray-300 mb-1">Телефон</label>
                     <input type="tel" id="client-phone" class="input-field w-full" placeholder="+380XXXXXXXXX">
                 </div>
                 <div>
-                    <label for="client-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <label for="client-email" class="block text-sm font-medium text-gray-300 mb-1">Email</label>
                     <input type="email" id="client-email" class="input-field w-full">
                 </div>
                 <div>
-                    <label for="client-instagram" class="block text-sm font-medium text-gray-700 mb-1">Instagram (ссылка)</label>
+                    <label for="client-instagram" class="block text-sm font-medium text-gray-300 mb-1">Instagram (ссылка)</label>
                     <input type="text" id="client-instagram" class="input-field w-full" placeholder="@username">
                 </div>
                 <div>
-                    <label for="client-notes" class="block text-sm font-medium text-gray-700 mb-1">Заметки</label>
+                    <label for="client-notes" class="block text-sm font-medium text-gray-300 mb-1">Заметки</label>
                     <textarea id="client-notes" class="input-field w-full h-24 resize-y"></textarea>
                 </div>
                 <div class="flex justify-end space-x-3 mt-6">
@@ -346,9 +391,9 @@
     </div>
 
     <div id="message-box-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
-        <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm mx-4 transform transition-all duration-300 scale-95 opacity-0" id="message-box-modal-content">
-            <h3 class="text-xl font-bold mb-4 text-gray-800" id="message-box-title">Уведомление</h3>
-            <p id="message-box-text" class="text-gray-700 mb-6"></p>
+        <div class="bg-gray-800 p-6 rounded-xl shadow-2xl w-full max-w-sm mx-4 transform transition-all duration-300 scale-95 opacity-0 max-h-[90vh] overflow-y-auto" id="message-box-modal-content">
+            <h3 class="text-xl font-bold mb-4 text-gray-100" id="message-box-title">Уведомление</h3>
+            <p id="message-box-text" class="text-gray-300 mb-6"></p>
             <div class="flex justify-end">
                 <button type="button" id="message-box-ok" class="btn-primary">ОК</button>
             </div>
@@ -358,15 +403,15 @@
     <canvas id="receipt-canvas" class="hidden"></canvas>
 
     <div id="login-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
-        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md mx-4 transform transition-all duration-300 scale-95 opacity-0" id="login-modal-content">
-            <h2 class="text-2xl font-bold mb-6 text-gray-800 text-center">Вход</h2>
+        <div class="bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-md mx-4 transform transition-all duration-300 scale-95 opacity-0 max-h-[90vh] overflow-y-auto" id="login-modal-content">
+            <h2 class="text-2xl font-bold mb-6 text-gray-100 text-center">Вход</h2>
             <form id="login-form" class="space-y-4">
                 <div>
-                    <label for="login-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <label for="login-email" class="block text-sm font-medium text-gray-300 mb-1">Email</label>
                     <input type="email" id="login-email" class="input-field w-full" placeholder="email@example.com" required>
                 </div>
                 <div>
-                    <label for="login-password" class="block text-sm font-medium text-gray-700 mb-1">Пароль</label>
+                    <label for="login-password" class="block text-sm font-medium text-gray-300 mb-1">Пароль</label>
                     <input type="password" id="login-password" class="input-field w-full" placeholder="********" required>
                 </div>
                 <p id="login-error-message" class="text-red-500 text-sm hidden">Неверный Email или пароль.</p>
@@ -374,26 +419,26 @@
                     <button type="submit" class="btn-primary w-full">Войти</button>
                 </div>
             </form>
-            <p class="text-center text-sm text-gray-600 mt-4">
-                Нет аккаунта? <a href="#" id="show-signup" class="text-blue-600 hover:underline">Зарегистрироваться</a>
+            <p class="text-center text-sm text-gray-400 mt-4">
+                Нет аккаунта? <a href="#" id="show-signup" class="text-blue-500 hover:underline">Зарегистрироваться</a>
             </p>
         </div>
     </div>
 
     <div id="signup-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
-        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md mx-4 transform transition-all duration-300 scale-95 opacity-0" id="signup-modal-content">
-            <h2 class="text-2xl font-bold mb-6 text-gray-800 text-center">Регистрация</h2>
+        <div class="bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-md mx-4 transform transition-all duration-300 scale-95 opacity-0 max-h-[90vh] overflow-y-auto" id="signup-modal-content">
+            <h2 class="text-2xl font-bold mb-6 text-gray-100 text-center">Регистрация</h2>
             <form id="signup-form" class="space-y-4">
                 <div>
-                    <label for="signup-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <label for="signup-email" class="block text-sm font-medium text-gray-300 mb-1">Email</label>
                     <input type="email" id="signup-email" class="input-field w-full" placeholder="email@example.com" required>
                 </div>
                 <div>
-                    <label for="signup-password" class="block text-sm font-medium text-gray-700 mb-1">Пароль</label>
+                    <label for="signup-password" class="block text-sm font-medium text-gray-300 mb-1">Пароль</label>
                     <input type="password" id="signup-password" class="input-field w-full" placeholder="********" required>
                 </div>
                 <div>
-                    <label for="signup-password-confirm" class="block text-sm font-medium text-gray-700 mb-1">Подтвердите пароль</label>
+                    <label for="signup-password-confirm" class="block text-sm font-medium text-gray-300 mb-1">Подтвердите пароль</label>
                     <input type="password" id="signup-password-confirm" class="input-field w-full" placeholder="********" required>
                 </div>
                 <p id="signup-error-message" class="text-red-500 text-sm hidden">Пароли не совпадают или произошла ошибка.</p>
@@ -401,8 +446,8 @@
                     <button type="submit" class="btn-primary w-full">Зарегистрироваться</button>
                 </div>
             </form>
-            <p class="text-center text-sm text-gray-600 mt-4">
-                Уже есть аккаунт? <a href="#" id="show-login" class="text-blue-600 hover:underline">Войти</a>
+            <p class="text-center text-sm text-gray-400 mt-4">
+                Уже есть аккаунт? <a href="#" id="show-login" class="text-blue-500 hover:underline">Войти</a>
             </p>
         </div>
     </div>
@@ -445,7 +490,7 @@
             hourlyRate: 500, // грн
             materialCategories: ['Иглы', 'Краска', 'Средства', 'Прочее'],
             lowStockThreshold: 5, // По умолчанию для уведомлений
-            studioName: 'Моя Тату Студия' // Название студии по умолчанию
+            studioName: 'RDNCK.TATTOO' // Название студии по умолчанию
         };
 
         let currentAppointmentForSession = null; // Для калькулятора сеанса
@@ -759,111 +804,103 @@
             const lowStockMaterials = materials.filter(mat => mat.quantity <= mat.minStock);
 
             loadContent(`
-                <div class="space-y-8">
-                    <h1 class="text-3xl font-bold text-gray-900 mb-6">Главная</h1>
+                <div class="space-y-8 p-4">
+                    <h1 class="text-3xl font-bold text-gray-100 mb-6">Dashboard</h1>
 
-                    <div class="bg-white p-6 rounded-xl shadow-md">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Быстрые действия</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <button id="add-appointment-btn-dashboard" class="btn-primary flex items-center justify-center py-3">
-                                <i class="fas fa-plus-circle mr-2"></i> Новая запись
-                            </button>
-                            <button id="add-expense-btn-dashboard" class="btn-primary flex items-center justify-center py-3">
-                                <i class="fas fa-hand-holding-usd mr-2"></i> Добавить расход
-                            </button>
-                            <button id="add-material-btn-dashboard" class="btn-primary flex items-center justify-center py-3">
-                                <i class="fas fa-box mr-2"></i> Добавить материал
-                            </button>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="card text-center">
+                            <p class="text-sm text-gray-400">Total Revenue</p>
+                            <p class="text-3xl font-bold text-green-400">${formatCurrency(totalSalesAmount)}</p>
+                        </div>
+                        <div class="card text-center">
+                            <p class="text-sm text-gray-400">Upcoming Appointments</p>
+                            <p class="text-3xl font-bold text-blue-400">${upcomingAppointments.length}</p>
+                        </div>
+                        <div class="card text-center">
+                            <p class="text-sm text-gray-400">Total Clients</p>
+                            <p class="text-3xl font-bold text-purple-400">${clients.length}</p>
                         </div>
                     </div>
 
-                    <div class="bg-white p-6 rounded-xl shadow-md">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Аналитика (обзор)</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                            <div class="bg-blue-50 p-4 rounded-lg shadow-sm">
-                                <p class="text-sm text-gray-600">Общая выручка</p>
-                                <p class="text-2xl font-bold text-blue-700">${formatCurrency(totalSalesAmount)}</p>
-                            </div>
-                            <div class="bg-red-50 p-4 rounded-lg shadow-sm">
-                                <p class="text-sm text-gray-600">Общие расходы</p>
-                                <p class="text-2xl font-bold text-red-700">${formatCurrency(totalExpensesAmount)}</p>
-                            </div>
-                            <div class="bg-green-50 p-4 rounded-lg shadow-sm">
-                                <p class="text-sm text-gray-600">Чистая прибыль</p>
-                                <p class="text-2xl font-bold text-green-700">${formatCurrency(netProfit)}</p>
-                            </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="card">
+                            <h2 class="card-header">Upcoming Appointments</h2>
+                            ${upcomingAppointments.length > 0 ? `
+                                <div class="space-y-4">
+                                    ${upcomingAppointments.slice(0, 3).map(app => `
+                                        <div class="bg-gray-700 p-4 rounded-lg flex justify-between items-center">
+                                            <div>
+                                                <p class="font-semibold text-gray-100">${clients.find(c => c.id === app.clientId)?.name || 'Неизвестно'}</p>
+                                                <p class="text-sm text-gray-400">${formatDate(app.date)} at ${formatTime(app.time)}</p>
+                                            </div>
+                                            <button data-id="${app.id}" class="btn-primary text-sm px-3 py-1 confirm-visit-btn">Confirm</button>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                <div class="mt-6 text-center">
+                                    <button onclick="window.location.hash='#appointments'" class="btn-secondary text-sm">View All Appointments</button>
+                                </div>
+                            ` : '<p class="text-gray-400 text-center">No upcoming appointments.</p>'}
+                        </div>
+
+                        <div class="card">
+                            <h2 class="card-header">Recent Clients</h2>
+                            ${clients.length > 0 ? `
+                                <div class="space-y-4">
+                                    ${clients.slice(0, 3).map(client => `
+                                        <div class="bg-gray-700 p-4 rounded-lg flex justify-between items-center">
+                                            <div>
+                                                <p class="font-semibold text-gray-100">${client.name}</p>
+                                                <p class="text-sm text-gray-400">${client.phone || client.email || '-'}</p>
+                                            </div>
+                                            <button data-id="${client.id}" class="btn-secondary text-sm px-3 py-1 edit-client-btn">View</button>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                <div class="mt-6 text-center">
+                                    <button onclick="window.location.hash='#clients'" class="btn-secondary text-sm">View All Clients</button>
+                                </div>
+                            ` : '<p class="text-gray-400 text-center">No clients yet.</p>'}
                         </div>
                     </div>
 
-                    <div class="bg-white p-6 rounded-xl shadow-md">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Предстоящие записи</h2>
-                        ${upcomingAppointments.length > 0 ? `
-                            <div class="overflow-x-auto rounded-lg border border-gray-200">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="table-header">
-                                        <tr>
-                                            <th class="table-cell">Дата</th>
-                                            <th class="table-cell">Время</th>
-                                            <th class="table-cell">Клиент</th>
-                                            <th class="table-cell">Длительность</th>
-                                            <th class="table-cell">Сложность</th>
-                                            <th class="table-cell">Действия</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-200">
-                                        ${upcomingAppointments.map(app => `
-                                            <tr class="table-row">
-                                                <td class="table-cell">${formatDate(app.date)}</td>
-                                                <td class="table-cell">${formatTime(app.time)}</td>
-                                                <td class="table-cell">${clients.find(c => c.id === app.clientId)?.name || 'Неизвестно'}</td>
-                                                <td class="table-cell">${app.duration} ч</td>
-                                                <td class="table-cell">${app.complexity}</td>
-                                                <td class="table-cell">
-                                                    <button data-id="${app.id}" class="btn-primary text-sm px-3 py-1 confirm-visit-btn" ${app.status === 'completed' ? 'disabled' : ''}>
-                                                        <i class="fas fa-check-circle mr-1"></i> Подтвердить
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ` : '<p class="text-gray-600">Нет предстоящих записей.</p>'}
-                    </div>
-
-                    <div class="bg-white p-6 rounded-xl shadow-md">
-                        <h2 class="text-xl font-semibold text-red-700 mb-4 flex items-center">
-                            <i class="fas fa-exclamation-triangle mr-2"></i> Материалы с низким остатком
+                    <div class="card mt-8">
+                        <h2 class="card-header flex items-center text-red-400">
+                            <i class="fas fa-exclamation-triangle mr-2"></i> Low Stock Alert
                         </h2>
                         ${lowStockMaterials.length > 0 ? `
-                            <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <ul class="list-disc list-inside space-y-2 text-gray-300">
                                 ${lowStockMaterials.map(mat => `
-                                    <li>${mat.name} (остаток: ${mat.quantity} ед., мин: ${mat.minStock} ед.)</li>
+                                    <li>${mat.name} (remaining: ${mat.quantity} units, min: ${mat.minStock} units)</li>
                                 `).join('')}
                             </ul>
-                        ` : '<p class="text-gray-600">Все материалы в достаточном количестве.</p>'}
+                        ` : '<p class="text-gray-400">All materials are in sufficient quantity.</p>'}
                     </div>
                 </div>
             `);
 
-            // Прикрепление слушателей событий для быстрых действий
-            document.getElementById('add-appointment-btn-dashboard').addEventListener('click', () => {
-                openAppointmentModal();
-            });
-            document.getElementById('add-expense-btn-dashboard').addEventListener('click', () => {
-                openExpenseModal();
-            });
-            document.getElementById('add-material-btn-dashboard').addEventListener('click', () => {
-                openMaterialModal();
-            });
+            // Прикрепление слушателей событий для быстрых действий (если они будут добавлены)
+            // document.getElementById('add-appointment-btn-dashboard').addEventListener('click', () => { openAppointmentModal(); });
+            // document.getElementById('add-expense-btn-dashboard').addEventListener('click', () => { openExpenseModal(); });
+            // document.getElementById('add-material-btn-dashboard').addEventListener('click', () => { openMaterialModal(); });
 
-            // Прикрепление слушателей событий для кнопок "Подтвердить визит"
+            // Прикрепление слушателей событий для кнопок "Confirm"
             document.querySelectorAll('.confirm-visit-btn').forEach(button => {
                 button.addEventListener('click', (e) => {
                     const appointmentId = e.currentTarget.dataset.id;
                     const appointment = appointments.find(app => app.id === appointmentId);
                     if (appointment) {
                         openSessionCalculatorModal(appointment);
+                    }
+                });
+            });
+
+            document.querySelectorAll('.edit-client-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const clientId = e.currentTarget.dataset.id;
+                    const client = clients.find(c => c.id === clientId);
+                    if (client) {
+                        openClientModal(client);
                     }
                 });
             });
@@ -872,64 +909,65 @@
         /**
          * Рендерит страницу "Записи".
          */
-        async function renderAppointments() {
-            loadContent(`
-                <div class="space-y-6">
-                    <h1 class="text-3xl font-bold text-gray-900 mb-6">Записи</h1>
-                    <button id="add-appointment-btn" class="btn-primary mb-6">
-                        <i class="fas fa-plus-circle mr-2"></i> Создать новую запись
-                    </button>
+        async function renderAppointments(searchTerm = '') {
+            let filteredAppointments = appointments;
 
-                    <div class="bg-white p-6 rounded-xl shadow-md">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Список записей</h2>
-                        ${appointments.length > 0 ? `
-                            <div class="overflow-x-auto rounded-lg border border-gray-200">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="table-header">
-                                        <tr>
-                                            <th class="table-cell">Дата</th>
-                                            <th class="table-cell">Время</th>
-                                            <th class="table-cell">Клиент</th>
-                                            <th class="table-cell">Длительность</th>
-                                            <th class="table-cell">Сложность</th>
-                                            <th class="table-cell">Статус</th>
-                                            <th class="table-cell">Действия</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-200">
-                                        ${appointments.sort((a, b) => new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time)).map(app => `
-                                            <tr class="table-row">
-                                                <td class="table-cell">${formatDate(app.date)}</td>
-                                                <td class="table-cell">${formatTime(app.time)}</td>
-                                                <td class="table-cell">${clients.find(c => c.id === app.clientId)?.name || 'Неизвестно'}</td>
-                                                <td class="table-cell">${app.duration} ч</td>
-                                                <td class="table-cell">${app.complexity}</td>
-                                                <td class="table-cell">
-                                                    <span class="px-2 py-1 rounded-full text-xs font-semibold
-                                                        ${app.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : ''}
-                                                        ${app.status === 'completed' ? 'bg-green-100 text-green-800' : ''}
-                                                        ${app.status === 'cancelled' ? 'bg-red-100 text-red-800' : ''}
-                                                    ">
-                                                        ${app.status === 'pending' ? 'Ожидает' : app.status === 'completed' ? 'Завершено' : 'Отменено'}
-                                                    </span>
-                                                </td>
-                                                <td class="table-cell flex space-x-2">
-                                                    <button data-id="${app.id}" class="btn-primary text-sm px-3 py-1 confirm-visit-btn" ${app.status === 'completed' ? 'disabled' : ''}>
-                                                        <i class="fas fa-check-circle mr-1"></i> Подтвердить
-                                                    </button>
-                                                    <button data-id="${app.id}" class="btn-secondary text-sm px-3 py-1 edit-appointment-btn">
-                                                        <i class="fas fa-edit mr-1"></i> Изменить
-                                                    </button>
-                                                    <button data-id="${app.id}" class="btn-danger text-sm px-3 py-1 delete-appointment-btn">
-                                                        <i class="fas fa-trash mr-1"></i> Удалить
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ` : '<p class="text-gray-600">Нет записей.</p>'}
+            if (searchTerm) {
+                const lowerCaseSearchTerm = searchTerm.toLowerCase();
+                filteredAppointments = appointments.filter(app => {
+                    const client = clients.find(c => c.id === app.clientId);
+                    return (client && client.name.toLowerCase().includes(lowerCaseSearchTerm)) ||
+                           (client && client.phone && client.phone.toLowerCase().includes(lowerCaseSearchTerm)) ||
+                           (app.sketch && app.sketch.toLowerCase().includes(lowerCaseSearchTerm)) ||
+                           (app.status && app.status.toLowerCase().includes(lowerCaseSearchTerm));
+                });
+            }
+
+            loadContent(`
+                <div class="space-y-6 p-4">
+                    <div class="flex justify-between items-center mb-6">
+                        <h1 class="text-3xl font-bold text-gray-100">Appointments</h1>
+                        <button id="add-appointment-btn" class="btn-primary">
+                            <i class="fas fa-plus-circle mr-2"></i> New Appointment
+                        </button>
+                    </div>
+
+                    <div class="mb-6">
+                        <input type="text" id="appointment-search-input" placeholder="Search by client name, phone, or status..." class="input-field w-full">
+                    </div>
+
+                    <div class="flex space-x-2 mb-6">
+                        <button class="filter-btn active bg-blue-600 text-white px-4 py-2 rounded-lg" data-filter="all">All</button>
+                        <button class="filter-btn bg-gray-700 text-gray-300 px-4 py-2 rounded-lg" data-filter="pending">Scheduled</button>
+                        <button class="filter-btn bg-gray-700 text-gray-300 px-4 py-2 rounded-lg" data-filter="completed">Completed</button>
+                        <button class="filter-btn bg-gray-700 text-gray-300 px-4 py-2 rounded-lg" data-filter="cancelled">Cancelled</button>
+                    </div>
+
+                    <div id="appointments-list" class="space-y-4">
+                        ${filteredAppointments.length > 0 ? `
+                            ${filteredAppointments.sort((a, b) => new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time)).map(app => {
+                                const client = clients.find(c => c.id === app.clientId);
+                                const statusClass = app.status === 'pending' ? 'bg-yellow-500' : app.status === 'completed' ? 'bg-green-500' : 'bg-red-500';
+                                const statusText = app.status === 'pending' ? 'Scheduled' : app.status === 'completed' ? 'Completed' : 'Cancelled';
+                                return `
+                                    <div class="card flex flex-col md:flex-row justify-between items-start md:items-center p-4">
+                                        <div>
+                                            <p class="font-semibold text-gray-100">${client ? client.name : 'Unknown Client'}</p>
+                                            <p class="text-sm text-gray-400">${formatDate(app.date)} at ${formatTime(app.time)} - ${app.duration} hours</p>
+                                        </div>
+                                        <div class="flex items-center space-x-3 mt-3 md:mt-0">
+                                            <span class="px-3 py-1 rounded-full text-xs font-semibold ${statusClass} text-white">${statusText}</span>
+                                            <button data-id="${app.id}" class="btn-secondary text-sm px-3 py-1 edit-appointment-btn">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button data-id="${app.id}" class="btn-danger text-sm px-3 py-1 delete-appointment-btn">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        ` : '<p class="text-gray-400 text-center">No appointments found.</p>'}
                     </div>
                 </div>
             `);
@@ -938,16 +976,76 @@
                 openAppointmentModal();
             });
 
-            document.querySelectorAll('.confirm-visit-btn').forEach(button => {
+            // Search functionality
+            const appointmentSearchInput = document.getElementById('appointment-search-input');
+            let searchTimeout;
+            appointmentSearchInput.addEventListener('input', () => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    renderAppointments(appointmentSearchInput.value.trim());
+                }, 300);
+            });
+
+            // Filter buttons
+            document.querySelectorAll('.filter-btn').forEach(button => {
                 button.addEventListener('click', (e) => {
-                    const appointmentId = e.currentTarget.dataset.id;
-                    const appointment = appointments.find(app => app.id === appointmentId);
-                    if (appointment) {
-                        openSessionCalculatorModal(appointment);
+                    document.querySelectorAll('.filter-btn').forEach(btn => {
+                        btn.classList.remove('active', 'bg-blue-600', 'text-white');
+                        btn.classList.add('bg-gray-700', 'text-gray-300');
+                    });
+                    e.currentTarget.classList.add('active', 'bg-blue-600', 'text-white');
+                    e.currentTarget.classList.remove('bg-gray-700', 'text-gray-300');
+
+                    const filter = e.currentTarget.dataset.filter;
+                    let filtered = appointments;
+                    if (filter !== 'all') {
+                        filtered = appointments.filter(app => app.status === filter);
                     }
+                    updateAppointmentsList(filtered);
                 });
             });
 
+            function updateAppointmentsList(filtered) {
+                const appointmentsListContainer = document.getElementById('appointments-list');
+                if (!appointmentsListContainer) return;
+
+                if (filtered.length === 0) {
+                    appointmentsListContainer.innerHTML = '<p class="text-gray-400 text-center">No appointments found for this filter.</p>';
+                    return;
+                }
+
+                appointmentsListContainer.innerHTML = filtered.sort((a, b) => new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time)).map(app => {
+                    const client = clients.find(c => c.id === app.clientId);
+                    const statusClass = app.status === 'pending' ? 'bg-yellow-500' : app.status === 'completed' ? 'bg-green-500' : 'bg-red-500';
+                    const statusText = app.status === 'pending' ? 'Scheduled' : app.status === 'completed' ? 'Completed' : 'Cancelled';
+                    return `
+                        <div class="card flex flex-col md:flex-row justify-between items-start md:items-center p-4">
+                            <div>
+                                <p class="font-semibold text-gray-100">${client ? client.name : 'Unknown Client'}</p>
+                                <p class="text-sm text-gray-400">${formatDate(app.date)} at ${formatTime(app.time)} - ${app.duration} hours</p>
+                            </div>
+                            <div class="flex items-center space-x-3 mt-3 md:mt-0">
+                                <span class="px-3 py-1 rounded-full text-xs font-semibold ${statusClass} text-white">${statusText}</span>
+                                <button data-id="${app.id}" class="btn-secondary text-sm px-3 py-1 edit-appointment-btn">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button data-id="${app.id}" class="btn-danger text-sm px-3 py-1 delete-appointment-btn">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                attachAppointmentActionListeners();
+            }
+
+
+            // Attach listeners after rendering
+            attachAppointmentActionListeners();
+        }
+
+        function attachAppointmentActionListeners() {
             document.querySelectorAll('.edit-appointment-btn').forEach(button => {
                 button.addEventListener('click', (e) => {
                     const appointmentId = e.currentTarget.dataset.id;
@@ -961,8 +1059,7 @@
             document.querySelectorAll('.delete-appointment-btn').forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const appointmentId = e.currentTarget.dataset.id;
-                    // Используем кастомное модальное окно вместо нативного confirm
-                    showMessageBox('Подтверждение удаления', 'Вы уверены, что хотите удалить эту запись?');
+                    showMessageBox('Confirmation', 'Are you sure you want to delete this appointment?');
                     document.getElementById('message-box-ok').onclick = async () => {
                         await deleteDocument('appointments', appointmentId);
                         hideModal(document.getElementById('message-box-modal'), document.getElementById('message-box-modal-content'));
@@ -976,45 +1073,45 @@
          */
         async function renderClients() {
             loadContent(`
-                <div class="space-y-6">
-                    <h1 class="text-3xl font-bold text-gray-900 mb-6">Клиенты</h1>
+                <div class="space-y-6 p-4">
+                    <h1 class="text-3xl font-bold text-gray-100 mb-6">Clients</h1>
                     <button id="add-client-btn" class="btn-primary mb-6">
-                        <i class="fas fa-user-plus mr-2"></i> Добавить нового клиента
+                        <i class="fas fa-user-plus mr-2"></i> Add New Client
                     </button>
 
-                    <div class="bg-white p-6 rounded-xl shadow-md">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Список клиентов</h2>
-                        <input type="text" id="client-search-input" class="input-field w-full mb-4" placeholder="Поиск по ФИО или номеру телефона...">
+                    <div class="card">
+                        <h2 class="card-header">Client List</h2>
+                        <input type="text" id="client-search-input" class="input-field w-full mb-4" placeholder="Search by name or phone number...">
                         <div id="clients-list-container">
                             ${clients.length > 0 ? `
-                                <div class="overflow-x-auto rounded-lg border border-gray-200">
-                                    <table class="min-w-full divide-y divide-gray-200">
+                                <div class="overflow-x-auto rounded-lg border border-gray-700">
+                                    <table class="min-w-full divide-y divide-gray-700">
                                         <thead class="table-header">
                                             <tr>
-                                                <th class="table-cell">Имя</th>
-                                                <th class="table-cell">Телефон</th>
+                                                <th class="table-cell">Name</th>
+                                                <th class="table-cell">Phone</th>
                                                 <th class="table-cell">Email</th>
                                                 <th class="table-cell">Instagram</th>
-                                                <th class="table-cell">Заметки</th>
-                                                <th class="table-cell">Действия</th>
+                                                <th class="table-cell">Notes</th>
+                                                <th class="table-cell">Actions</th>
                                             </tr>
                                         </thead>
-                                        <tbody class="bg-white divide-y divide-gray-200" id="clients-table-body">
+                                        <tbody class="bg-gray-800 divide-y divide-gray-700" id="clients-table-body">
                                             ${clients.map(client => `
                                                 <tr class="table-row">
                                                     <td class="table-cell">${client.name}</td>
                                                     <td class="table-cell">${client.phone || '-'}</td>
                                                     <td class="table-cell">${client.email || '-'}</td>
                                                     <td class="table-cell">
-                                                        ${client.instagram ? `<a href="${client.instagram}" target="_blank" class="text-blue-600 hover:underline"><i class="fab fa-instagram"></i></a>` : '-'}
+                                                        ${client.instagram ? `<a href="${client.instagram.startsWith('http') ? client.instagram : 'https://instagram.com/' + client.instagram.replace('@', '')}" target="_blank" class="text-blue-400 hover:underline"><i class="fab fa-instagram"></i> ${client.instagram}</a>` : '-'}
                                                     </td>
                                                     <td class="table-cell max-w-xs truncate">${client.notes || '-'}</td>
                                                     <td class="table-cell flex space-x-2">
                                                         <button data-id="${client.id}" class="btn-secondary text-sm px-3 py-1 edit-client-btn">
-                                                            <i class="fas fa-edit mr-1"></i> Изменить
+                                                            <i class="fas fa-edit mr-1"></i> Edit
                                                         </button>
                                                         <button data-id="${client.id}" class="btn-danger text-sm px-3 py-1 delete-client-btn">
-                                                            <i class="fas fa-trash mr-1"></i> Удалить
+                                                            <i class="fas fa-trash mr-1"></i> Delete
                                                         </button>
                                                     </td>
                                                 </tr>
@@ -1022,7 +1119,7 @@
                                         </tbody>
                                     </table>
                                 </div>
-                            ` : '<p class="text-gray-600">Нет клиентов в базе.</p>'}
+                            ` : '<p class="text-gray-400">No clients in the database.</p>'}
                         </div>
                     </div>
                 </div>
@@ -1053,15 +1150,15 @@
                         <td class="table-cell">${client.phone || '-'}</td>
                         <td class="table-cell">${client.email || '-'}</td>
                         <td class="table-cell">
-                            ${client.instagram ? `<a href="${client.instagram}" target="_blank" class="text-blue-600 hover:underline"><i class="fab fa-instagram"></i></a>` : '-'}
+                            ${client.instagram ? `<a href="${client.instagram.startsWith('http') ? client.instagram : 'https://instagram.com/' + client.instagram.replace('@', '')}" target="_blank" class="text-blue-400 hover:underline"><i class="fab fa-instagram"></i> ${client.instagram}</a>` : '-'}
                         </td>
                         <td class="table-cell max-w-xs truncate">${client.notes || '-'}</td>
                         <td class="table-cell flex space-x-2">
                             <button data-id="${client.id}" class="btn-secondary text-sm px-3 py-1 edit-client-btn">
-                                <i class="fas fa-edit mr-1"></i> Изменить
+                                <i class="fas fa-edit mr-1"></i> Edit
                             </button>
                             <button data-id="${client.id}" class="btn-danger text-sm px-3 py-1 delete-client-btn">
-                                <i class="fas fa-trash mr-1"></i> Удалить
+                                <i class="fas fa-trash mr-1"></i> Delete
                             </button>
                         </td>
                     </tr>
@@ -1086,7 +1183,7 @@
                     button.addEventListener('click', async (e) => {
                         const clientId = e.currentTarget.dataset.id;
                         // Используем кастомное модальное окно вместо нативного confirm
-                        showMessageBox('Подтверждение удаления', 'Вы уверены, что хотите удалить этого клиента?');
+                        showMessageBox('Confirmation', 'Are you sure you want to delete this client?');
                         document.getElementById('message-box-ok').onclick = async () => {
                             await deleteDocument('clients', clientId);
                             hideModal(document.getElementById('message-box-modal'), document.getElementById('message-box-modal-content'));
@@ -1102,41 +1199,41 @@
          */
         async function renderInventory() {
             loadContent(`
-                <div class="space-y-6">
-                    <h1 class="text-3xl font-bold text-gray-900 mb-6">Инвентарь</h1>
+                <div class="space-y-6 p-4">
+                    <h1 class="text-3xl font-bold text-gray-100 mb-6">Inventory</h1>
                     <button id="add-material-btn" class="btn-primary mb-6">
-                        <i class="fas fa-box-open mr-2"></i> Добавить новый материал
+                        <i class="fas fa-box-open mr-2"></i> Add New Material
                     </button>
 
-                    <div class="bg-white p-6 rounded-xl shadow-md">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Список материалов</h2>
+                    <div class="card">
+                        <h2 class="card-header">Material List</h2>
                         ${materials.length > 0 ? `
-                            <div class="overflow-x-auto rounded-lg border border-gray-200">
-                                <table class="min-w-full divide-y divide-gray-200">
+                            <div class="overflow-x-auto rounded-lg border border-gray-700">
+                                <table class="min-w-full divide-y divide-gray-700">
                                     <thead class="table-header">
                                         <tr>
-                                            <th class="table-cell">Название</th>
-                                            <th class="table-cell">Вид</th>
-                                            <th class="table-cell">Цена за ед.</th>
-                                            <th class="table-cell">Остаток</th>
-                                            <th class="table-cell">Мин. остаток</th>
-                                            <th class="table-cell">Действия</th>
+                                            <th class="table-cell">Name</th>
+                                            <th class="table-cell">Type</th>
+                                            <th class="table-cell">Price per Unit</th>
+                                            <th class="table-cell">Quantity</th>
+                                            <th class="table-cell">Min Stock</th>
+                                            <th class="table-cell">Actions</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="bg-white divide-y divide-gray-200">
+                                    <tbody class="bg-gray-800 divide-y divide-gray-700">
                                         ${materials.map(mat => `
-                                            <tr class="table-row ${mat.quantity <= mat.minStock ? 'bg-red-50' : ''}">
+                                            <tr class="table-row ${mat.quantity <= mat.minStock ? 'bg-red-900/20' : ''}">
                                                 <td class="table-cell">${mat.name}</td>
                                                 <td class="table-cell">${mat.type || '-'}</td>
                                                 <td class="table-cell">${formatCurrency(mat.pricePerUnit)}</td>
-                                                <td class="table-cell">${mat.quantity} ед.</td>
-                                                <td class="table-cell">${mat.minStock} ед.</td>
+                                                <td class="table-cell">${mat.quantity} units.</td>
+                                                <td class="table-cell">${mat.minStock} units.</td>
                                                 <td class="table-cell flex space-x-2">
                                                     <button data-id="${mat.id}" class="btn-secondary text-sm px-3 py-1 edit-material-btn">
-                                                        <i class="fas fa-edit mr-1"></i> Изменить
+                                                        <i class="fas fa-edit mr-1"></i> Edit
                                                     </button>
                                                     <button data-id="${mat.id}" class="btn-danger text-sm px-3 py-1 delete-material-btn">
-                                                        <i class="fas fa-trash mr-1"></i> Удалить
+                                                        <i class="fas fa-trash mr-1"></i> Delete
                                                     </button>
                                                 </td>
                                             </tr>
@@ -1144,7 +1241,7 @@
                                     </tbody>
                                 </table>
                             </div>
-                        ` : '<p class="text-gray-600">Нет материалов в инвентаре.</p>'}
+                        ` : '<p class="text-gray-400">No materials in inventory.</p>'}
                     </div>
                 </div>
             `);
@@ -1167,7 +1264,7 @@
                 button.addEventListener('click', async (e) => {
                     const materialId = e.currentTarget.dataset.id;
                     // Используем кастомное модальное окно вместо нативного confirm
-                    showMessageBox('Подтверждение удаления', 'Вы уверены, что хотите удалить этот материал?');
+                    showMessageBox('Confirmation', 'Are you sure you want to delete this material?');
                     document.getElementById('message-box-ok').onclick = async () => {
                         await deleteDocument('materials', materialId);
                         hideModal(document.getElementById('message-box-modal'), document.getElementById('message-box-modal-content'));
@@ -1220,39 +1317,39 @@
                 .slice(0, 5); // Топ 5 клиентов
 
             loadContent(`
-                <div class="space-y-6">
-                    <h1 class="text-3xl font-bold text-gray-900 mb-6">Финансы</h1>
+                <div class="space-y-6 p-4">
+                    <h1 class="text-3xl font-bold text-gray-100 mb-6">Finances</h1>
                     <button id="add-expense-btn" class="btn-primary mb-6">
-                        <i class="fas fa-plus-circle mr-2"></i> Добавить расход
+                        <i class="fas fa-plus-circle mr-2"></i> Add Expense
                     </button>
 
-                    <div class="bg-white p-6 rounded-xl shadow-md grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                        <div class="bg-blue-50 p-4 rounded-lg shadow-sm">
-                            <p class="text-sm text-gray-600">Всего доходов</p>
-                            <p class="text-2xl font-bold text-blue-700">${formatCurrency(sales.reduce((sum, s) => sum + s.totalPrice, 0))}</p>
+                    <div class="card grid grid-cols-1 md:grid-cols-3 gap-4 text-center mb-8">
+                        <div class="bg-blue-900/20 p-4 rounded-lg shadow-sm">
+                            <p class="text-sm text-gray-400">Total Revenue</p>
+                            <p class="text-2xl font-bold text-blue-400">${formatCurrency(sales.reduce((sum, s) => sum + s.totalPrice, 0))}</p>
                         </div>
-                        <div class="bg-red-50 p-4 rounded-lg shadow-sm">
-                            <p class="text-sm text-gray-600">Всего расходов</p>
-                            <p class="text-2xl font-bold text-red-700">${formatCurrency(expenses.reduce((sum, e) => sum + e.amount, 0))}</p>
+                        <div class="bg-red-900/20 p-4 rounded-lg shadow-sm">
+                            <p class="text-sm text-gray-400">Total Expenses</p>
+                            <p class="text-2xl font-bold text-red-400">${formatCurrency(expenses.reduce((sum, e) => sum + e.amount, 0))}</p>
                         </div>
-                        <div class="bg-green-50 p-4 rounded-lg shadow-sm">
-                            <p class="text-sm text-gray-600">Чистая прибыль</p>
-                            <p class="text-2xl font-bold text-green-700">${formatCurrency(sales.reduce((sum, s) => sum + s.totalPrice, 0) - expenses.reduce((sum, e) => sum + e.amount, 0))}</p>
+                        <div class="bg-green-900/20 p-4 rounded-lg shadow-sm">
+                            <p class="text-sm text-gray-400">Net Profit</p>
+                            <p class="text-2xl font-bold text-green-400">${formatCurrency(sales.reduce((sum, s) => sum + s.totalPrice, 0) - expenses.reduce((sum, e) => sum + e.amount, 0))}</p>
                         </div>
                     </div>
 
-                    <div class="bg-white p-6 rounded-xl shadow-md">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Выручка по дням</h2>
+                    <div class="card mb-8">
+                        <h2 class="card-header">Daily Revenue</h2>
                         ${sortedDailyRevenue.length > 0 ? `
-                            <div class="overflow-x-auto rounded-lg border border-gray-200">
-                                <table class="min-w-full divide-y divide-gray-200">
+                            <div class="overflow-x-auto rounded-lg border border-gray-700">
+                                <table class="min-w-full divide-y divide-gray-700">
                                     <thead class="table-header">
                                         <tr>
-                                            <th class="table-cell">Дата</th>
-                                            <th class="table-cell">Сумма (чистая)</th>
+                                            <th class="table-cell">Date</th>
+                                            <th class="table-cell">Amount (Net)</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="bg-white divide-y divide-gray-200">
+                                    <tbody class="bg-gray-800 divide-y divide-gray-700">
                                         ${sortedDailyRevenue.map(([date, amount]) => `
                                             <tr class="table-row">
                                                 <td class="table-cell">${formatDate(date)}</td>
@@ -1262,21 +1359,21 @@
                                     </tbody>
                                 </table>
                             </div>
-                        ` : '<p class="text-gray-600">Нет данных о выручке по дням.</p>'}
+                        ` : '<p class="text-gray-400">No daily revenue data.</p>'}
                     </div>
 
-                    <div class="bg-white p-6 rounded-xl shadow-md">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Выручка по месяцам</h2>
+                    <div class="card mb-8">
+                        <h2 class="card-header">Monthly Revenue</h2>
                         ${sortedMonthlyRevenue.length > 0 ? `
-                            <div class="overflow-x-auto rounded-lg border border-gray-200">
-                                <table class="min-w-full divide-y divide-gray-200">
+                            <div class="overflow-x-auto rounded-lg border border-gray-700">
+                                <table class="min-w-full divide-y divide-gray-700">
                                     <thead class="table-header">
                                         <tr>
-                                            <th class="table-cell">Месяц</th>
-                                            <th class="table-cell">Сумма (чистая)</th>
+                                            <th class="table-cell">Month</th>
+                                            <th class="table-cell">Amount (Net)</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="bg-white divide-y divide-gray-200">
+                                    <tbody class="bg-gray-800 divide-y divide-gray-700">
                                         ${sortedMonthlyRevenue.map(([month, amount]) => `
                                             <tr class="table-row">
                                                 <td class="table-cell">${month}</td>
@@ -1286,23 +1383,23 @@
                                     </tbody>
                                 </table>
                             </div>
-                        ` : '<p class="text-gray-600">Нет данных о выручке по месяцам.</p>'}
+                        ` : '<p class="text-gray-400">No monthly revenue data.</p>'}
                     </div>
 
-                    <div class="bg-white p-6 rounded-xl shadow-md">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Список расходов</h2>
+                    <div class="card mb-8">
+                        <h2 class="card-header">Expense List</h2>
                         ${expenses.length > 0 ? `
-                            <div class="overflow-x-auto rounded-lg border border-gray-200">
-                                <table class="min-w-full divide-y divide-gray-200">
+                            <div class="overflow-x-auto rounded-lg border border-gray-700">
+                                <table class="min-w-full divide-y divide-gray-700">
                                     <thead class="table-header">
                                         <tr>
-                                            <th class="table-cell">Дата</th>
-                                            <th class="table-cell">Описание</th>
-                                            <th class="table-cell">Сумма</th>
-                                            <th class="table-cell">Действия</th>
+                                            <th class="table-cell">Date</th>
+                                            <th class="table-cell">Description</th>
+                                            <th class="table-cell">Amount</th>
+                                            <th class="table-cell">Actions</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="bg-white divide-y divide-gray-200">
+                                    <tbody class="bg-gray-800 divide-y divide-gray-700">
                                         ${expenses.sort((a, b) => new Date(b.date) - new Date(a.date)).map(expense => `
                                             <tr class="table-row">
                                                 <td class="table-cell">${formatDate(expense.date)}</td>
@@ -1310,7 +1407,7 @@
                                                 <td class="table-cell">${formatCurrency(expense.amount)}</td>
                                                 <td class="table-cell">
                                                     <button data-id="${expense.id}" class="btn-danger text-sm px-3 py-1 delete-expense-btn">
-                                                        <i class="fas fa-trash mr-1"></i> Удалить
+                                                        <i class="fas fa-trash mr-1"></i> Delete
                                                     </button>
                                                 </td>
                                             </tr>
@@ -1318,33 +1415,33 @@
                                     </tbody>
                                 </table>
                             </div>
-                        ` : '<p class="text-gray-600">Нет зафиксированных расходов.</p>'}
+                        ` : '<p class="text-gray-400">No expenses recorded.</p>'}
                     </div>
 
-                    <div class="bg-white p-6 rounded-xl shadow-md">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Список Продаж</h2>
+                    <div class="card mb-8">
+                        <h2 class="card-header">Sales List</h2>
                         ${sales.length > 0 ? `
-                            <div class="overflow-x-auto rounded-lg border border-gray-200">
-                                <table class="min-w-full divide-y divide-gray-200">
+                            <div class="overflow-x-auto rounded-lg border border-gray-700">
+                                <table class="min-w-full divide-y divide-gray-700">
                                     <thead class="table-header">
                                         <tr>
-                                            <th class="table-cell">№ Заказа</th>
-                                            <th class="table-cell">Дата</th>
-                                            <th class="table-cell">Клиент</th>
-                                            <th class="table-cell">Сумма</th>
-                                            <th class="table-cell">Действия</th>
+                                            <th class="table-cell">Order #</th>
+                                            <th class="table-cell">Date</th>
+                                            <th class="table-cell">Client</th>
+                                            <th class="table-cell">Amount</th>
+                                            <th class="table-cell">Actions</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="bg-white divide-y divide-gray-200">
+                                    <tbody class="bg-gray-800 divide-y divide-gray-700">
                                         ${sales.sort((a, b) => b.orderNumber - a.orderNumber).map(sale => `
                                             <tr class="table-row">
                                                 <td class="table-cell">${sale.orderNumber || '-'}</td>
                                                 <td class="table-cell">${formatDate(sale.date)} ${formatTime(sale.time)}</td>
-                                                <td class="table-cell">${clients.find(c => c.id === sale.clientId)?.name || 'Неизвестно'}</td>
+                                                <td class="table-cell">${clients.find(c => c.id === sale.clientId)?.name || 'Unknown'}</td>
                                                 <td class="table-cell">${formatCurrency(sale.totalPrice)}</td>
                                                 <td class="table-cell">
                                                     <button data-id="${sale.id}" class="btn-secondary text-sm px-3 py-1 print-existing-receipt-btn">
-                                                        <i class="fas fa-print mr-1"></i> Печать
+                                                        <i class="fas fa-print mr-1"></i> Print
                                                     </button>
                                                 </td>
                                             </tr>
@@ -1352,21 +1449,21 @@
                                     </tbody>
                                 </table>
                             </div>
-                        ` : '<p class="text-gray-600">Нет зафиксированных продаж.</p>'}
+                        ` : '<p class="text-gray-400">No sales recorded.</p>'}
                     </div>
 
-                    <div class="bg-white p-6 rounded-xl shadow-md">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">ТОП-клиенты</h2>
+                    <div class="card">
+                        <h2 class="card-header">Top Clients</h2>
                         ${topClients.length > 0 ? `
-                            <div class="overflow-x-auto rounded-lg border border-gray-200">
-                                <table class="min-w-full divide-y divide-gray-200">
+                            <div class="overflow-x-auto rounded-lg border border-gray-700">
+                                <table class="min-w-full divide-y divide-gray-700">
                                     <thead class="table-header">
                                         <tr>
-                                            <th class="table-cell">Клиент</th>
-                                            <th class="table-cell">Потрачено</th>
+                                            <th class="table-cell">Client</th>
+                                            <th class="table-cell">Amount Spent</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="bg-white divide-y divide-gray-200">
+                                    <tbody class="bg-gray-800 divide-y divide-gray-700">
                                         ${topClients.map(item => `
                                             <tr class="table-row">
                                                 <td class="table-cell">${item.client.name}</td>
@@ -1376,7 +1473,7 @@
                                     </tbody>
                                 </table>
                             </div>
-                        ` : '<p class="text-gray-600">Нет данных о ТОП-клиентах.</p>'}
+                        ` : '<p class="text-gray-400">No top clients data.</p>'}
                     </div>
                 </div>
             `);
@@ -1388,8 +1485,7 @@
             document.querySelectorAll('.delete-expense-btn').forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const expenseId = e.currentTarget.dataset.id;
-                    // Используем кастомное модальное окно вместо нативного confirm
-                    showMessageBox('Подтверждение удаления', 'Вы уверены, что хотите удалить этот расход?');
+                    showMessageBox('Confirmation', 'Are you sure you want to delete this expense?');
                     document.getElementById('message-box-ok').onclick = async () => {
                         await deleteDocument('expenses', expenseId);
                         hideModal(document.getElementById('message-box-modal'), document.getElementById('message-box-modal-content'));
@@ -1413,30 +1509,30 @@
          */
         async function renderSettings() {
             loadContent(`
-                <div class="space-y-6">
-                    <h1 class="text-3xl font-bold text-gray-900 mb-6">Настройки</h1>
+                <div class="space-y-6 p-4">
+                    <h1 class="text-3xl font-bold text-gray-100 mb-6">Settings</h1>
 
-                    <div class="bg-white p-6 rounded-xl shadow-md">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Общие настройки</h2>
+                    <div class="card mb-8">
+                        <h2 class="card-header">General Settings</h2>
                         <form id="general-settings-form" class="space-y-4">
                             <div>
-                                <label for="studio-name-setting" class="block text-sm font-medium text-gray-700 mb-1">Название студии</label>
+                                <label for="studio-name-setting" class="block text-sm font-medium text-gray-300 mb-1">Studio Name</label>
                                 <input type="text" id="studio-name-setting" class="input-field w-full" value="${settings.studioName || ''}">
                             </div>
                             <div>
-                                <label for="hourly-rate-setting" class="block text-sm font-medium text-gray-700 mb-1">Ставка за час (грн)</label>
+                                <label for="hourly-rate-setting" class="block text-sm font-medium text-gray-300 mb-1">Hourly Rate (UAH)</label>
                                 <input type="number" id="hourly-rate-setting" class="input-field w-full" min="0" step="0.01" value="${settings.hourlyRate}">
                             </div>
                             <div>
-                                <label for="low-stock-threshold-setting" class="block text-sm font-medium text-gray-700 mb-1">Минимальный остаток для уведомлений</label>
+                                <label for="low-stock-threshold-setting" class="block text-sm font-medium text-gray-300 mb-1">Low Stock Notification Threshold</label>
                                 <input type="number" id="low-stock-threshold-setting" class="input-field w-full" min="0" step="0.01" value="${settings.lowStockThreshold}">
                             </div>
-                            <button type="submit" class="btn-primary">Сохранить общие настройки</button>
+                            <button type="submit" class="btn-primary">Save General Settings</button>
                         </form>
                     </div>
 
-                    <div class="bg-white p-6 rounded-xl shadow-md">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Категории материалов</h2>
+                    <div class="card">
+                        <h2 class="card-header">Material Categories</h2>
                         <div id="material-categories-list" class="space-y-2 mb-4">
                             ${settings.materialCategories.map((cat, index) => `
                                 <div class="flex items-center space-x-3">
@@ -1448,10 +1544,10 @@
                             `).join('')}
                         </div>
                         <div class="flex space-x-2">
-                            <input type="text" id="new-category-input" class="input-field flex-grow" placeholder="Новая категория">
-                            <button id="add-category-btn" class="btn-secondary">Добавить</button>
+                            <input type="text" id="new-category-input" class="input-field flex-grow" placeholder="New category">
+                            <button id="add-category-btn" class="btn-secondary">Add</button>
                         </div>
-                        <button id="save-categories-btn" class="btn-primary mt-4">Сохранить категории</button>
+                        <button id="save-categories-btn" class="btn-primary mt-4">Save Categories</button>
                     </div>
                 </div>
             `);
@@ -1472,7 +1568,7 @@
                     const { data: existingSettings, error: fetchError } = await supabase.from('settings').select('id').eq('user_id', userId).single();
                     if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means no rows found
                         console.error("Error fetching existing settings:", fetchError.message);
-                        showMessageBox('Ошибка', `Не удалось загрузить настройки: ${fetchError.message}`);
+                        showMessageBox('Error', `Failed to load settings: ${fetchError.message}`);
                         return;
                     }
 
@@ -1482,7 +1578,7 @@
                         await addDocument('settings', settings);
                     }
                 } else {
-                    showMessageBox('Ошибка', 'Пожалуйста, введите корректные числовые значения.');
+                    showMessageBox('Error', 'Please enter valid numeric values.');
                 }
             });
 
@@ -1495,7 +1591,7 @@
                     newCategoryInput.value = '';
                     renderSettings(); // Повторный рендеринг для обновления списка
                 } else if (settings.materialCategories.includes(newCategory)) {
-                    showMessageBox('Ошибка', 'Такая категория уже существует.');
+                    showMessageBox('Error', 'This category already exists.');
                 }
             });
 
@@ -1514,7 +1610,7 @@
                 const { data: existingSettings, error: fetchError } = await supabase.from('settings').select('id').eq('user_id', userId).single();
                 if (fetchError && fetchError.code !== 'PGRST116') {
                     console.error("Error fetching existing settings for categories:", fetchError.message);
-                    showMessageBox('Ошибка', `Не удалось загрузить настройки категорий: ${fetchError.message}`);
+                    showMessageBox('Error', `Failed to load category settings: ${fetchError.message}`);
                     return;
                 }
 
@@ -1553,27 +1649,27 @@
             clientSelect.innerHTML = ''; // Очистка существующих опций
 
             if (appointment) {
-                title.textContent = 'Редактировать Запись';
+                title.textContent = 'Edit Appointment';
                 form.dataset.id = appointment.id;
                 const existingClient = clients.find(c => c.id === appointment.clientId);
                 if (existingClient) {
                     clientPhoneInput.value = existingClient.phone || '';
                     // Заполнение списка клиентов всеми клиентами и выбор существующего
-                    clientSelect.innerHTML = clients.map(client => `<option value="${client.id}">${client.name} (${client.phone || 'нет телефона'})</option>`).join('');
+                    clientSelect.innerHTML = clients.map(client => `<option value="${client.id}">${client.name} (${client.phone || 'no phone'})</option>`).join('');
                     clientSelect.value = existingClient.id;
                     clientSelect.disabled = true; // Отключение выбора, если клиент найден по телефону
                     clientPhoneInput.disabled = true; // Отключение ввода телефона для существующей записи
-                    clientStatusMessage.textContent = `Клиент найден: ${existingClient.name}`;
-                    clientStatusMessage.classList.remove('text-red-600');
-                    clientStatusMessage.classList.add('text-green-600');
+                    clientStatusMessage.textContent = `Client found: ${existingClient.name}`;
+                    clientStatusMessage.classList.remove('text-red-500');
+                    clientStatusMessage.classList.add('text-green-500');
                 } else {
                     clientPhoneInput.value = ''; // Клиент не найден или не связан
-                    clientSelect.innerHTML = clients.map(client => `<option value="${client.id}">${client.name} (${client.phone || 'нет телефона'})</option>`).join('');
+                    clientSelect.innerHTML = clients.map(client => `<option value="${client.id}">${client.name} (${client.phone || 'no phone'})</option>`).join('');
                     clientSelect.disabled = false;
                     clientPhoneInput.disabled = false;
-                    clientStatusMessage.textContent = 'Клиент не найден по записи. Выберите или введите новый телефон.';
-                    clientStatusMessage.classList.remove('text-green-600');
-                    clientStatusMessage.classList.add('text-red-600');
+                    clientStatusMessage.textContent = 'Client not found for this appointment. Select or enter new phone.';
+                    clientStatusMessage.classList.remove('text-green-500');
+                    clientStatusMessage.classList.add('text-red-500');
                 }
 
                 document.getElementById('appointment-date').value = appointment.date;
@@ -1582,7 +1678,7 @@
                 document.getElementById('appointment-complexity').value = appointment.complexity;
                 document.getElementById('appointment-sketch').value = appointment.sketch || '';
             } else {
-                title.textContent = 'Создать Запись';
+                title.textContent = 'Create Appointment';
                 delete form.dataset.id;
                 clientPhoneInput.disabled = false;
                 clientSelect.disabled = false;
@@ -1591,9 +1687,9 @@
                 document.getElementById('appointment-date').value = today;
 
                 // Заполнение списка клиентов всеми клиентами
-                clientSelect.innerHTML = clients.map(client => `<option value="${client.id}">${client.name} (${client.phone || 'нет телефона'})</option>`).join('');
+                clientSelect.innerHTML = clients.map(client => `<option value="${client.id}">${client.name} (${client.phone || 'no phone'})</option>`).join('');
                 clientSelect.value = ''; // Нет выбора по умолчанию
-                clientSelect.prepend(new Option('Выберите клиента (необязательно)', '')); // Добавление опции-заполнителя
+                clientSelect.prepend(new Option('Select client (optional)', '')); // Добавление опции-заполнителя
             }
             showModal(modal, content);
         }
@@ -1627,25 +1723,25 @@
                         clientSelect.disabled = true;
                         newClientDetails.classList.add('hidden');
                         newClientNameInput.required = false; // Не требуется, если клиент существует
-                        clientStatusMessage.textContent = `Клиент найден: ${existingClient.name}`;
-                        clientStatusMessage.classList.remove('text-red-600');
-                        clientStatusMessage.classList.add('text-green-600');
+                        clientStatusMessage.textContent = `Client found: ${existingClient.name}`;
+                        clientStatusMessage.classList.remove('text-red-500');
+                        clientStatusMessage.classList.add('text-green-500');
                     } else {
                         clientSelect.value = ''; // Очистка выбора, если клиент не найден
                         clientSelect.disabled = false; // Включение выбора для нового клиента
                         newClientDetails.classList.remove('hidden');
                         newClientNameInput.required = true; // Сделать имя обязательным для нового клиента
-                        clientStatusMessage.textContent = 'Клиент не найден. Заполните данные для нового клиента.';
-                        clientStatusMessage.classList.remove('text-green-600');
-                        clientStatusMessage.classList.add('text-red-600');
+                        clientStatusMessage.textContent = 'Client not found. Fill in new client details.';
+                        clientStatusMessage.classList.remove('text-green-500');
+                        clientStatusMessage.classList.add('text-red-500');
                     }
                 } else {
                     // Если телефон пуст, разрешить выбор существующего или добавление нового
                     clientSelect.disabled = false;
                     newClientDetails.classList.add('hidden');
                     newClientNameInput.required = false;
-                    clientStatusMessage.textContent = 'Введите телефон или выберите существующего клиента.';
-                    clientStatusMessage.classList.remove('text-green-600', 'text-red-600');
+                    clientStatusMessage.textContent = 'Enter phone or select existing client.';
+                    clientStatusMessage.classList.remove('text-green-500', 'text-red-500');
                 }
             });
 
@@ -1656,14 +1752,14 @@
                     clientPhoneInput.disabled = true; // Отключение ввода телефона, если клиент выбран
                     newClientDetails.classList.add('hidden');
                     newClientNameInput.required = false;
-                    clientStatusMessage.textContent = `Выбран клиент: ${clientSelect.options[clientSelect.selectedIndex].text}`;
-                    clientStatusMessage.classList.remove('text-red-600');
-                    clientStatusMessage.classList.add('text-green-600');
+                    clientStatusMessage.textContent = `Selected client: ${clientSelect.options[clientSelect.selectedIndex].text}`;
+                    clientStatusMessage.classList.remove('text-red-500');
+                    clientStatusMessage.classList.add('text-green-500');
                 } else {
                     clientPhoneInput.disabled = false; // Включение ввода телефона, если клиент не выбран
                     clientPhoneInput.value = '';
-                    clientStatusMessage.textContent = 'Введите телефон или выберите существующего клиента.';
-                    clientStatusMessage.classList.remove('text-green-600', 'text-red-600');
+                    clientStatusMessage.textContent = 'Enter phone or select existing client.';
+                    clientStatusMessage.classList.remove('text-green-500', 'text-red-500');
                 }
             });
 
@@ -1688,23 +1784,23 @@
                                 notes: ''
                             };
                             if (!newClientData.name) {
-                                showMessageBox('Ошибка', 'Имя нового клиента обязательно.');
+                                showMessageBox('Error', 'New client name is required.');
                                 return;
                             }
                             const newClientId = await addDocument('clients', newClientData);
                             if (newClientId) {
                                 selectedClientId = newClientId;
                             } else {
-                                showMessageBox('Ошибка', 'Не удалось добавить нового клиента.');
+                                showMessageBox('Error', 'Failed to add new client.');
                                 return;
                             }
                         } else {
-                            showMessageBox('Ошибка', 'Пожалуйста, выберите клиента или заполните данные для нового.');
+                            showMessageBox('Error', 'Please select a client or fill in new client details.');
                             return;
                         }
                     }
                 } else if (!selectedClientId && !phoneNumber) {
-                    showMessageBox('Ошибка', 'Пожалуйста, введите телефон клиента или выберите его из списка.');
+                    showMessageBox('Error', 'Please enter client phone or select from list.');
                     return;
                 }
 
@@ -1782,12 +1878,12 @@
             const form = document.getElementById('session-calculator-form');
 
             const client = clients.find(c => c.id === appointment.clientId);
-            document.getElementById('session-client-info').textContent = `Клиент: ${client ? client.name : 'Неизвестно'}`;
-            document.getElementById('session-appointment-info').textContent = `Запись: ${formatDate(appointment.date)} в ${formatTime(appointment.time)}, ${appointment.duration} ч, Сложность: ${appointment.complexity}`;
+            document.getElementById('session-client-info').textContent = `Client: ${client ? client.name : 'Unknown'}`;
+            document.getElementById('session-appointment-info').textContent = `Appointment: ${formatDate(appointment.date)} at ${formatTime(appointment.time)}, ${appointment.duration} hours, Complexity: ${appointment.complexity}`;
 
-            document.getElementById('session-sketch-preview').src = appointment.sketch || 'https://placehold.co/150x150/e0e0e0/ffffff?text=Эскиз';
+            document.getElementById('session-sketch-preview').src = appointment.sketch || 'https://placehold.co/150x150/2a2a2a/e0e0e0?text=Sketch';
             document.getElementById('session-sketch-preview').onerror = function() {
-                this.src = 'https://placehold.co/150x150/e0e0e0/ffffff?text=Эскиз';
+                this.src = 'https://placehold.co/150x150/2a2a2a/e0e0e0?text=Sketch';
             };
 
             document.getElementById('session-work-time').value = appointment.duration;
@@ -1857,8 +1953,8 @@
                 if (filteredMaterials.length > 0) {
                     filteredMaterials.forEach(mat => {
                         const div = document.createElement('div');
-                        div.classList.add('p-2', 'hover:bg-gray-100', 'cursor-pointer', 'rounded-md');
-                        div.textContent = `${mat.name} (${formatCurrency(mat.pricePerUnit)}/ед.)`;
+                        div.classList.add('p-2', 'hover:bg-gray-700', 'cursor-pointer', 'rounded-md');
+                        div.textContent = `${mat.name} (${formatCurrency(mat.pricePerUnit)}/unit)`;
                         div.dataset.materialId = mat.id;
                         div.addEventListener('click', () => {
                             addConsumableToSession(mat);
@@ -1867,7 +1963,7 @@
                         consumableSearchResults.appendChild(div);
                     });
                 } else {
-                    consumableSearchResults.innerHTML = '<p class="p-2 text-gray-500">Нет материалов по запросу.</p>';
+                    consumableSearchResults.innerHTML = '<p class="p-2 text-gray-500">No materials found.</p>';
                 }
             }
 
@@ -1882,14 +1978,14 @@
                 } else {
                     // Добавить новый элемент материала
                     const div = document.createElement('div');
-                    div.classList.add('flex', 'items-center', 'justify-between', 'p-2', 'bg-white', 'rounded-lg', 'shadow-sm');
+                    div.classList.add('flex', 'items-center', 'justify-between', 'p-2', 'bg-gray-800', 'rounded-lg', 'shadow-sm');
                     div.dataset.materialId = material.id;
                     div.innerHTML = `
-                        <span class="text-gray-700">${material.name}</span>
+                        <span class="text-gray-300">${material.name}</span>
                         <div class="flex items-center space-x-2">
                             <input type="number" value="1" min="0.1" step="0.1" class="w-20 input-field text-center consumable-qty">
-                            <span class="text-gray-600">ед.</span>
-                            <span class="font-semibold text-gray-800 consumable-price">${formatCurrency(material.pricePerUnit)}</span>
+                            <span class="text-gray-400">units.</span>
+                            <span class="font-semibold text-gray-100 consumable-price">${formatCurrency(material.pricePerUnit)}</span>
                             <button type="button" class="text-red-500 hover:text-red-700 remove-consumable-btn"><i class="fas fa-times"></i></button>
                         </div>
                     `;
@@ -1900,7 +1996,7 @@
 
             document.getElementById('pay-session-btn').addEventListener('click', async () => {
                 if (!currentAppointmentForSession) {
-                    showMessageBox('Ошибка', 'Нет активного сеанса для оплаты.');
+                    showMessageBox('Error', 'No active session to pay for.');
                     return;
                 }
 
@@ -1914,7 +2010,7 @@
                     costPrice: currentAppointmentForSession.costPrice,
                     consumables: currentAppointmentForSession.consumablesUsed,
                     paymentMethod: paymentMethod,
-                    notes: `Сеанс тату от ${formatDate(currentAppointmentForSession.date)}.`
+                    notes: `Tattoo session from ${formatDate(currentAppointmentForSession.date)}.`
                 };
 
                 // Вычитание расходников из инвентаря
@@ -1936,7 +2032,7 @@
                 renderDashboard();
                 renderAppointments();
                 renderFinance();
-                showMessageBox('Успех', `Сеанс успешно оплачен: ${formatCurrency(saleData.totalPrice)}`);
+                showMessageBox('Success', `Session successfully paid: ${formatCurrency(saleData.totalPrice)}`);
             });
 
             document.getElementById('print-receipt-btn').addEventListener('click', () => {
@@ -1944,10 +2040,10 @@
                     const client = clients.find(c => c.id === currentAppointmentForSession.clientId);
                     // Создаем фиктивный объект продажи для печати, если он еще не сохранен
                     const dummySale = {
-                        orderNumber: 'Предв. №', // Заполнитель для несохраненных продаж
+                        orderNumber: 'Preview #', // Заполнитель для несохраненных продаж
                         date: new Date().toISOString().split('T')[0],
                         time: new Date().toTimeString().split(' ')[0].substring(0, 5),
-                        clientName: client ? client.name : 'Неизвестно',
+                        clientName: client ? client.name : 'Unknown',
                         totalPrice: currentAppointmentForSession.calculatedPrice,
                         consumables: currentAppointmentForSession.consumablesUsed,
                         workTime: currentAppointmentForSession.duration,
@@ -1957,7 +2053,7 @@
                     };
                     generateReceiptImage(dummySale);
                 } else {
-                    showMessageBox('Информация', 'Сначала рассчитайте стоимость сеанса.');
+                    showMessageBox('Information', 'First, calculate the session cost.');
                 }
             });
         }
@@ -2011,7 +2107,7 @@
             const title = document.getElementById('material-modal-title');
 
             if (material) {
-                title.textContent = 'Редактировать Материал';
+                title.textContent = 'Edit Material';
                 form.dataset.id = material.id;
                 document.getElementById('material-name').value = material.name;
                 document.getElementById('material-price-unit').value = material.pricePerUnit;
@@ -2019,7 +2115,7 @@
                 document.getElementById('material-type').value = material.type || '';
                 document.getElementById('material-min-stock').value = material.minStock || settings.lowStockThreshold;
             } else {
-                title.textContent = 'Добавить Материал';
+                title.textContent = 'Add Material';
                 delete form.dataset.id;
                 form.reset();
                 document.getElementById('material-min-stock').value = settings.lowStockThreshold; // По умолчанию из настроек
@@ -2072,7 +2168,7 @@
             const title = document.getElementById('client-modal-title');
 
             if (client) {
-                title.textContent = 'Редактировать Клиента';
+                title.textContent = 'Edit Client';
                 form.dataset.id = client.id;
                 document.getElementById('client-name').value = client.name;
                 document.getElementById('client-phone').value = client.phone || '';
@@ -2080,7 +2176,7 @@
                 document.getElementById('client-instagram').value = client.instagram || '';
                 document.getElementById('client-notes').value = client.notes || '';
             } else {
-                title.textContent = 'Добавить Клиента';
+                title.textContent = 'Add Client';
                 delete form.dataset.id;
                 form.reset();
             }
@@ -2165,9 +2261,9 @@
             canvas.width = receiptWidth;
             canvas.height = contentHeight + 60; // Добавить отступы
 
-            ctx.fillStyle = '#FFFFFF';
+            ctx.fillStyle = '#1a1a1a'; // Темный фон чека
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#000000'; // Черный текст
+            ctx.fillStyle = '#e0e0e0'; // Светлый текст
 
             ctx.font = 'bold 24px Inter';
             ctx.textAlign = 'center';
@@ -2176,26 +2272,26 @@
 
             ctx.font = '16px Inter';
             ctx.textAlign = 'left';
-            ctx.fillText(`Чек №: ${sale.orderNumber || 'Н/Д'}`, marginX, currentY);
+            ctx.fillText(`Receipt #: ${sale.orderNumber || 'N/A'}`, marginX, currentY);
             currentY += lineHeight;
-            ctx.fillText(`Дата: ${formatDate(sale.date)} ${formatTime(sale.time)}`, marginX, currentY);
+            ctx.fillText(`Date: ${formatDate(sale.date)} ${formatTime(sale.time)}`, marginX, currentY);
             currentY += lineHeight;
-            ctx.fillText(`Клиент: ${sale.clientName || clients.find(c => c.id === sale.clientId)?.name || 'Неизвестно'}`, marginX, currentY);
+            ctx.fillText(`Client: ${sale.clientName || clients.find(c => c.id === sale.clientId)?.name || 'Unknown'}`, marginX, currentY);
             currentY += lineHeight * 1.5;
 
             // Элементы строки
             ctx.font = 'bold 16px Inter';
-            ctx.fillText('Услуги и материалы:', marginX, currentY);
+            ctx.fillText('Services & Materials:', marginX, currentY);
             currentY += lineHeight;
 
             ctx.font = '14px Inter';
             const workTimeCost = sale.workTime * sale.hourlyRate;
-            ctx.fillText(`Работа (${sale.workTime} ч @ ${formatCurrency(sale.hourlyRate)}/ч): ${formatCurrency(workTimeCost)}`, marginX, currentY);
+            ctx.fillText(`Work (${sale.workTime} hr @ ${formatCurrency(sale.hourlyRate)}/hr): ${formatCurrency(workTimeCost)}`, marginX, currentY);
             currentY += lineHeight;
 
             if (sale.consumables && sale.consumables.length > 0) {
                 sale.consumables.forEach(item => {
-                    ctx.fillText(`- ${item.name} (${item.quantity} ед.): ${formatCurrency(item.pricePerUnit * item.quantity)}`, marginX + 10, currentY);
+                    ctx.fillText(`- ${item.name} (${item.quantity} units.): ${formatCurrency(item.pricePerUnit * item.quantity)}`, marginX + 10, currentY);
                     currentY += lineHeight;
                 });
             }
@@ -2203,13 +2299,13 @@
             // Сложность и скидка (если применимо)
             if (sale.complexityMarkup > 0) {
                 const markupAmount = (workTimeCost + (sale.consumables ? sale.consumables.reduce((sum, c) => sum + (c.pricePerUnit * c.quantity), 0) : 0)) * (sale.complexityMarkup / 100);
-                 ctx.fillText(`Наценка за сложность (${sale.complexityMarkup}%): ${formatCurrency(markupAmount)}`, marginX, currentY);
+                 ctx.fillText(`Complexity Markup (${sale.complexityMarkup}%): ${formatCurrency(markupAmount)}`, marginX, currentY);
                  currentY += lineHeight;
             }
             if (sale.discount > 0) {
                 const preDiscountTotal = (workTimeCost + (sale.consumables ? sale.consumables.reduce((sum, c) => sum + (c.pricePerUnit * c.quantity), 0) : 0));
                 const discountAmount = preDiscountTotal * (sale.discount / 100);
-                ctx.fillText(`Скидка (${sale.discount}%): -${formatCurrency(discountAmount)}`, marginX, currentY);
+                ctx.fillText(`Discount (${sale.discount}%): -${formatCurrency(discountAmount)}`, marginX, currentY);
                 currentY += lineHeight;
             }
 
@@ -2218,14 +2314,14 @@
 
             ctx.font = 'bold 20px Inter';
             ctx.textAlign = 'right';
-            ctx.fillText(`Итого: ${formatCurrency(sale.totalPrice)}`, receiptWidth - marginX, currentY);
+            ctx.fillText(`Total: ${formatCurrency(sale.totalPrice)}`, receiptWidth - marginX, currentY);
             currentY += lineHeight * 1.5;
 
             ctx.font = '14px Inter';
             ctx.textAlign = 'center';
-            ctx.fillText('Спасибо за визит!', receiptWidth / 2, currentY);
+            ctx.fillText('Thank you for your visit!', receiptWidth / 2, currentY);
             currentY += lineHeight;
-            ctx.fillText('Ждем вас снова!', receiptWidth / 2, currentY);
+            ctx.fillText('See you again!', receiptWidth / 2, currentY);
 
             // Преобразование в JPG и скачивание
             const dataURL = canvas.toDataURL('image/jpeg', 0.9);
@@ -2246,6 +2342,13 @@
         function handleRouteChange() {
             const hash = window.location.hash || '#dashboard';
             updateNavLinkActiveState(hash);
+
+            // Скрыть мобильное меню при изменении маршрута
+            const mobileNavMenu = document.getElementById('mobile-nav-menu');
+            if (mobileNavMenu.classList.contains('open')) {
+                mobileNavMenu.classList.remove('open');
+            }
+
 
             if (!isAuthReady) {
                 console.warn('Аутентификация не готова, откладываем рендеринг контента.');
@@ -2286,7 +2389,7 @@
 
             if (session) {
                 userId = session.user.id;
-                console.log("Пользователь Supabase вошел в систему:", userId);
+                console.log("Supabase user logged in:", userId);
                 document.getElementById('current-user-id').textContent = userId;
 
                 // Настраиваем слушатели ТОЛЬКО ОДИН РАЗ после первоначальной аутентификации
@@ -2322,7 +2425,7 @@
                                 hourlyRate: 500,
                                 materialCategories: ['Иглы', 'Краска', 'Средства', 'Прочее'],
                                 lowStockThreshold: 5,
-                                studioName: 'Моя Тату Студия'
+                                studioName: 'RDNCK.TATTOO'
                             });
                         }
                         handleRouteChange();
@@ -2339,11 +2442,11 @@
                 hideModal(signupModal, signupModalContent);
 
             } else {
-                console.log("Пользователь не вошел в систему с Supabase.");
-                document.getElementById('current-user-id').textContent = 'Не аутентифицирован';
+                console.log("User not logged in with Supabase.");
+                document.getElementById('current-user-id').textContent = 'Not Authenticated';
                 userId = null; // Очистить userId
                 isAuthReady = false;
-                loadContent('<div class="flex items-center justify-center h-full text-gray-500 text-xl">Пожалуйста, войдите в систему.</div>');
+                loadContent('<div class="flex items-center justify-center h-full text-gray-500 text-xl">Please log in.</div>');
                 showModal(loginModal, loginModalContent); // Показать модальное окно входа, если нет пользователя
 
                 // Очистить все подписки, если пользователь выходит
@@ -2386,7 +2489,7 @@
                 if (error) {
                     document.getElementById('login-error-message').textContent = error.message;
                     document.getElementById('login-error-message').classList.remove('hidden');
-                    console.error("Ошибка входа:", error.message);
+                    console.error("Login error:", error.message);
                 }
             });
 
@@ -2398,7 +2501,7 @@
                 const passwordConfirm = document.getElementById('signup-password-confirm').value;
 
                 if (password !== passwordConfirm) {
-                    document.getElementById('signup-error-message').textContent = 'Пароли не совпадают.';
+                    document.getElementById('signup-error-message').textContent = 'Passwords do not match.';
                     document.getElementById('signup-error-message').classList.remove('hidden');
                     return;
                 }
@@ -2407,9 +2510,9 @@
                 if (error) {
                     document.getElementById('signup-error-message').textContent = error.message;
                     document.getElementById('signup-error-message').classList.remove('hidden');
-                    console.error("Ошибка регистрации:", error.message);
+                    console.error("Signup error:", error.message);
                 } else {
-                    showMessageBox('Успех', 'Регистрация прошла успешно! Пожалуйста, проверьте свою почту для подтверждения.');
+                    showMessageBox('Success', 'Registration successful! Please check your email for confirmation.');
                     hideModal(signupModal, signupModalContent);
                     showModal(loginModal, loginModalContent);
                 }
@@ -2418,14 +2521,14 @@
             document.getElementById('logout-btn').addEventListener('click', async () => {
                 const { error } = await supabase.auth.signOut();
                 if (error) {
-                    console.error("Ошибка выхода:", error.message);
-                    showMessageBox('Ошибка', `Не удалось выйти: ${error.message}`);
+                    console.error("Logout error:", error.message);
+                    showMessageBox('Error', `Failed to log out: ${error.message}`);
                 } else {
-                    showMessageBox('Успех', 'Вы успешно вышли из системы.');
+                    showMessageBox('Success', 'You have successfully logged out.');
                 }
             });
 
-            // Показать/скрыть модальные окна входа/регистрации
+            // Show/hide login/signup modals
             document.getElementById('show-signup').addEventListener('click', (e) => {
                 e.preventDefault();
                 hideModal(loginModal, loginModalContent);
@@ -2436,6 +2539,34 @@
                 e.preventDefault();
                 hideModal(signupModal, signupModalContent);
                 showModal(loginModal, loginModalContent);
+            });
+
+            // Mobile navigation toggle
+            const mobileNavToggle = document.getElementById('mobile-nav-toggle');
+            const mobileNavMenu = document.getElementById('mobile-nav-menu');
+            const appContent = document.getElementById('app-content');
+
+            mobileNavToggle.addEventListener('click', () => {
+                mobileNavMenu.classList.toggle('open');
+                // Adjust main content margin to push it when sidebar opens
+                if (mobileNavMenu.classList.contains('open')) {
+                    appContent.classList.remove('md:ml-64');
+                    appContent.classList.add('ml-64'); // Push content right
+                } else {
+                    appContent.classList.remove('ml-64');
+                    appContent.classList.add('md:ml-64'); // Reset for desktop
+                }
+            });
+
+            // Close mobile nav when a link is clicked
+            document.querySelectorAll('#mobile-nav-menu .nav-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (mobileNavMenu.classList.contains('open')) {
+                        mobileNavMenu.classList.remove('open');
+                        appContent.classList.remove('ml-64');
+                        appContent.classList.add('md:ml-64');
+                    }
+                });
             });
         });
     </script>
