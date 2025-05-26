@@ -2248,18 +2248,18 @@
             contentHeight += 2 * lineHeight; // Название студии
             contentHeight += 2 * lineHeight; // Номер заказа, Дата, Время
             contentHeight += lineHeight; // Имя клиента
-            contentHeight += 20; // Разделитель
+            contentHeight += 30; // Разделитель
             contentHeight += lineHeight; // Заголовок услуги
             contentHeight += lineHeight; // Строка времени работы
             if (sale.consumables && sale.consumables.length > 0) {
                 contentHeight += lineHeight * (sale.consumables.length + 1); // Строки расходников + заголовок
             }
-            contentHeight += 20; // Разделитель
+            contentHeight += 30; // Разделитель
             contentHeight += 2 * lineHeight; // Общая цена
             contentHeight += 2 * lineHeight; // Сообщение благодарности
 
             canvas.width = receiptWidth;
-            canvas.height = contentHeight + 60; // Добавить отступы
+            canvas.height = contentHeight + 90; // Добавить отступы
 
             ctx.fillStyle = '#1a1a1a'; // Темный фон чека
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -2310,11 +2310,11 @@
             }
 
 
-            currentY += 20; // Разделитель
+            currentY += 30; // Разделитель
 
             ctx.font = 'bold 45px Inter';
             ctx.textAlign = 'right';
-            ctx.fillText(`Total: ${formatCurrency(sale.totalPrice)}`, receiptWidth - marginX, currentY);
+            ctx.fillText(`Всього: ${formatCurrency(sale.totalPrice)}`, receiptWidth - marginX, currentY);
             currentY += lineHeight * 1.5;
 
             ctx.font = '45px Inter';
