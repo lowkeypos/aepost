@@ -2265,12 +2265,12 @@
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#e0e0e0'; // Светлый текст
 
-            ctx.font = 'bold 24px Inter';
+            ctx.font = 'bold 42px Inter';
             ctx.textAlign = 'center';
             ctx.fillText(settings.studioName, receiptWidth / 2, currentY);
             currentY += lineHeight * 1.5;
 
-            ctx.font = '16px Inter';
+            ctx.font = '32px Inter';
             ctx.textAlign = 'left';
             ctx.fillText(`Receipt #: ${sale.orderNumber || 'N/A'}`, marginX, currentY);
             currentY += lineHeight;
@@ -2280,11 +2280,11 @@
             currentY += lineHeight * 1.5;
 
             // Элементы строки
-            ctx.font = 'bold 16px Inter';
+            ctx.font = 'bold 32px Inter';
             ctx.fillText('Services & Materials:', marginX, currentY);
             currentY += lineHeight;
 
-            ctx.font = '14px Inter';
+            ctx.font = '32px Inter';
             const workTimeCost = sale.workTime * sale.hourlyRate;
             ctx.fillText(`Work (${sale.workTime} hr @ ${formatCurrency(sale.hourlyRate)}/hr): ${formatCurrency(workTimeCost)}`, marginX, currentY);
             currentY += lineHeight;
@@ -2312,16 +2312,16 @@
 
             currentY += 20; // Разделитель
 
-            ctx.font = 'bold 20px Inter';
+            ctx.font = 'bold 45px Inter';
             ctx.textAlign = 'right';
             ctx.fillText(`Total: ${formatCurrency(sale.totalPrice)}`, receiptWidth - marginX, currentY);
             currentY += lineHeight * 1.5;
 
-            ctx.font = '14px Inter';
+            ctx.font = '45px Inter';
             ctx.textAlign = 'center';
-            ctx.fillText('Thank you for your visit!', receiptWidth / 2, currentY);
+            ctx.fillText('Дякуємо за довіру!', receiptWidth / 2, currentY);
             currentY += lineHeight;
-            ctx.fillText('See you again!', receiptWidth / 2, currentY);
+            ctx.fillText('Чекатимо на Вас!!', receiptWidth / 2, currentY);
 
             // Преобразование в JPG и скачивание
             const dataURL = canvas.toDataURL('image/jpeg', 0.9);
