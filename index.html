@@ -2239,27 +2239,27 @@
             const ctx = canvas.getContext('2d');
 
             const receiptWidth = 580; // Стандартная ширина чека (например, 58 мм * 10 пикс/мм)
-            let currentY = 30;
-            const lineHeight = 25;
-            const marginX = 20;
+            let currentY = 50;
+            const lineHeight = 45;
+            const marginX = 30;
 
             // Расчет динамической высоты
             let contentHeight = 0;
-            contentHeight += 2 * lineHeight; // Название студии
-            contentHeight += 2 * lineHeight; // Номер заказа, Дата, Время
+            contentHeight += 4 * lineHeight; // Название студии
+            contentHeight += 4 * lineHeight; // Номер заказа, Дата, Время
             contentHeight += lineHeight; // Имя клиента
-            contentHeight += 30; // Разделитель
+            contentHeight += 50; // Разделитель
             contentHeight += lineHeight; // Заголовок услуги
             contentHeight += lineHeight; // Строка времени работы
             if (sale.consumables && sale.consumables.length > 0) {
                 contentHeight += lineHeight * (sale.consumables.length + 1); // Строки расходников + заголовок
             }
-            contentHeight += 30; // Разделитель
-            contentHeight += 2 * lineHeight; // Общая цена
-            contentHeight += 2 * lineHeight; // Сообщение благодарности
+            contentHeight += 50; // Разделитель
+            contentHeight += 4 * lineHeight; // Общая цена
+            contentHeight += 4 * lineHeight; // Сообщение благодарности
 
             canvas.width = receiptWidth;
-            canvas.height = contentHeight + 90; // Добавить отступы
+            canvas.height = contentHeight + 150; // Добавить отступы
 
             ctx.fillStyle = '#1a1a1a'; // Темный фон чека
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -2268,7 +2268,7 @@
             ctx.font = 'bold 42px Inter';
             ctx.textAlign = 'center';
             ctx.fillText(settings.studioName, receiptWidth / 2, currentY);
-            currentY += lineHeight * 1.5;
+            currentY += lineHeight * 4;
 
             ctx.font = '32px Inter';
             ctx.textAlign = 'left';
@@ -2277,7 +2277,7 @@
             ctx.fillText(`Date: ${formatDate(sale.date)} ${formatTime(sale.time)}`, marginX, currentY);
             currentY += lineHeight;
             ctx.fillText(`Client: ${sale.clientName || clients.find(c => c.id === sale.clientId)?.name || 'Unknown'}`, marginX, currentY);
-            currentY += lineHeight * 1.5;
+            currentY += lineHeight * 3;
 
             // Элементы строки
             ctx.font = 'bold 32px Inter';
