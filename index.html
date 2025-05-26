@@ -2280,18 +2280,18 @@
             currentY += lineHeight * 3;
 
             // Элементы строки
-            ctx.font = 'bold 32px Inter';
-            ctx.fillText('Services & Materials:', marginX, currentY);
+            ctx.font = 'bold 28px Inter';
+            ctx.fillText('Сервіс та матеріали:', marginX, currentY);
             currentY += lineHeight;
 
-            ctx.font = '32px Inter';
+            ctx.font = '22px Inter';
             const workTimeCost = sale.workTime * sale.hourlyRate;
-            ctx.fillText(`Work (${sale.workTime} hr @ ${formatCurrency(sale.hourlyRate)}/hr): ${formatCurrency(workTimeCost)}`, marginX, currentY);
+            ctx.fillText(`Робота (${sale.workTime} hr х ${formatCurrency(sale.hourlyRate)}): ${formatCurrency(workTimeCost)}`, marginX, currentY);
             currentY += lineHeight;
 
             if (sale.consumables && sale.consumables.length > 0) {
                 sale.consumables.forEach(item => {
-                    ctx.fillText(`- ${item.name} (${item.quantity} units.): ${formatCurrency(item.pricePerUnit * item.quantity)}`, marginX + 10, currentY);
+                    ctx.fillText(`Матеріали: ${item.name} (${item.quantity} units.): ${formatCurrency(item.pricePerUnit * item.quantity)}`, marginX + 10, currentY);
                     currentY += lineHeight;
                 });
             }
@@ -2299,7 +2299,7 @@
             // Сложность и скидка (если применимо)
             if (sale.complexityMarkup > 0) {
                 const markupAmount = (workTimeCost + (sale.consumables ? sale.consumables.reduce((sum, c) => sum + (c.pricePerUnit * c.quantity), 0) : 0)) * (sale.complexityMarkup / 100);
-                 ctx.fillText(`Complexity Markup (${sale.complexityMarkup}%): ${formatCurrency(markupAmount)}`, marginX, currentY);
+                 ctx.fillText(`Важкість (${sale.complexityMarkup}%): ${formatCurrency(markupAmount)}`, marginX, currentY);
                  currentY += lineHeight;
             }
             if (sale.discount > 0) {
