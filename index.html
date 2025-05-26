@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tattoo CRM/POS</title>
+    <title>RDNCK.TATTOO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* Light gray background */
+            background-color: #f3f4f6; /* Светло-серый фон */
         }
-        /* Custom scrollbar for better aesthetics */
+        /* Пользовательский скроллбар для лучшей эстетики */
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -27,24 +27,24 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #555;
         }
-        /* Hide scrollbar for specific elements if needed */
+        /* Скрыть скроллбар для определенных элементов при необходимости */
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
         .no-scrollbar {
-            -ms-overflow-style: none;  /* IE and Edge */
+            -ms-overflow-style: none;  /* IE и Edge */
             scrollbar-width: none;  /* Firefox */
         }
-        /* Active tab styling */
+        /* Стиль активной вкладки */
         .nav-link.active {
-            background-color: #1a202c; /* Darker background for active tab */
+            background-color: #1a202c; /* Более темный фон для активной вкладки */
             color: white;
         }
-        /* Modal backdrop */
+        /* Фон модального окна */
         .modal-backdrop {
             background-color: rgba(0, 0, 0, 0.5);
         }
-        /* General button styling */
+        /* Общий стиль кнопок */
         .btn-primary {
             @apply bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out;
         }
@@ -54,11 +54,11 @@
         .btn-danger {
             @apply bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out;
         }
-        /* Input field styling */
+        /* Стиль полей ввода */
         .input-field {
             @apply p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 ease-in-out;
         }
-        /* Table styling */
+        /* Стиль таблицы */
         .table-header {
             @apply bg-gray-200 text-gray-700 uppercase text-sm leading-normal;
         }
@@ -119,7 +119,7 @@
             </li>
         </ul>
         <div class="mt-auto p-2 text-sm text-gray-400 hidden md:block">
-            <p>User ID: <span id="current-user-id">Loading...</span></p>
+            <p>User ID: <span id="current-user-id">Загрузка...</span></p>
         </div>
     </nav>
 
@@ -407,19 +407,19 @@
         </div>
     </div>
 
-
     <script type="module">
-        // Import Supabase client
+        // Импорт клиента Supabase
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-        // Supabase Configuration - REPLACE WITH YOUR ACTUAL SUPABASE PROJECT DETAILS
-        const supabaseUrl = 'https://wdfpusnhkpkwupuuanar.supabase.co'; // e.g., 'https://abcde12345.supabase.co'
-        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkZnB1c25oa3Brd3VwdXVhbmFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyNzY2MTIsImV4cCI6MjA2Mzg1MjYxMn0.w83zm_VOHLjvdLsvGKLp11gBBNLev9ICnm7XHzrQdmE'; // This is your project's public "anon" key
+        // Конфигурация Supabase - ЗАМЕНИТЕ НА ВАШИ АКТУАЛЬНЫЕ ДАННЫЕ ПРОЕКТА SUPABASE
+        // Вы можете найти их в вашем проекте Supabase: Project Settings -> API
+        const supabaseUrl = 'https://wdfpusnhkpkwupuuanar.supabase.co'; // Например, 'https://abcde12345.supabase.co'
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkZnB1c25oa3Brd3VwdXVhbmFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyNzY2MTIsImV4cCI6MjA2Mzg1MjYxMn0.w83zm_VOHLjvdLsvGKLp11gBBNLev9ICnm7XHzrQdmE'; // Это публичный "анонимный" ключ вашего проекта
 
-        // Basic check for unconfigured Supabase details
+        // Базовая проверка на неконфигурированные данные Supabase
         if (!supabaseUrl || !supabaseAnonKey || supabaseUrl === 'YOUR_SUPABASE_URL' || supabaseAnonKey === 'YOUR_SUPABASE_ANON_KEY') {
-            console.error("Supabase URL or Anon Key is not configured. Please replace 'YOUR_SUPABASE_URL' and 'YOUR_SUPABASE_ANON_KEY' with your actual Supabase project details.");
-            // Display a message to the user if Supabase is not configured
+            console.error("URL или Anon Key Supabase не настроены. Пожалуйста, замените 'YOUR_SUPABASE_URL' и 'YOUR_SUPABASE_ANON_KEY' на актуальные данные вашего проекта Supabase.");
+            // Отображение сообщения пользователю, если Supabase не настроен
             document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('app-content').innerHTML = `
                     <div class="flex items-center justify-center h-full text-red-500 text-xl text-center p-4">
@@ -427,15 +427,15 @@
                     </div>
                 `;
             });
-            throw new Error("Supabase configuration missing."); // Stop script execution
+            throw new Error("Отсутствует конфигурация Supabase."); // Остановка выполнения скрипта
         }
 
         const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-        let userId = null; // To store the current authenticated user's ID
-        let isAuthReady = false; // Flag to indicate if authentication state has been checked
+        let userId = null; // Для хранения ID текущего аутентифицированного пользователя
+        let isAuthReady = false; // Флаг, указывающий, была ли проверена аутентификация
 
-        // Global data storage (cache)
+        // Глобальное хранилище данных (кэш)
         let clients = [];
         let appointments = [];
         let materials = [];
@@ -445,12 +445,12 @@
             hourlyRate: 500, // грн
             materialCategories: ['Иглы', 'Краска', 'Средства', 'Прочее'],
             lowStockThreshold: 5, // По умолчанию для уведомлений
-            studioName: 'Моя Тату Студия' // Default studio name
+            studioName: 'Моя Тату Студия' // Название студии по умолчанию
         };
 
-        let currentAppointmentForSession = null; // For session calculator
+        let currentAppointmentForSession = null; // Для калькулятора сеанса
 
-        // --- Utility Functions for UI ---
+        // --- Вспомогательные функции для UI ---
 
         /**
          * Показывает модальное окно.
@@ -548,7 +548,7 @@
             }
         }
 
-        // --- Helper to convert camelCase to snake_case for Supabase ---
+        // --- Вспомогательные функции для преобразования camelCase в snake_case для Supabase ---
         function toSnakeCase(obj) {
             const newObj = {};
             for (const key in obj) {
@@ -560,7 +560,7 @@
             return newObj;
         }
 
-        // --- Helper to convert snake_case to camelCase for JS ---
+        // --- Вспомогательные функции для преобразования snake_case в camelCase для JS ---
         function toCamelCase(obj) {
             const newObj = {};
             for (const key in obj) {
@@ -572,81 +572,81 @@
             return newObj;
         }
 
-        // --- Supabase Data Operations ---
-        const activeSupabaseSubscriptions = {}; // To manage active subscriptions
+        // --- Операции с данными Supabase ---
+        const activeSupabaseSubscriptions = {}; // Для управления активными подписками
 
         /**
-         * Sets up a real-time listener for a Supabase table.
-         * @param {string} tableName - The name of the table to listen to.
-         * @param {function} callback - The callback function to process the data.
+         * Настраивает слушатель в реальном времени для таблицы Supabase.
+         * @param {string} tableName - Имя таблицы для прослушивания.
+         * @param {function} callback - Функция обратного вызова для обработки данных.
          */
         async function setupSupabaseListener(tableName, callback) {
             if (!userId) {
-                console.error('User not authenticated, cannot set up Supabase listener for', tableName);
+                console.error('Пользователь не аутентифицирован, не удалось настроить слушатель Supabase для', tableName);
                 return;
             }
 
-            // Remove existing subscription for this table if it exists
+            // Удалить существующую подписку для этой таблицы, если она есть
             if (activeSupabaseSubscriptions[tableName]) {
                 supabase.removeChannel(activeSupabaseSubscriptions[tableName]);
                 delete activeSupabaseSubscriptions[tableName];
             }
 
-            const channel = supabase.channel(`${tableName}_channel_${userId}`); // Unique channel per user and table
+            const channel = supabase.channel(`${tableName}_channel_${userId}`); // Уникальный канал для каждого пользователя и таблицы
             const subscription = channel
                 .on(
                     'postgres_changes',
-                    { event: '*', schema: 'public', table: tableName, filter: `user_id=eq.${userId}` }, // Filter by user_id directly in listener
+                    { event: '*', schema: 'public', table: tableName, filter: `user_id=eq.${userId}` }, // Фильтр по user_id непосредственно в слушателе
                     payload => {
-                        console.log(`Realtime change in ${tableName}:`, payload);
-                        fetchAndSetData(tableName, callback); // Re-fetch all data on change
+                        console.log(`Изменение в реальном времени в ${tableName}:`, payload);
+                        fetchAndSetData(tableName, callback); // Повторно получить все данные при изменении
                     }
                 )
                 .subscribe((status) => {
                     if (status === 'SUBSCRIBED') {
-                        console.log(`Subscribed to ${tableName} for user ${userId}`);
-                        fetchAndSetData(tableName, callback); // Initial fetch on subscribe
+                        console.log(`Подписан на ${tableName} для пользователя ${userId}`);
+                        fetchAndSetData(tableName, callback); // Начальная выборка при подписке
                     } else if (status === 'CLOSED') {
-                        console.log(`Subscription to ${tableName} closed`);
+                        console.log(`Подписка на ${tableName} закрыта`);
                     } else if (status === 'CHANNEL_ERROR') {
-                        console.error(`Error in subscription to ${tableName}`);
+                        console.error(`Ошибка в подписке на ${tableName}`);
                     }
                 });
-            activeSupabaseSubscriptions[tableName] = channel; // Store the channel object
+            activeSupabaseSubscriptions[tableName] = channel; // Сохранить объект канала
             return subscription;
         }
 
         /**
-         * Fetches and sets data for a given table.
-         * @param {string} tableName - The name of the table.
-         * @param {function} callback - The callback function to update the global data array.
+         * Получает и устанавливает данные для данной таблицы.
+         * @param {string} tableName - Имя таблицы.
+         * @param {function} callback - Функция обратного вызова для обновления глобального массива данных.
          */
         async function fetchAndSetData(tableName, callback) {
             if (!userId) {
-                console.error('User ID not available for data fetch for', tableName);
+                console.error('ID пользователя недоступен для получения данных для', tableName);
                 return;
             }
             try {
                 const { data, error } = await supabase
                     .from(tableName)
                     .select('*')
-                    .eq('user_id', userId); // Filter by user_id for RLS
+                    .eq('user_id', userId); // Фильтр по user_id для RLS
 
                 if (error) throw error;
 
                 const camelCaseData = data.map(toCamelCase);
                 callback(camelCaseData);
             } catch (e) {
-                console.error(`Error fetching ${tableName}:`, e.message);
+                console.error(`Ошибка при получении ${tableName}:`, e.message);
                 showMessageBox('Ошибка', `Не удалось загрузить данные: ${e.message}`);
             }
         }
 
         /**
-         * Adds a document to a Supabase table.
-         * @param {string} tableName - The name of the table.
-         * @param {object} record - The data to add.
-         * @returns {Promise<string|null>} The ID of the new record, or null if an error occurred.
+         * Добавляет документ в таблицу Supabase.
+         * @param {string} tableName - Имя таблицы.
+         * @param {object} record - Данные для добавления.
+         * @returns {Promise<string|null>} ID новой записи или null, если произошла ошибка.
          */
         async function addDocument(tableName, record) {
             if (!userId) {
@@ -654,7 +654,7 @@
                 return null;
             }
             try {
-                // For sales, generate an order number
+                // Для продаж генерируем номер заказа
                 if (tableName === 'sales') {
                     const { data: latestSale, error: latestSaleError } = await supabase
                         .from('sales')
@@ -680,17 +680,17 @@
                 showMessageBox('Успех', 'Данные успешно добавлены!');
                 return insertedData[0].id;
             } catch (e) {
-                console.error("Error adding document: ", e);
+                console.error("Ошибка при добавлении документа: ", e);
                 showMessageBox('Ошибка', `Не удалось добавить данные: ${e.message}`);
                 return null;
             }
         }
 
         /**
-         * Updates a document in a Supabase table.
-         * @param {string} tableName - The name of the table.
-         * @param {string} id - The ID of the record to update.
-         * @param {object} record - The data to update.
+         * Обновляет документ в таблице Supabase.
+         * @param {string} tableName - Имя таблицы.
+         * @param {string} id - ID записи для обновления.
+         * @param {object} record - Данные для обновления.
          */
         async function updateDocument(tableName, id, record) {
             if (!userId) {
@@ -703,20 +703,20 @@
                     .from(tableName)
                     .update(snakeCaseRecord)
                     .eq('id', id)
-                    .eq('user_id', userId); // Ensure user owns the record
+                    .eq('user_id', userId); // Убедитесь, что пользователь владеет записью
 
                 if (error) throw error;
                 showMessageBox('Успех', 'Данные успешно обновлены!');
             } catch (e) {
-                console.error("Error updating document: ", e);
+                console.error("Ошибка при обновлении документа: ", e);
                 showMessageBox('Ошибка', `Не удалось обновить данные: ${e.message}`);
             }
         }
 
         /**
-         * Deletes a document from a Supabase table.
-         * @param {string} tableName - The name of the table.
-         * @param {string} id - The ID of the record to delete.
+         * Удаляет документ из таблицы Supabase.
+         * @param {string} tableName - Имя таблицы.
+         * @param {string} id - ID записи для удаления.
          */
         async function deleteDocument(tableName, id) {
             if (!userId) {
@@ -728,24 +728,24 @@
                     .from(tableName)
                     .delete()
                     .eq('id', id)
-                    .eq('user_id', userId); // Ensure user owns the record
+                    .eq('user_id', userId); // Убедитесь, что пользователь владеет записью
 
                 if (error) throw error;
                 showMessageBox('Успех', 'Данные успешно удалены!');
             } catch (e) {
-                console.error("Error deleting document: ", e);
+                console.error("Ошибка при удалении документа: ", e);
                 showMessageBox('Ошибка', `Не удалось удалить данные: ${e.message}`);
             }
         }
 
-        // --- Page Rendering Functions ---
+        // --- Функции рендеринга страниц ---
 
         /**
-         * Renders the Dashboard page.
+         * Рендерит страницу "Главная".
          */
         async function renderDashboard() {
             const today = new Date();
-            today.setHours(0, 0, 0, 0); // Start of today
+            today.setHours(0, 0, 0, 0); // Начало сегодняшнего дня
 
             const upcomingAppointments = appointments.filter(app => {
                 const appDate = new Date(app.date + 'T' + app.time);
@@ -819,7 +819,7 @@
                                                 <td class="table-cell">${app.duration} ч</td>
                                                 <td class="table-cell">${app.complexity}</td>
                                                 <td class="table-cell">
-                                                    <button data-id="${app.id}" class="btn-primary text-sm px-3 py-1 confirm-visit-btn">
+                                                    <button data-id="${app.id}" class="btn-primary text-sm px-3 py-1 confirm-visit-btn" ${app.status === 'completed' ? 'disabled' : ''}>
                                                         <i class="fas fa-check-circle mr-1"></i> Подтвердить
                                                     </button>
                                                 </td>
@@ -846,7 +846,7 @@
                 </div>
             `);
 
-            // Attach event listeners for quick actions
+            // Прикрепление слушателей событий для быстрых действий
             document.getElementById('add-appointment-btn-dashboard').addEventListener('click', () => {
                 openAppointmentModal();
             });
@@ -857,7 +857,7 @@
                 openMaterialModal();
             });
 
-            // Attach event listeners for "Confirm Visit" buttons
+            // Прикрепление слушателей событий для кнопок "Подтвердить визит"
             document.querySelectorAll('.confirm-visit-btn').forEach(button => {
                 button.addEventListener('click', (e) => {
                     const appointmentId = e.currentTarget.dataset.id;
@@ -870,7 +870,7 @@
         }
 
         /**
-         * Renders the Appointments page.
+         * Рендерит страницу "Записи".
          */
         async function renderAppointments() {
             loadContent(`
@@ -961,15 +961,18 @@
             document.querySelectorAll('.delete-appointment-btn').forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const appointmentId = e.currentTarget.dataset.id;
-                    if (confirm('Вы уверены, что хотите удалить эту запись?')) { // Using native confirm for simplicity, can be replaced with custom modal
+                    // Используем кастомное модальное окно вместо нативного confirm
+                    showMessageBox('Подтверждение удаления', 'Вы уверены, что хотите удалить эту запись?');
+                    document.getElementById('message-box-ok').onclick = async () => {
                         await deleteDocument('appointments', appointmentId);
-                    }
+                        hideModal(document.getElementById('message-box-modal'), document.getElementById('message-box-modal-content'));
+                    };
                 });
             });
         }
 
         /**
-         * Renders the Clients page.
+         * Рендерит страницу "Клиенты".
          */
         async function renderClients() {
             loadContent(`
@@ -1029,7 +1032,7 @@
                 openClientModal();
             });
 
-            // Client Search functionality
+            // Функциональность поиска клиентов
             const clientSearchInput = document.getElementById('client-search-input');
             clientSearchInput.addEventListener('input', (e) => {
                 const searchTerm = e.target.value.toLowerCase();
@@ -1042,7 +1045,7 @@
 
             function updateClientsTable(filteredClients) {
                 const clientsTableBody = document.getElementById('clients-table-body');
-                if (!clientsTableBody) return; // Ensure element exists
+                if (!clientsTableBody) return; // Убедитесь, что элемент существует
 
                 clientsTableBody.innerHTML = filteredClients.map(client => `
                     <tr class="table-row">
@@ -1064,7 +1067,7 @@
                     </tr>
                 `).join('');
 
-                // Re-attach event listeners for edit/delete buttons after re-rendering
+                // Повторное прикрепление слушателей событий для кнопок редактирования/удаления после повторного рендеринга
                 attachClientActionListeners();
             }
 
@@ -1082,17 +1085,20 @@
                 document.querySelectorAll('.delete-client-btn').forEach(button => {
                     button.addEventListener('click', async (e) => {
                         const clientId = e.currentTarget.dataset.id;
-                        if (confirm('Вы уверены, что хотите удалить этого клиента?')) { // Using native confirm for simplicity, can be replaced with custom modal
+                        // Используем кастомное модальное окно вместо нативного confirm
+                        showMessageBox('Подтверждение удаления', 'Вы уверены, что хотите удалить этого клиента?');
+                        document.getElementById('message-box-ok').onclick = async () => {
                             await deleteDocument('clients', clientId);
-                        }
+                            hideModal(document.getElementById('message-box-modal'), document.getElementById('message-box-modal-content'));
+                        };
                     });
                 });
             }
-            attachClientActionListeners(); // Initial attachment
+            attachClientActionListeners(); // Начальное прикрепление
         }
 
         /**
-         * Renders the Inventory page.
+         * Рендерит страницу "Инвентарь".
          */
         async function renderInventory() {
             loadContent(`
@@ -1160,25 +1166,28 @@
             document.querySelectorAll('.delete-material-btn').forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const materialId = e.currentTarget.dataset.id;
-                    if (confirm('Вы уверены, что хотите удалить этот материал?')) { // Using native confirm for simplicity, can be replaced with custom modal
+                    // Используем кастомное модальное окно вместо нативного confirm
+                    showMessageBox('Подтверждение удаления', 'Вы уверены, что хотите удалить этот материал?');
+                    document.getElementById('message-box-ok').onclick = async () => {
                         await deleteDocument('materials', materialId);
-                    }
+                        hideModal(document.getElementById('message-box-modal'), document.getElementById('message-box-modal-content'));
+                    };
                 });
             });
         }
 
         /**
-         * Renders the Finance page.
+         * Рендерит страницу "Финансы".
          */
         async function renderFinance() {
-            // Calculate daily/monthly revenue
+            // Рассчитываем ежедневную/ежемесячную выручку
             const dailyRevenue = {};
             const monthlyRevenue = {};
 
             sales.forEach(sale => {
                 const saleDate = new Date(sale.date);
-                const dayKey = saleDate.toISOString().split('T')[0]; //YYYY-MM-DD
-                const monthKey = saleDate.getFullYear() + '-' + (saleDate.getMonth() + 1).toString().padStart(2, '0'); //YYYY-MM
+                const dayKey = saleDate.toISOString().split('T')[0]; // ГГГГ-ММ-ДД
+                const monthKey = saleDate.getFullYear() + '-' + (saleDate.getMonth() + 1).toString().padStart(2, '0'); // ГГГГ-ММ
 
                 dailyRevenue[dayKey] = (dailyRevenue[dayKey] || 0) + sale.totalPrice;
                 monthlyRevenue[monthKey] = (monthlyRevenue[monthKey] || 0) + sale.totalPrice;
@@ -1196,7 +1205,7 @@
             const sortedDailyRevenue = Object.entries(dailyRevenue).sort((a, b) => new Date(a[0]) - new Date(b[0]));
             const sortedMonthlyRevenue = Object.entries(monthlyRevenue).sort((a, b) => new Date(a[0]) - new Date(b[0]));
 
-            // Top clients by total spent
+            // Топ клиентов по общей сумме потраченных средств
             const clientSpending = {};
             sales.forEach(sale => {
                 clientSpending[sale.clientId] = (clientSpending[sale.clientId] || 0) + sale.totalPrice;
@@ -1206,9 +1215,9 @@
                     client: clients.find(c => c.id === clientId),
                     totalSpent
                 }))
-                .filter(item => item.client) // Filter out sales without a matching client
+                .filter(item => item.client) // Отфильтровать продажи без соответствующего клиента
                 .sort((a, b) => b.totalSpent - a.totalSpent)
-                .slice(0, 5); // Top 5 clients
+                .slice(0, 5); // Топ 5 клиентов
 
             loadContent(`
                 <div class="space-y-6">
@@ -1379,9 +1388,12 @@
             document.querySelectorAll('.delete-expense-btn').forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const expenseId = e.currentTarget.dataset.id;
-                    if (confirm('Вы уверены, что хотите удалить этот расход?')) { // Using native confirm for simplicity
+                    // Используем кастомное модальное окно вместо нативного confirm
+                    showMessageBox('Подтверждение удаления', 'Вы уверены, что хотите удалить этот расход?');
+                    document.getElementById('message-box-ok').onclick = async () => {
                         await deleteDocument('expenses', expenseId);
-                    }
+                        hideModal(document.getElementById('message-box-modal'), document.getElementById('message-box-modal-content'));
+                    };
                 });
             });
 
@@ -1397,7 +1409,7 @@
         }
 
         /**
-         * Renders the Settings page.
+         * Рендерит страницу "Настройки".
          */
         async function renderSettings() {
             loadContent(`
@@ -1444,7 +1456,7 @@
                 </div>
             `);
 
-            // General Settings Form
+            // Форма общих настроек
             document.getElementById('general-settings-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const newStudioName = document.getElementById('studio-name-setting').value.trim();
@@ -1454,10 +1466,16 @@
                     settings.studioName = newStudioName;
                     settings.hourlyRate = newHourlyRate;
                     settings.lowStockThreshold = newLowStockThreshold;
-                    // Assuming a single settings document, its ID could be 'app-settings' or derived from userId
-                    // For simplicity, let's assume 'user-settings' as a fixed ID for the current user's settings.
-                    // In a real app, you might fetch the existing settings document ID.
-                    const existingSettings = (await supabase.from('settings').select('id').eq('user_id', userId).single()).data;
+                    // Предполагается, что существует один документ настроек, его ID может быть 'app-settings' или производным от userId
+                    // Для простоты, давайте предположим 'user-settings' как фиксированный ID для настроек текущего пользователя.
+                    // В реальном приложении вы можете получить ID существующего документа настроек.
+                    const { data: existingSettings, error: fetchError } = await supabase.from('settings').select('id').eq('user_id', userId).single();
+                    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means no rows found
+                        console.error("Error fetching existing settings:", fetchError.message);
+                        showMessageBox('Ошибка', `Не удалось загрузить настройки: ${fetchError.message}`);
+                        return;
+                    }
+
                     if (existingSettings) {
                         await updateDocument('settings', existingSettings.id, settings);
                     } else {
@@ -1468,14 +1486,14 @@
                 }
             });
 
-            // Material Categories
+            // Категории материалов
             document.getElementById('add-category-btn').addEventListener('click', () => {
                 const newCategoryInput = document.getElementById('new-category-input');
                 const newCategory = newCategoryInput.value.trim();
                 if (newCategory && !settings.materialCategories.includes(newCategory)) {
                     settings.materialCategories.push(newCategory);
                     newCategoryInput.value = '';
-                    renderSettings(); // Re-render to update the list
+                    renderSettings(); // Повторный рендеринг для обновления списка
                 } else if (settings.materialCategories.includes(newCategory)) {
                     showMessageBox('Ошибка', 'Такая категория уже существует.');
                 }
@@ -1485,15 +1503,21 @@
                 if (e.target.classList.contains('remove-category-btn') || e.target.closest('.remove-category-btn')) {
                     const index = parseInt(e.target.dataset.index || e.target.closest('.remove-category-btn').dataset.index);
                     settings.materialCategories.splice(index, 1);
-                    renderSettings(); // Re-render to update the list
+                    renderSettings(); // Повторный рендеринг для обновления списка
                 }
             });
 
             document.getElementById('save-categories-btn').addEventListener('click', async () => {
-                // Update categories from input fields before saving
+                // Обновляем категории из полей ввода перед сохранением
                 const updatedCategories = Array.from(document.querySelectorAll('.material-category-input')).map(input => input.value.trim()).filter(Boolean);
-                settings.materialCategories = [...new Set(updatedCategories)]; // Remove duplicates
-                const existingSettings = (await supabase.from('settings').select('id').eq('user_id', userId).single()).data;
+                settings.materialCategories = [...new Set(updatedCategories)]; // Удаляем дубликаты
+                const { data: existingSettings, error: fetchError } = await supabase.from('settings').select('id').eq('user_id', userId).single();
+                if (fetchError && fetchError.code !== 'PGRST116') {
+                    console.error("Error fetching existing settings for categories:", fetchError.message);
+                    showMessageBox('Ошибка', `Не удалось загрузить настройки категорий: ${fetchError.message}`);
+                    return;
+                }
+
                 if (existingSettings) {
                     await updateDocument('settings', existingSettings.id, settings);
                 } else {
@@ -1503,7 +1527,7 @@
         }
 
 
-        // --- Modal Logic ---
+        // --- Логика модальных окон ---
 
         /**
          * Открывает модальное окно для добавления/редактирования записи.
@@ -1522,11 +1546,11 @@
             const newClientEmailInput = document.getElementById('new-client-email');
             const newClientInstagramInput = document.getElementById('new-client-instagram');
 
-            // Reset form and hide new client details
+            // Сброс формы и скрытие деталей нового клиента
             form.reset();
             newClientDetails.classList.add('hidden');
             clientStatusMessage.textContent = '';
-            clientSelect.innerHTML = ''; // Clear existing options
+            clientSelect.innerHTML = ''; // Очистка существующих опций
 
             if (appointment) {
                 title.textContent = 'Редактировать Запись';
@@ -1534,16 +1558,16 @@
                 const existingClient = clients.find(c => c.id === appointment.clientId);
                 if (existingClient) {
                     clientPhoneInput.value = existingClient.phone || '';
-                    // Populate client select with all clients and select the existing one
+                    // Заполнение списка клиентов всеми клиентами и выбор существующего
                     clientSelect.innerHTML = clients.map(client => `<option value="${client.id}">${client.name} (${client.phone || 'нет телефона'})</option>`).join('');
                     clientSelect.value = existingClient.id;
-                    clientSelect.disabled = true; // Disable selection if client found by phone
-                    clientPhoneInput.disabled = true; // Disable phone input for existing appointment
+                    clientSelect.disabled = true; // Отключение выбора, если клиент найден по телефону
+                    clientPhoneInput.disabled = true; // Отключение ввода телефона для существующей записи
                     clientStatusMessage.textContent = `Клиент найден: ${existingClient.name}`;
                     clientStatusMessage.classList.remove('text-red-600');
                     clientStatusMessage.classList.add('text-green-600');
                 } else {
-                    clientPhoneInput.value = ''; // No client found or linked
+                    clientPhoneInput.value = ''; // Клиент не найден или не связан
                     clientSelect.innerHTML = clients.map(client => `<option value="${client.id}">${client.name} (${client.phone || 'нет телефона'})</option>`).join('');
                     clientSelect.disabled = false;
                     clientPhoneInput.disabled = false;
@@ -1562,14 +1586,14 @@
                 delete form.dataset.id;
                 clientPhoneInput.disabled = false;
                 clientSelect.disabled = false;
-                // Set default date to today
+                // Установка даты по умолчанию на сегодня
                 const today = new Date().toISOString().split('T')[0];
                 document.getElementById('appointment-date').value = today;
 
-                // Populate client select with all clients
+                // Заполнение списка клиентов всеми клиентами
                 clientSelect.innerHTML = clients.map(client => `<option value="${client.id}">${client.name} (${client.phone || 'нет телефона'})</option>`).join('');
-                clientSelect.value = ''; // No default selection
-                clientSelect.prepend(new Option('Выберите клиента (необязательно)', '')); // Add a placeholder option
+                clientSelect.value = ''; // Нет выбора по умолчанию
+                clientSelect.prepend(new Option('Выберите клиента (необязательно)', '')); // Добавление опции-заполнителя
             }
             showModal(modal, content);
         }
@@ -1593,7 +1617,7 @@
                 hideModal(modal, content);
             });
 
-            // Handle phone input blur to check for existing client
+            // Обработка потери фокуса поля телефона для проверки существующего клиента
             clientPhoneInput.addEventListener('blur', () => {
                 const phoneNumber = clientPhoneInput.value.trim();
                 if (phoneNumber) {
@@ -1602,21 +1626,21 @@
                         clientSelect.value = existingClient.id;
                         clientSelect.disabled = true;
                         newClientDetails.classList.add('hidden');
-                        newClientNameInput.required = false; // Not required if existing client
+                        newClientNameInput.required = false; // Не требуется, если клиент существует
                         clientStatusMessage.textContent = `Клиент найден: ${existingClient.name}`;
                         clientStatusMessage.classList.remove('text-red-600');
                         clientStatusMessage.classList.add('text-green-600');
                     } else {
-                        clientSelect.value = ''; // Clear selection if no client found
-                        clientSelect.disabled = false; // Enable selection for new client
+                        clientSelect.value = ''; // Очистка выбора, если клиент не найден
+                        clientSelect.disabled = false; // Включение выбора для нового клиента
                         newClientDetails.classList.remove('hidden');
-                        newClientNameInput.required = true; // Make name required for new client
+                        newClientNameInput.required = true; // Сделать имя обязательным для нового клиента
                         clientStatusMessage.textContent = 'Клиент не найден. Заполните данные для нового клиента.';
                         clientStatusMessage.classList.remove('text-green-600');
                         clientStatusMessage.classList.add('text-red-600');
                     }
                 } else {
-                    // If phone is empty, allow selecting existing or adding new
+                    // Если телефон пуст, разрешить выбор существующего или добавление нового
                     clientSelect.disabled = false;
                     newClientDetails.classList.add('hidden');
                     newClientNameInput.required = false;
@@ -1625,18 +1649,18 @@
                 }
             });
 
-            // If a client is manually selected, disable new client details
+            // Если клиент выбран вручную, отключить детали нового клиента
             clientSelect.addEventListener('change', () => {
                 if (clientSelect.value) {
                     clientPhoneInput.value = clients.find(c => c.id === clientSelect.value)?.phone || '';
-                    clientPhoneInput.disabled = true; // Disable phone input if client selected
+                    clientPhoneInput.disabled = true; // Отключение ввода телефона, если клиент выбран
                     newClientDetails.classList.add('hidden');
                     newClientNameInput.required = false;
                     clientStatusMessage.textContent = `Выбран клиент: ${clientSelect.options[clientSelect.selectedIndex].text}`;
                     clientStatusMessage.classList.remove('text-red-600');
                     clientStatusMessage.classList.add('text-green-600');
                 } else {
-                    clientPhoneInput.disabled = false; // Enable phone input if no client selected
+                    clientPhoneInput.disabled = false; // Включение ввода телефона, если клиент не выбран
                     clientPhoneInput.value = '';
                     clientStatusMessage.textContent = 'Введите телефон или выберите существующего клиента.';
                     clientStatusMessage.classList.remove('text-green-600', 'text-red-600');
@@ -1648,13 +1672,13 @@
                 let selectedClientId = clientSelect.value;
                 const phoneNumber = clientPhoneInput.value.trim();
 
-                // If no client selected and phone number entered, try to find or create
+                // Если клиент не выбран и номер телефона введен, попытаться найти или создать
                 if (!selectedClientId && phoneNumber) {
                     const existingClient = clients.find(c => c.phone === phoneNumber);
                     if (existingClient) {
                         selectedClientId = existingClient.id;
                     } else {
-                        // Create new client if phone number not found and new client details are visible
+                        // Создать нового клиента, если номер телефона не найден и детали нового клиента видны
                         if (!newClientDetails.classList.contains('hidden')) {
                             const newClientData = {
                                 name: newClientNameInput.value.trim(),
@@ -1692,7 +1716,7 @@
                     duration: parseFloat(document.getElementById('appointment-duration').value),
                     complexity: parseInt(document.getElementById('appointment-complexity').value),
                     sketch: document.getElementById('appointment-sketch').value,
-                    status: 'pending' // Default status
+                    status: 'pending' // Статус по умолчанию
                 };
 
                 const appointmentId = form.dataset.id;
@@ -1702,8 +1726,8 @@
                     await addDocument('appointments', appointmentData);
                 }
                 hideModal(modal, content);
-                renderAppointments(); // Re-render appointments list
-                renderDashboard(); // Re-render dashboard to update upcoming appointments
+                renderAppointments(); // Повторный рендеринг списка записей
+                renderDashboard(); // Повторный рендеринг главной страницы для обновления предстоящих записей
             });
         }
 
@@ -1735,13 +1759,13 @@
             });
 
             let totalPrice = (workTime * hourlyRate) + costPrice;
-            totalPrice += totalPrice * (complexityMarkup / 100); // Apply complexity markup
-            totalPrice -= totalPrice * (discount / 100); // Apply discount
+            totalPrice += totalPrice * (complexityMarkup / 100); // Применение наценки за сложность
+            totalPrice -= totalPrice * (discount / 100); // Применение скидки
 
             document.getElementById('session-cost-price').textContent = formatCurrency(costPrice);
             document.getElementById('session-total-price').textContent = formatCurrency(totalPrice);
 
-            // Store current calculation for payment
+            // Сохранение текущего расчета для оплаты
             currentAppointmentForSession.calculatedPrice = totalPrice;
             currentAppointmentForSession.costPrice = costPrice;
             currentAppointmentForSession.consumablesUsed = consumablesUsed;
@@ -1768,14 +1792,14 @@
 
             document.getElementById('session-work-time').value = appointment.duration;
             document.getElementById('session-hourly-rate').value = settings.hourlyRate;
-            // Complexity markup: 0% for 1, up to 90% for 10 (e.g., (complexity - 1) * 10)
+            // Наценка за сложность: 0% для 1, до 90% для 10 (например, (сложность - 1) * 10)
             const complexityMarkup = (appointment.complexity - 1) * 10;
             document.getElementById('session-complexity-markup').value = complexityMarkup;
-            document.getElementById('session-discount').value = 0; // Reset discount
+            document.getElementById('session-discount').value = 0; // Сброс скидки
 
-            // Clear previous consumables and recalculate
+            // Очистка предыдущих расходников и пересчет
             document.getElementById('session-consumables-list').innerHTML = '';
-            calculateSessionPrice(); // Initial calculation
+            calculateSessionPrice(); // Начальный расчет
 
             showModal(modal, content);
         }
@@ -1791,7 +1815,7 @@
                 hideModal(modal, content);
             });
 
-            // Recalculate on input changes
+            // Пересчет при изменении ввода
             document.getElementById('session-work-time').addEventListener('input', calculateSessionPrice);
             document.getElementById('session-discount').addEventListener('input', calculateSessionPrice);
             document.getElementById('session-consumables-list').addEventListener('input', (e) => {
@@ -1806,7 +1830,7 @@
                 }
             });
 
-            // Add consumable button logic
+            // Логика кнопки "Добавить расходник"
             const addConsumableBtn = document.getElementById('add-consumable-btn');
             const addConsumableDropdown = document.getElementById('add-consumable-dropdown');
             const consumableSearchInput = document.getElementById('consumable-search');
@@ -1852,11 +1876,11 @@
                 const existingItem = consumablesList.querySelector(`[data-material-id="${material.id}"]`);
 
                 if (existingItem) {
-                    // If material already exists, increment quantity
+                    // Если материал уже существует, увеличить количество
                     const qtyInput = existingItem.querySelector('.consumable-qty');
                     qtyInput.value = parseFloat(qtyInput.value) + 1;
                 } else {
-                    // Add new material item
+                    // Добавить новый элемент материала
                     const div = document.createElement('div');
                     div.classList.add('flex', 'items-center', 'justify-between', 'p-2', 'bg-white', 'rounded-lg', 'shadow-sm');
                     div.dataset.materialId = material.id;
@@ -1880,7 +1904,7 @@
                     return;
                 }
 
-                const paymentMethod = 'cash'; // Placeholder for payment method selection (could be a dropdown)
+                const paymentMethod = 'cash'; // Заполнитель для выбора способа оплаты (может быть выпадающим списком)
                 const saleData = {
                     appointmentId: currentAppointmentForSession.id,
                     clientId: currentAppointmentForSession.clientId,
@@ -1893,7 +1917,7 @@
                     notes: `Сеанс тату от ${formatDate(currentAppointmentForSession.date)}.`
                 };
 
-                // Deduct consumables from inventory
+                // Вычитание расходников из инвентаря
                 for (const item of currentAppointmentForSession.consumablesUsed) {
                     const material = materials.find(m => m.id === item.materialId);
                     if (material) {
@@ -1918,9 +1942,9 @@
             document.getElementById('print-receipt-btn').addEventListener('click', () => {
                 if (currentAppointmentForSession && currentAppointmentForSession.calculatedPrice) {
                     const client = clients.find(c => c.id === currentAppointmentForSession.clientId);
-                    // Create a dummy sale object for printing if it's not yet saved
+                    // Создаем фиктивный объект продажи для печати, если он еще не сохранен
                     const dummySale = {
-                        orderNumber: 'Предв. №', // Placeholder for unsaved sales
+                        orderNumber: 'Предв. №', // Заполнитель для несохраненных продаж
                         date: new Date().toISOString().split('T')[0],
                         time: new Date().toTimeString().split(' ')[0].substring(0, 5),
                         clientName: client ? client.name : 'Неизвестно',
@@ -1998,7 +2022,7 @@
                 title.textContent = 'Добавить Материал';
                 delete form.dataset.id;
                 form.reset();
-                document.getElementById('material-min-stock').value = settings.lowStockThreshold; // Default from settings
+                document.getElementById('material-min-stock').value = settings.lowStockThreshold; // По умолчанию из настроек
             }
             showModal(modal, content);
         }
@@ -2033,7 +2057,7 @@
                 }
                 hideModal(modal, content);
                 renderInventory();
-                renderDashboard(); // To update low stock notifications
+                renderDashboard(); // Для обновления уведомлений о низком запасе
             });
         }
 
@@ -2093,7 +2117,7 @@
                 }
                 hideModal(modal, content);
                 renderClients();
-                // Re-render dashboard/appointments if client data is displayed there
+                // Повторный рендеринг главной страницы/записей, если данные клиента отображаются там
                 renderDashboard();
                 renderAppointments();
             });
@@ -2118,32 +2142,32 @@
             const canvas = document.getElementById('receipt-canvas');
             const ctx = canvas.getContext('2d');
 
-            const receiptWidth = 580; // Standard receipt width (e.g., 58mm * 10px/mm)
+            const receiptWidth = 580; // Стандартная ширина чека (например, 58 мм * 10 пикс/мм)
             let currentY = 30;
             const lineHeight = 25;
             const marginX = 20;
 
-            // Calculate dynamic height
+            // Расчет динамической высоты
             let contentHeight = 0;
-            contentHeight += 2 * lineHeight; // Studio Name
-            contentHeight += 2 * lineHeight; // Order Number, Date, Time
-            contentHeight += lineHeight; // Client Name
-            contentHeight += 20; // Spacer
-            contentHeight += lineHeight; // Service header
-            contentHeight += lineHeight; // Work time line
+            contentHeight += 2 * lineHeight; // Название студии
+            contentHeight += 2 * lineHeight; // Номер заказа, Дата, Время
+            contentHeight += lineHeight; // Имя клиента
+            contentHeight += 20; // Разделитель
+            contentHeight += lineHeight; // Заголовок услуги
+            contentHeight += lineHeight; // Строка времени работы
             if (sale.consumables && sale.consumables.length > 0) {
-                contentHeight += lineHeight * (sale.consumables.length + 1); // Consumables lines + header
+                contentHeight += lineHeight * (sale.consumables.length + 1); // Строки расходников + заголовок
             }
-            contentHeight += 20; // Spacer
-            contentHeight += 2 * lineHeight; // Total Price
-            contentHeight += 2 * lineHeight; // Thank you message
+            contentHeight += 20; // Разделитель
+            contentHeight += 2 * lineHeight; // Общая цена
+            contentHeight += 2 * lineHeight; // Сообщение благодарности
 
             canvas.width = receiptWidth;
-            canvas.height = contentHeight + 60; // Add some padding
+            canvas.height = contentHeight + 60; // Добавить отступы
 
             ctx.fillStyle = '#FFFFFF';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#000000'; // Black text
+            ctx.fillStyle = '#000000'; // Черный текст
 
             ctx.font = 'bold 24px Inter';
             ctx.textAlign = 'center';
@@ -2159,7 +2183,7 @@
             ctx.fillText(`Клиент: ${sale.clientName || clients.find(c => c.id === sale.clientId)?.name || 'Неизвестно'}`, marginX, currentY);
             currentY += lineHeight * 1.5;
 
-            // Line items
+            // Элементы строки
             ctx.font = 'bold 16px Inter';
             ctx.fillText('Услуги и материалы:', marginX, currentY);
             currentY += lineHeight;
@@ -2176,7 +2200,7 @@
                 });
             }
 
-            // Complexity and Discount (if applicable)
+            // Сложность и скидка (если применимо)
             if (sale.complexityMarkup > 0) {
                 const markupAmount = (workTimeCost + (sale.consumables ? sale.consumables.reduce((sum, c) => sum + (c.pricePerUnit * c.quantity), 0) : 0)) * (sale.complexityMarkup / 100);
                  ctx.fillText(`Наценка за сложность (${sale.complexityMarkup}%): ${formatCurrency(markupAmount)}`, marginX, currentY);
@@ -2190,7 +2214,7 @@
             }
 
 
-            currentY += 20; // Spacer
+            currentY += 20; // Разделитель
 
             ctx.font = 'bold 20px Inter';
             ctx.textAlign = 'right';
@@ -2203,7 +2227,7 @@
             currentY += lineHeight;
             ctx.fillText('Ждем вас снова!', receiptWidth / 2, currentY);
 
-            // Convert to JPG and download
+            // Преобразование в JPG и скачивание
             const dataURL = canvas.toDataURL('image/jpeg', 0.9);
             const link = document.createElement('a');
             link.href = dataURL;
@@ -2214,17 +2238,17 @@
         }
 
 
-        // --- Routing Logic ---
+        // --- Логика маршрутизации ---
 
         /**
-         * Handles URL hash changes to navigate between pages.
+         * Обрабатывает изменения хэша URL для навигации между страницами.
          */
         function handleRouteChange() {
             const hash = window.location.hash || '#dashboard';
             updateNavLinkActiveState(hash);
 
             if (!isAuthReady) {
-                console.warn('Authentication not ready, delaying content rendering.');
+                console.warn('Аутентификация не готова, откладываем рендеринг контента.');
                 return;
             }
 
@@ -2253,11 +2277,87 @@
             }
         }
 
+        // --- Аутентификация Supabase ---
+        async function handleSupabaseAuthChange(event, session) {
+            const loginModal = document.getElementById('login-modal');
+            const loginModalContent = document.getElementById('login-modal-content');
+            const signupModal = document.getElementById('signup-modal');
+            const signupModalContent = document.getElementById('signup-modal-content');
 
-        // --- Initialization ---
+            if (session) {
+                userId = session.user.id;
+                console.log("Пользователь Supabase вошел в систему:", userId);
+                document.getElementById('current-user-id').textContent = userId;
+
+                // Настраиваем слушатели ТОЛЬКО ОДИН РАЗ после первоначальной аутентификации
+                if (!isAuthReady) { // Проверяем, были ли слушатели уже настроены
+                    isAuthReady = true;
+
+                    await setupSupabaseListener('clients', (data) => {
+                        clients = data;
+                        handleRouteChange(); // Повторный рендеринг текущей страницы для отражения изменений
+                    });
+                    await setupSupabaseListener('appointments', (data) => {
+                        appointments = data;
+                        handleRouteChange();
+                    });
+                    await setupSupabaseListener('materials', (data) => {
+                        materials = data;
+                        handleRouteChange();
+                    });
+                    await setupSupabaseListener('expenses', (data) => {
+                        expenses = data;
+                        handleRouteChange();
+                    });
+                    await setupSupabaseListener('sales', (data) => {
+                        sales = data;
+                        handleRouteChange();
+                    });
+                    await setupSupabaseListener('settings', async (data) => {
+                        if (data.length > 0) {
+                            settings = { ...settings, ...data[0] };
+                        } else {
+                            // Если настроек нет, создать настройки по умолчанию для этого пользователя
+                            await addDocument('settings', {
+                                hourlyRate: 500,
+                                materialCategories: ['Иглы', 'Краска', 'Средства', 'Прочее'],
+                                lowStockThreshold: 5,
+                                studioName: 'Моя Тату Студия'
+                            });
+                        }
+                        handleRouteChange();
+                    });
+
+                    // Начальная обработка маршрута после загрузки данных и настройки слушателей
+                    handleRouteChange();
+                } else {
+                    // Если уже аутентифицирован и слушатели настроены, просто повторно рендерим текущий маршрут
+                    handleRouteChange();
+                }
+
+                hideModal(loginModal, loginModalContent);
+                hideModal(signupModal, signupModalContent);
+
+            } else {
+                console.log("Пользователь не вошел в систему с Supabase.");
+                document.getElementById('current-user-id').textContent = 'Не аутентифицирован';
+                userId = null; // Очистить userId
+                isAuthReady = false;
+                loadContent('<div class="flex items-center justify-center h-full text-gray-500 text-xl">Пожалуйста, войдите в систему.</div>');
+                showModal(loginModal, loginModalContent); // Показать модальное окно входа, если нет пользователя
+
+                // Очистить все подписки, если пользователь выходит
+                for (const channelName in activeSupabaseSubscriptions) {
+                    supabase.removeChannel(activeSupabaseSubscriptions[channelName]);
+                    delete activeSupabaseSubscriptions[channelName];
+                }
+            }
+        }
+
+        // --- Инициализация ---
 
         document.addEventListener('DOMContentLoaded', async () => {
-            // Setup modal event listeners (these are static and don't depend on auth state or data)
+            // Настройка слушателей событий модальных окон (они статичны и не зависят от состояния аутентификации или данных)
             setupAppointmentModal();
             setupSessionCalculatorModal();
             setupExpenseModal();
@@ -2265,13 +2365,18 @@
             setupClientModal();
             setupMessageBox();
 
-            // Listen for hash changes (this will trigger handleRouteChange, which now relies on already-set listeners)
+            // Слушатель изменений хэша (это вызовет handleRouteChange, который теперь зависит от уже настроенных слушателей)
             window.addEventListener('hashchange', handleRouteChange);
 
-            // Set up the Supabase auth listener. This will handle initial auth state and subsequent changes.
+            // Настройка слушателя аутентификации Supabase. Это будет обрабатывать начальное состояние аутентификации и последующие изменения.
             supabase.auth.onAuthStateChange(handleSupabaseAuthChange);
 
-            // --- Authentication Forms Event Listeners ---
+            // --- Слушатели событий форм аутентификации ---
+            const loginModal = document.getElementById('login-modal');
+            const loginModalContent = document.getElementById('login-modal-content');
+            const signupModal = document.getElementById('signup-modal');
+            const signupModalContent = document.getElementById('signup-modal-content');
+
             document.getElementById('login-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 document.getElementById('login-error-message').classList.add('hidden');
@@ -2281,7 +2386,7 @@
                 if (error) {
                     document.getElementById('login-error-message').textContent = error.message;
                     document.getElementById('login-error-message').classList.remove('hidden');
-                    console.error("Login error:", error.message);
+                    console.error("Ошибка входа:", error.message);
                 }
             });
 
@@ -2302,7 +2407,7 @@
                 if (error) {
                     document.getElementById('signup-error-message').textContent = error.message;
                     document.getElementById('signup-error-message').classList.remove('hidden');
-                    console.error("Signup error:", error.message);
+                    console.error("Ошибка регистрации:", error.message);
                 } else {
                     showMessageBox('Успех', 'Регистрация прошла успешно! Пожалуйста, проверьте свою почту для подтверждения.');
                     hideModal(signupModal, signupModalContent);
@@ -2313,14 +2418,14 @@
             document.getElementById('logout-btn').addEventListener('click', async () => {
                 const { error } = await supabase.auth.signOut();
                 if (error) {
-                    console.error("Logout error:", error.message);
+                    console.error("Ошибка выхода:", error.message);
                     showMessageBox('Ошибка', `Не удалось выйти: ${error.message}`);
                 } else {
                     showMessageBox('Успех', 'Вы успешно вышли из системы.');
                 }
             });
 
-            // Show/hide login/signup modals
+            // Показать/скрыть модальные окна входа/регистрации
             document.getElementById('show-signup').addEventListener('click', (e) => {
                 e.preventDefault();
                 hideModal(loginModal, loginModalContent);
