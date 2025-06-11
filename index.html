@@ -973,7 +973,26 @@
                     </div>
                 </div>
             `);
+        document.querySelectorAll('.confirm-visit-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const appointmentId = e.currentTarget.dataset.id;
+                    const appointment = appointments.find(app => app.id === appointmentId);
+                    if (appointment) {
+                        openSessionCalculatorModal(appointment);
+                    }
+                });
+            });
 
+            document.querySelectorAll('.edit-client-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const clientId = e.currentTarget.dataset.id;
+                    const client = clients.find(c => c.id === clientId);
+                    if (client) {
+                        openClientModal(client);
+                    }
+                });
+            });
+        }
             document.getElementById('add-appointment-btn').addEventListener('click', () => {
                 openAppointmentModal();
             });
