@@ -955,10 +955,9 @@
                                             <p class="font-semibold text-gray-100">${client ? client.name : 'Unknown Client'}</p>
                                             <p class="text-sm text-gray-400">${formatDate(app.date)} at ${formatTime(app.time)} - ${app.duration} hours</p>
                                         </div>
-                                         
+                                         <button data-id="${app.id}" class="btn-primary text-sm px-3 py-1 confirm-visit-btn">Confirm</button>
                                         <div class="flex items-center space-x-3 mt-3 md:mt-0">
                                             <span class="px-3 py-1 rounded-full text-xs font-semibold ${statusClass} text-white">${statusText}</span>
-                                            <button data-id="${app.id}" class="btn-primary text-sm px-3 py-1 confirm-visit-btn">Confirm</button>
                                             <button data-id="${app.id}" class="btn-secondary text-sm px-3 py-1 edit-appointment-btn">
                                                 <i class="fas fa-edit"></i>
                                             </button>
@@ -973,26 +972,7 @@
                     </div>
                 </div>
             `);
-        document.querySelectorAll('.confirm-visit-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const appointmentId = e.currentTarget.dataset.id;
-                    const appointment = appointments.find(app => app.id === appointmentId);
-                    if (appointment) {
-                        openSessionCalculatorModal(appointment);
-                    }
-                });
-            });
 
-            document.querySelectorAll('.edit-client-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const clientId = e.currentTarget.dataset.id;
-                    const client = clients.find(c => c.id === clientId);
-                    if (client) {
-                        openClientModal(client);
-                    }
-                });
-            });
-        }
             document.getElementById('add-appointment-btn').addEventListener('click', () => {
                 openAppointmentModal();
             });
@@ -1064,7 +1044,7 @@
 
             // Attach listeners after rendering
             attachAppointmentActionListeners();
-      
+        }
 
         function attachAppointmentActionListeners() {
             document.querySelectorAll('.edit-appointment-btn').forEach(button => {
@@ -1087,6 +1067,7 @@
                     };
                 });
             });
+        }
 
         /**
          * Рендерит страницу "Клиенты".
