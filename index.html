@@ -119,36 +119,36 @@
 
     <nav id="mobile-nav-menu" class="w-full md:w-64 bg-gray-800 text-white p-4 flex flex-col justify-between shadow-lg">
         <div>
-            <div class="text-2xl font-bold mb-4 text-center border-b border-gray-700 pb-4">InkTracker</div>
+            <div class="text-2xl font-bold mb-4 text-center border-b border-gray-700 pb-4">RDNK.TATTOO</div>
             <ul class="space-y-2">
                 <li>
                     <a href="#dashboard" class="nav-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition duration-200 ease-in-out active">
                         <i class="fas fa-home mr-3"></i>
-                        <span>Dashboard</span>
+                        <span>Главная</span>
                     </a>
                 </li>
                 <li>
                     <a href="#appointments" class="nav-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition duration-200 ease-in-out">
                         <i class="fas fa-calendar-alt mr-3"></i>
-                        <span>Appointments</span>
+                        <span>Записи</span>
                     </a>
                 </li>
                 <li>
                     <a href="#clients" class="nav-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition duration-200 ease-in-out">
                         <i class="fas fa-users mr-3"></i>
-                        <span>Clients</span>
+                        <span>Клиенты</span>
                     </a>
                 </li>
                 <li>
                     <a href="#inventory" class="nav-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition duration-200 ease-in-out">
                         <i class="fas fa-boxes mr-3"></i>
-                        <span>Inventory</span>
+                        <span>Инвентарь</span>
                     </a>
                 </li>
                 <li>
                     <a href="#finance" class="nav-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition duration-200 ease-in-out">
                         <i class="fas fa-wallet mr-3"></i>
-                        <span>Finances</span>
+                        <span>Финансы</span>
                     </a>
                 </li>
                 <li>
@@ -955,6 +955,7 @@
                                             <p class="font-semibold text-gray-100">${client ? client.name : 'Unknown Client'}</p>
                                             <p class="text-sm text-gray-400">${formatDate(app.date)} at ${formatTime(app.time)} - ${app.duration} hours</p>
                                         </div>
+                                         <button data-id="${app.id}" class="btn-primary text-sm px-3 py-1 confirm-visit-btn">Confirm</button>
                                         <div class="flex items-center space-x-3 mt-3 md:mt-0">
                                             <span class="px-3 py-1 rounded-full text-xs font-semibold ${statusClass} text-white">${statusText}</span>
                                             <button data-id="${app.id}" class="btn-secondary text-sm px-3 py-1 edit-appointment-btn">
